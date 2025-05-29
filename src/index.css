@@ -1,0 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-gray-200;
+  }
+  
+  body {
+    @apply bg-mp-gray-50 font-sans text-mp-gray-900;
+    font-family: 'Inter', 'Proxima Nova', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold text-mp-gray-900;
+  }
+}
+
+@layer components {
+  /* Botones estilo Mercado Pago */
+  .btn-primary {
+    @apply bg-mp-primary hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-mp transition-all duration-200 shadow-mp hover:shadow-mp-lg focus:outline-none focus:ring-2 focus:ring-mp-primary focus:ring-opacity-50;
+  }
+
+  .btn-secondary {
+    @apply bg-mp-secondary hover:bg-green-600 text-white font-medium py-3 px-6 rounded-mp transition-all duration-200 shadow-mp hover:shadow-mp-lg focus:outline-none focus:ring-2 focus:ring-mp-secondary focus:ring-opacity-50;
+  }
+
+  .btn-outline {
+    @apply border-2 border-mp-primary text-mp-primary hover:bg-mp-primary hover:text-white font-medium py-3 px-6 rounded-mp transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-mp-primary focus:ring-opacity-50;
+  }
+
+  .btn-ghost {
+    @apply text-mp-gray-600 hover:text-mp-primary hover:bg-mp-gray-100 font-medium py-2 px-4 rounded-mp transition-all duration-200;
+  }
+
+  /* Cards estilo Mercado Pago */
+  .card {
+    @apply bg-white rounded-mp-lg shadow-mp border border-mp-gray-200 p-6;
+  }
+
+  .card-hover {
+    @apply card hover:shadow-mp-lg transition-all duration-200 cursor-pointer;
+  }
+
+  /* Inputs estilo Mercado Pago */
+  .input {
+    @apply w-full px-4 py-3 border border-mp-gray-300 rounded-mp focus:outline-none focus:ring-2 focus:ring-mp-primary focus:border-transparent transition-all duration-200 bg-white;
+  }
+
+  .input-error {
+    @apply input border-mp-error focus:ring-mp-error;
+  }
+
+  /* Badges y estados */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-green-100 text-green-800;
+  }
+
+  .badge-warning {
+    @apply badge bg-yellow-100 text-yellow-800;
+  }
+
+  .badge-error {
+    @apply badge bg-red-100 text-red-800;
+  }
+
+  .badge-info {
+    @apply badge bg-blue-100 text-blue-800;
+  }
+
+  /* Navegación */
+  .nav-link {
+    @apply flex items-center px-4 py-3 text-mp-gray-600 hover:text-mp-primary hover:bg-mp-gray-100 rounded-mp transition-all duration-200 font-medium;
+  }
+
+  .nav-link-active {
+    @apply nav-link text-mp-primary bg-blue-50 border-r-2 border-mp-primary;
+  }
+
+  /* Animaciones suaves */
+  .animate-enter {
+    @apply animate-fade-in;
+  }
+
+  .animate-slide {
+    @apply animate-slide-up;
+  }
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Loading spinner */
+.spinner {
+  border: 2px solid #f3f4f6;
+  border-top: 2px solid #009ee3;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+} 
