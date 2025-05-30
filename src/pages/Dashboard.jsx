@@ -8,7 +8,10 @@ import {
   ArrowDownRight,
   Calendar,
   Eye,
-  EyeOff
+  EyeOff,
+  Filter,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -28,6 +31,8 @@ import toast from 'react-hot-toast';
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showAmounts, setShowAmounts] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(''); // Inicializar vacío para auto-seleccionar
+  const [sortBy, setSortBy] = useState('fecha'); // nuevo estado para ordenamiento
   const [data, setData] = useState({
     totalIncome: 0,
     totalExpenses: 0,
@@ -40,6 +45,65 @@ const Dashboard = () => {
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  // Auto-seleccionar el primer mes con datos después de cargar
+  useEffect(() => {
+    // Generar opciones de meses basadas en los datos disponibles
+    const getAvailableMonths = () => {
+      const months = new Set();
+      
+      // Agregar meses de gastos e ingresos
+      [...data.expenses, ...data.incomes].forEach(item => {
+        if (item.created_at) {
+          const date = new Date(item.created_at);
+          const month = date.toISOString().slice(0, 7);
+          console.log(`[useEffect] Procesando fecha: ${item.created_at} -> ${month} (${date.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })})`);
+          months.add(month);
+        }
+      });
+      
+      // Siempre incluir el mes actual
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      months.add(currentMonth);
+      
+      // Convertir a array y ordenar
+      return Array.from(months).sort().reverse();
+    };
+
+    if (!selectedMonth && (data.expenses.length > 0 || data.incomes.length > 0)) {
+      const availableMonths = getAvailableMonths();
+      console.log('Meses disponibles:', availableMonths); // Debug
+      console.log('Datos de ejemplo:', data.expenses[0]?.created_at, data.incomes[0]?.created_at); // Debug
+      console.log('Seleccionando mes:', availableMonths[0]); // Debug
+      if (availableMonths.length > 0) {
+        setSelectedMonth(availableMonths[0]); // Seleccionar el mes más reciente
+      }
+    }
+  }, [data, selectedMonth]);
+
+  // Función para generar opciones del selector (duplicada para usar en el render)
+  const getAvailableMonthsForSelect = () => {
+    const months = new Set();
+    
+    // Agregar meses de gastos e ingresos
+    [...data.expenses, ...data.incomes].forEach(item => {
+      if (item.created_at) {
+        const date = new Date(item.created_at);
+        const month = date.toISOString().slice(0, 7);
+        console.log(`Procesando fecha: ${item.created_at} -> ${month} (${date.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })})`);
+        months.add(month);
+      }
+    });
+    
+    // Siempre incluir el mes actual
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    months.add(currentMonth);
+    
+    console.log('Todos los meses encontrados:', Array.from(months).sort().reverse());
+    
+    // Convertir a array y ordenar
+    return Array.from(months).sort().reverse();
+  };
 
   const loadDashboardData = async () => {
     try {
@@ -91,15 +155,76 @@ const Dashboard = () => {
     return formatCurrency(amount);
   };
 
+  // Función para filtrar datos por mes seleccionado
+  const filterDataByMonth = (dataArray, monthFilter) => {
+    if (!monthFilter) return dataArray;
+    return dataArray.filter(item => {
+      const itemDate = new Date(item.created_at);
+      const itemMonth = itemDate.toISOString().slice(0, 7);
+      return itemMonth === monthFilter;
+    });
+  };
+
+  // Datos filtrados por mes (calcular después de cargar datos)
+  const filteredExpenses = filterDataByMonth(data.expenses, selectedMonth);
+  const filteredIncomes = filterDataByMonth(data.incomes, selectedMonth);
+  const monthlyTotalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const monthlyTotalIncome = filteredIncomes.reduce((sum, income) => sum + income.amount, 0);
+  const monthlyBalance = monthlyTotalIncome - monthlyTotalExpenses;
+
+  const formatMonthLabel = (monthString) => {
+    // Evitar problemas de zona horaria usando constructor numérico
+    const [year, month] = monthString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1); // month es 0-indexed
+    const formatted = date.toLocaleDateString('es-AR', { 
+      year: 'numeric', 
+      month: 'long' 
+    });
+    // Capitalizar la primera letra del mes
+    const capitalized = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+    console.log(`formatMonthLabel: ${monthString} -> ${capitalized} (year: ${year}, month: ${month})`);
+    return capitalized;
+  };
+
+  // Función para obtener colores por categoría
+  const getCategoryColor = (categoryId) => {
+    const colors = [
+      { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-700' },
+      { bg: 'bg-green-100', border: 'border-green-400', text: 'text-green-700' },
+      { bg: 'bg-yellow-100', border: 'border-yellow-400', text: 'text-yellow-700' },
+      { bg: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-700' },
+      { bg: 'bg-pink-100', border: 'border-pink-400', text: 'text-pink-700' },
+      { bg: 'bg-indigo-100', border: 'border-indigo-400', text: 'text-indigo-700' },
+      { bg: 'bg-cyan-100', border: 'border-cyan-400', text: 'text-cyan-700' },
+      { bg: 'bg-orange-100', border: 'border-orange-400', text: 'text-orange-700' },
+    ];
+    
+    if (!categoryId) {
+      return { bg: 'bg-gray-100', border: 'border-gray-400', text: 'text-gray-700' };
+    }
+    
+    // Usar el hash del categoryId para asignar colores consistentes
+    let hash = 0;
+    for (let i = 0; i < categoryId.length; i++) {
+      hash = categoryId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colorIndex = Math.abs(hash) % colors.length;
+    return colors[colorIndex];
+  };
+
   // Función para calcular datos reales del gráfico de torta por categorías
   const calculateCategoryData = () => {
-    if (!data.expenses.length || !data.categories.length) {
+    // Usar datos filtrados si hay un mes seleccionado, sino usar todos los datos
+    const expensesToUse = selectedMonth ? filteredExpenses : data.expenses;
+    const totalExpensesToUse = selectedMonth ? monthlyTotalExpenses : data.totalExpenses;
+    
+    if (!expensesToUse.length || !data.categories.length) {
       return [];
     }
 
     // Agrupar gastos por categoría
     const categoryTotals = {};
-    data.expenses.forEach(expense => {
+    expensesToUse.forEach(expense => {
       const categoryId = expense.category_id || 'sin_categoria';
       if (!categoryTotals[categoryId]) {
         categoryTotals[categoryId] = 0;
@@ -114,7 +239,7 @@ const Dashboard = () => {
     return Object.entries(categoryTotals).map(([categoryId, amount]) => {
       const category = data.categories.find(c => c.id === categoryId);
       const name = category ? category.name : 'Sin categoría';
-      const percentage = data.totalExpenses > 0 ? Math.round((amount / data.totalExpenses) * 100) : 0;
+      const percentage = totalExpensesToUse > 0 ? Math.round((amount / totalExpensesToUse) * 100) : 0;
       
       return {
         name,
@@ -125,42 +250,67 @@ const Dashboard = () => {
     }).filter(item => item.value > 0); // Solo mostrar categorías con gastos
   };
 
-  // Función para calcular datos del gráfico de área (versión simplificada)
+  // Función para calcular datos del gráfico de área
   const calculateChartData = () => {
-    // Como no tenemos datos históricos, mostramos una tendencia simple desde 0
-    const currentMonth = new Date().toLocaleDateString('es-AR', { month: 'short' });
-    const currentYear = new Date().getFullYear();
-    
-    // Crear algunos puntos anteriores en 0 para mostrar el crecimiento actual
-    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    const currentMonthIndex = new Date().getMonth();
-    
-    const chartData = [];
-    
-    // Agregar 2-3 meses anteriores en 0
-    for (let i = Math.max(0, currentMonthIndex - 2); i < currentMonthIndex; i++) {
+    if (selectedMonth) {
+      // Si hay un mes seleccionado, mostrar datos de ese mes específico
+      const monthLabel = new Date(selectedMonth + '-01').toLocaleDateString('es-AR', { month: 'short' });
+      return [{
+        name: monthLabel,
+        ingresos: monthlyTotalIncome,
+        gastos: monthlyTotalExpenses
+      }];
+    } else {
+      // Lógica original para mostrar tendencia general
+      const currentMonth = new Date().toLocaleDateString('es-AR', { month: 'short' });
+      const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const currentMonthIndex = new Date().getMonth();
+      
+      const chartData = [];
+      
+      // Agregar 2-3 meses anteriores en 0
+      for (let i = Math.max(0, currentMonthIndex - 2); i < currentMonthIndex; i++) {
+        chartData.push({
+          name: months[i],
+          ingresos: 0,
+          gastos: 0
+        });
+      }
+      
+      // Agregar el mes actual con datos reales
       chartData.push({
-        name: months[i],
-        ingresos: 0,
-        gastos: 0
+        name: currentMonth,
+        ingresos: data.totalIncome,
+        gastos: data.totalExpenses
       });
+      
+      return chartData;
     }
-    
-    // Agregar el mes actual con datos reales
-    chartData.push({
-      name: currentMonth,
-      ingresos: data.totalIncome,
-      gastos: data.totalExpenses
-    });
-    
-    return chartData;
   };
 
-  // Datos para el gráfico de área
+  // Datos para los gráficos
   const chartData = calculateChartData();
-
-  // Datos para el gráfico de torta (categorías de gastos)
   const pieData = calculateCategoryData();
+
+  // Función para ordenar transacciones
+  const sortTransactions = (transactions, sortType) => {
+    const sorted = [...transactions];
+    
+    switch (sortType) {
+      case 'fecha':
+        return sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      case 'monto':
+        return sorted.sort((a, b) => b.amount - a.amount);
+      case 'categoria':
+        return sorted.sort((a, b) => {
+          const categoryA = data.categories.find(c => c.id === a.category_id)?.name || 'Sin categoría';
+          const categoryB = data.categories.find(c => c.id === b.category_id)?.name || 'Sin categoría';
+          return categoryA.localeCompare(categoryB);
+        });
+      default:
+        return sorted;
+    }
+  };
 
   if (loading) {
     return (
@@ -173,20 +323,54 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header con toggle de visibilidad */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-mp-gray-900">Dashboard</h1>
-          <p className="text-mp-gray-600">Resumen de tu actividad financiera</p>
+      {/* Header con toggle de visibilidad y selector de mes */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+          {/* Selector de mes */}
+          <div className="relative">
+            <label className="block text-sm font-medium text-mp-gray-700 mb-2">
+              Filtrar por mes
+            </label>
+            <div className="relative">
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="input pr-10 w-full sm:w-auto min-w-[200px]"
+              >
+                <option value="">Todos los meses</option>
+                {getAvailableMonthsForSelect().map(month => (
+                  <option key={month} value={month}>
+                    {formatMonthLabel(month)}
+                  </option>
+                ))}
+              </select>
+              <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-mp-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Toggle de visibilidad */}
+          <div className="self-end">
+            <button
+              onClick={() => setShowAmounts(!showAmounts)}
+              className="btn-ghost flex items-center space-x-2"
+            >
+              {showAmounts ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              <span>{showAmounts ? 'Ocultar' : 'Mostrar'} montos</span>
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => setShowAmounts(!showAmounts)}
-          className="btn-ghost flex items-center space-x-2"
-        >
-          {showAmounts ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          <span>{showAmounts ? 'Ocultar' : 'Mostrar'} montos</span>
-        </button>
       </div>
+
+      {/* Banner del período seleccionado */}
+      {selectedMonth && (
+        <div className="bg-mp-primary rounded-mp-lg p-4 text-white shadow-mp">
+          <div className="flex items-center justify-center">
+            <h3 className="text-lg font-bold">
+              📅 {formatMonthLabel(selectedMonth)}
+            </h3>
+          </div>
+        </div>
+      )}
 
       {/* Métricas principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -194,23 +378,25 @@ const Dashboard = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-mp-gray-600">Balance Total</p>
-              <p className={`text-2xl font-bold ${data.balance >= 0 ? 'text-mp-secondary' : 'text-mp-error'}`}>
-                {formatAmount(data.balance)}
+              <p className="text-sm font-medium text-mp-gray-600">
+                Balance {selectedMonth ? 'del Mes' : 'Total'}
+              </p>
+              <p className={`text-2xl font-bold ${(selectedMonth ? monthlyBalance : data.balance) >= 0 ? 'text-mp-secondary' : 'text-mp-error'}`}>
+                {formatAmount(selectedMonth ? monthlyBalance : data.balance)}
               </p>
             </div>
-            <div className={`p-3 rounded-mp ${data.balance >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-              <DollarSign className={`w-6 h-6 ${data.balance >= 0 ? 'text-mp-secondary' : 'text-mp-error'}`} />
+            <div className={`p-3 rounded-mp ${(selectedMonth ? monthlyBalance : data.balance) >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+              <DollarSign className={`w-6 h-6 ${(selectedMonth ? monthlyBalance : data.balance) >= 0 ? 'text-mp-secondary' : 'text-mp-error'}`} />
             </div>
           </div>
           <div className="mt-4 flex items-center">
-            {data.balance >= 0 ? (
+            {(selectedMonth ? monthlyBalance : data.balance) >= 0 ? (
               <ArrowUpRight className="w-4 h-4 text-mp-secondary mr-1" />
             ) : (
               <ArrowDownRight className="w-4 h-4 text-mp-error mr-1" />
             )}
-            <span className={`text-sm ${data.balance >= 0 ? 'text-mp-secondary' : 'text-mp-error'}`}>
-              {data.balance >= 0 ? 'Positivo' : 'Negativo'}
+            <span className={`text-sm ${(selectedMonth ? monthlyBalance : data.balance) >= 0 ? 'text-mp-secondary' : 'text-mp-error'}`}>
+              {(selectedMonth ? monthlyBalance : data.balance) >= 0 ? 'Positivo' : 'Negativo'}
             </span>
           </div>
         </div>
@@ -219,9 +405,11 @@ const Dashboard = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-mp-gray-600">Total Ingresos</p>
+              <p className="text-sm font-medium text-mp-gray-600">
+                {selectedMonth ? 'Ingresos del Mes' : 'Total Ingresos'}
+              </p>
               <p className="text-2xl font-bold text-mp-secondary">
-                {formatAmount(data.totalIncome)}
+                {formatAmount(selectedMonth ? monthlyTotalIncome : data.totalIncome)}
               </p>
             </div>
             <div className="p-3 rounded-mp bg-green-100">
@@ -231,7 +419,7 @@ const Dashboard = () => {
           <div className="mt-4 flex items-center">
             <TrendingUp className="w-4 h-4 text-mp-secondary mr-1" />
             <span className="text-sm text-mp-gray-500">
-              {data.incomes.length} {data.incomes.length === 1 ? 'ingreso registrado' : 'ingresos registrados'}
+              {(selectedMonth ? filteredIncomes : data.incomes).length} {(selectedMonth ? filteredIncomes : data.incomes).length === 1 ? 'ingreso' : 'ingresos'} {selectedMonth ? 'en el mes' : 'registrados'}
             </span>
           </div>
         </div>
@@ -240,9 +428,11 @@ const Dashboard = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-mp-gray-600">Total Gastos</p>
+              <p className="text-sm font-medium text-mp-gray-600">
+                {selectedMonth ? 'Gastos del Mes' : 'Total Gastos'}
+              </p>
               <p className="text-2xl font-bold text-mp-accent">
-                {formatAmount(data.totalExpenses)}
+                {formatAmount(selectedMonth ? monthlyTotalExpenses : data.totalExpenses)}
               </p>
             </div>
             <div className="p-3 rounded-mp bg-orange-100">
@@ -252,7 +442,7 @@ const Dashboard = () => {
           <div className="mt-4 flex items-center">
             <TrendingDown className="w-4 h-4 text-mp-accent mr-1" />
             <span className="text-sm text-mp-gray-500">
-              {data.expenses.length} {data.expenses.length === 1 ? 'gasto registrado' : 'gastos registrados'}
+              {(selectedMonth ? filteredExpenses : data.expenses).length} {(selectedMonth ? filteredExpenses : data.expenses).length === 1 ? 'gasto' : 'gastos'} {selectedMonth ? 'en el mes' : 'registrados'}
             </span>
           </div>
         </div>
@@ -261,9 +451,11 @@ const Dashboard = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-mp-gray-600">Gastos Pendientes</p>
+              <p className="text-sm font-medium text-mp-gray-600">
+                Gastos Pendientes {selectedMonth ? 'del Mes' : ''}
+              </p>
               <p className="text-2xl font-bold text-mp-error">
-                {data.expenses.filter(e => !e.paid).length}
+                {(selectedMonth ? filteredExpenses : data.expenses).filter(e => !e.paid).length}
               </p>
             </div>
             <div className="p-3 rounded-mp bg-red-100">
@@ -272,11 +464,232 @@ const Dashboard = () => {
           </div>
           <div className="mt-4">
             <span className="text-sm text-mp-gray-500">
-              {formatAmount(data.expenses.filter(e => !e.paid).reduce((sum, e) => sum + e.amount, 0))} por pagar
+              {formatAmount((selectedMonth ? filteredExpenses : data.expenses).filter(e => !e.paid).reduce((sum, e) => sum + e.amount, 0))} por pagar
             </span>
           </div>
         </div>
       </div>
+
+      {/* Transacciones por mes - Dos columnas */}
+      {selectedMonth && (filteredExpenses.length > 0 || filteredIncomes.length > 0) && (
+        <div className="card">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-mp-gray-900">
+              💰 Transacciones de {formatMonthLabel(selectedMonth)}
+            </h3>
+            <div className="flex items-center space-x-4">
+              {/* Dropdown de ordenamiento */}
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-mp-gray-600">Ordenar por:</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="text-sm border border-mp-gray-300 rounded-mp px-3 py-1 focus:outline-none focus:ring-2 focus:ring-mp-primary focus:border-transparent"
+                >
+                  <option value="fecha">Fecha</option>
+                  <option value="monto">Monto</option>
+                  <option value="categoria">Categoría</option>
+                </select>
+              </div>
+              
+              {/* Indicadores de cantidad */}
+              <div className="flex items-center space-x-4 text-sm">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-mp-error rounded-full mr-2"></div>
+                  <span className="text-mp-gray-600">Gastos ({filteredExpenses.length})</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-mp-secondary rounded-full mr-2"></div>
+                  <span className="text-mp-gray-600">Ingresos ({filteredIncomes.length})</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Columna de Gastos */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold text-mp-error flex items-center">
+                  <TrendingDown className="w-5 h-5 mr-2" />
+                  Gastos
+                </h4>
+                <span className="text-lg font-bold text-mp-error">
+                  {formatAmount(monthlyTotalExpenses)}
+                </span>
+              </div>
+              
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {filteredExpenses.length === 0 ? (
+                  <div className="text-center py-8 text-mp-gray-500">
+                    <TrendingDown className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p>No hay gastos en este mes</p>
+                  </div>
+                ) : (
+                  sortTransactions(filteredExpenses, sortBy)
+                    .map((expense, index) => {
+                      const category = data.categories.find(c => c.id === expense.category_id);
+                      const color = getCategoryColor(expense.category_id);
+                      return (
+                        <div key={expense.id || index} className={`flex items-center justify-between p-3 rounded-mp bg-red-50 border-l-4 ${color.border}`}>
+                          <div className="flex items-start space-x-3">
+                            {/* Indicador de pago */}
+                            <div className="flex-shrink-0 mt-1">
+                              {expense.paid ? (
+                                <CheckCircle className="w-5 h-5 text-mp-secondary" />
+                              ) : (
+                                <XCircle className="w-5 h-5 text-mp-error" />
+                              )}
+                            </div>
+                            
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2">
+                                <p className="font-medium text-mp-gray-900 text-sm">
+                                  {expense.description}
+                                </p>
+                                {!expense.paid && (
+                                  <span className="badge-error text-xs">Pendiente</span>
+                                )}
+                                {category && (
+                                  <span className={`px-2 py-1 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}>
+                                    {category.name}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-mp-gray-500 mt-1">
+                                {new Date(expense.created_at).toLocaleDateString('es-AR')}
+                                {expense.due_date && (
+                                  <span className="ml-2">
+                                    • Vence: {new Date(expense.due_date).toLocaleDateString('es-AR')}
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right ml-3">
+                            <p className="font-semibold text-mp-error">
+                              -{formatAmount(expense.amount)}
+                            </p>
+                            {expense.percentage && (
+                              <p className="text-xs text-mp-gray-500">
+                                {formatPercentage(expense.percentage)} del total
+                              </p>
+                            )}
+                            {expense.amount_paid > 0 && expense.amount_paid < expense.amount && (
+                              <p className="text-xs text-mp-gray-500">
+                                Pagado: {formatAmount(expense.amount_paid)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                )}
+              </div>
+            </div>
+
+            {/* Columna de Ingresos */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold text-mp-secondary flex items-center">
+                  <TrendingUp className="w-5 h-5 mr-2" />
+                  Ingresos
+                </h4>
+                <span className="text-lg font-bold text-mp-secondary">
+                  {formatAmount(monthlyTotalIncome)}
+                </span>
+              </div>
+              
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {filteredIncomes.length === 0 ? (
+                  <div className="text-center py-8 text-mp-gray-500">
+                    <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p>No hay ingresos en este mes</p>
+                  </div>
+                ) : (
+                  sortTransactions(filteredIncomes, sortBy)
+                    .map((income, index) => {
+                      const color = getCategoryColor(income.category_id);
+                      const category = data.categories.find(c => c.id === income.category_id);
+                      return (
+                        <div key={income.id || index} className={`flex items-center justify-between p-3 rounded-mp bg-green-50 border-l-4 ${color.border || 'border-mp-secondary'}`}>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <p className="font-medium text-mp-gray-900 text-sm">
+                                {income.description}
+                              </p>
+                              {category && (
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}>
+                                  {category.name}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-mp-gray-500 mt-1">
+                              {new Date(income.created_at).toLocaleDateString('es-AR')}
+                            </p>
+                          </div>
+                          <div className="text-right ml-3">
+                            <p className="font-semibold text-mp-secondary">
+                              +{formatAmount(income.amount)}
+                            </p>
+                            {income.percentage && (
+                              <p className="text-xs text-mp-gray-500">
+                                {formatPercentage(income.percentage)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Resumen de totales del mes */}
+          {(filteredExpenses.length > 0 || filteredIncomes.length > 0) && (
+            <div className="mt-6 pt-4 border-t border-mp-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {/* Total gastos */}
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-mp-gray-600">Total gastos:</span>
+                  <div className="text-right">
+                    <div className="font-bold text-mp-error">
+                      {formatAmount(monthlyTotalExpenses)}
+                    </div>
+                    {monthlyTotalIncome > 0 && (
+                      <div className="text-xs text-mp-gray-500">
+                        {((monthlyTotalExpenses / monthlyTotalIncome) * 100).toFixed(1)}% de ingresos
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Total ingresos */}
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-mp-gray-600">Total ingresos:</span>
+                  <div className="text-right">
+                    <div className="font-bold text-mp-secondary">
+                      {formatAmount(monthlyTotalIncome)}
+                    </div>
+                    <div className="text-xs text-mp-gray-500">
+                      100% base
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Balance del mes */}
+              <div className="flex items-center justify-between pt-3 border-t border-mp-gray-200">
+                <span className="text-mp-gray-600">Balance del mes:</span>
+                <span className={`text-xl font-bold ${monthlyBalance >= 0 ? 'text-mp-secondary' : 'text-mp-error'}`}>
+                  {monthlyBalance >= 0 ? '+' : ''}{formatAmount(monthlyBalance)}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -284,9 +697,14 @@ const Dashboard = () => {
         <div className="card">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-semibold text-mp-gray-900">Tendencia Mensual</h3>
+              <h3 className="text-lg font-semibold text-mp-gray-900">
+                {selectedMonth ? `Datos de ${formatMonthLabel(selectedMonth)}` : 'Tendencia Mensual'}
+              </h3>
               <p className="text-sm text-mp-gray-500 mt-1">
-                Datos del mes actual (histórico próximamente)
+                {selectedMonth 
+                  ? 'Resumen del mes seleccionado' 
+                  : 'Datos del mes actual (histórico próximamente)'
+                }
               </p>
             </div>
             <div className="flex items-center space-x-4 text-sm">
@@ -336,58 +754,43 @@ const Dashboard = () => {
 
         {/* Gráfico de categorías */}
         <div className="card">
-          <h3 className="text-lg font-semibold text-mp-gray-900 mb-6">Gastos por Categoría</h3>
+          <h3 className="text-lg font-semibold text-mp-gray-900 mb-6">
+            Gastos por Categoría{selectedMonth && ` - ${formatMonthLabel(selectedMonth)}`}
+          </h3>
           {pieData.length > 0 ? (
-            <>
-              <div className="flex items-center justify-center">
-                <ResponsiveContainer width="100%" height={300}>
-                  <RechartsPieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={120}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value, name, props) => [
-                        `${value}% (${formatCurrency(props.payload.amount)})`, 
-                        'Porcentaje'
-                      ]}
-                      contentStyle={{
-                        backgroundColor: 'white',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.15)',
-                      }}
-                    />
-                  </RechartsPieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="mt-4 space-y-2">
-                {pieData.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div 
-                        className="w-3 h-3 rounded-full mr-2" 
-                        style={{ backgroundColor: item.color }}
-                      ></div>
-                      <span className="text-sm text-mp-gray-600">{item.name}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-sm font-medium text-mp-gray-900">{item.value}%</span>
-                      <div className="text-xs text-mp-gray-500">{formatCurrency(item.amount)}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
+            <div className="flex items-center justify-center">
+              <ResponsiveContainer width="100%" height={300}>
+                <RechartsPieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={120}
+                    paddingAngle={5}
+                    dataKey="value"
+                    label={({ name, value }) => `${name}: ${value}%`}
+                    labelLine={false}
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value, name, props) => [
+                      `${value}% (${formatCurrency(props.payload.amount)})`, 
+                      'Porcentaje'
+                    ]}
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.15)',
+                    }}
+                  />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-64 text-center">
               <PieChart className="w-12 h-12 text-mp-gray-400 mb-4" />
@@ -412,8 +815,10 @@ const Dashboard = () => {
             .slice(0, 5)
             .map((transaction, index) => {
               const isExpense = transaction.hasOwnProperty('paid');
+              const color = getCategoryColor(transaction.category_id);
+              const category = data.categories.find(c => c.id === transaction.category_id);
               return (
-                <div key={index} className="flex items-center justify-between p-4 rounded-mp bg-mp-gray-50">
+                <div key={index} className={`flex items-center justify-between p-4 rounded-mp bg-mp-gray-50 border-l-4 ${color.border || (isExpense ? 'border-mp-error' : 'border-mp-secondary')}`}>
                   <div className="flex items-center space-x-3">
                     <div className={`p-2 rounded-mp ${isExpense ? 'bg-red-100' : 'bg-green-100'}`}>
                       {isExpense ? (
@@ -422,8 +827,29 @@ const Dashboard = () => {
                         <TrendingUp className="w-4 h-4 text-mp-secondary" />
                       )}
                     </div>
-                    <div>
-                      <p className="font-medium text-mp-gray-900">{transaction.description}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <p className="font-medium text-mp-gray-900">{transaction.description}</p>
+                        {/* Indicador de pago solo para gastos */}
+                        {isExpense && (
+                          <div className="flex items-center space-x-1">
+                            {transaction.paid ? (
+                              <CheckCircle className="w-4 h-4 text-mp-secondary" />
+                            ) : (
+                              <XCircle className="w-4 h-4 text-mp-error" />
+                            )}
+                            {!transaction.paid && (
+                              <span className="badge-error text-xs">Pendiente</span>
+                            )}
+                          </div>
+                        )}
+                        {/* Badge de categoría */}
+                        {category && (
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}>
+                            {category.name}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-mp-gray-500">
                         {new Date(transaction.created_at).toLocaleDateString('es-AR')}
                       </p>
@@ -435,7 +861,7 @@ const Dashboard = () => {
                     </p>
                     {transaction.percentage && (
                       <p className="text-sm text-mp-gray-500">
-                        {formatPercentage(transaction.percentage)}
+                        {formatPercentage(transaction.percentage)} del total
                       </p>
                     )}
                   </div>
