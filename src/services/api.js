@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 
 // Configuración base de axios
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1',
+  baseURL: process.env.REACT_APP_API_URL || '/api/v1',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -81,6 +81,17 @@ export const reportsAPI = {
         end_date: endDate,
       },
     }),
+};
+
+// Nuevos servicios de Dashboard y Analytics
+export const dashboardAPI = {
+  overview: (params) => api.get('/dashboard', { params }),
+};
+
+export const analyticsAPI = {
+  expenses: (params) => api.get('/expenses/summary', { params }),
+  incomes: (params) => api.get('/incomes/summary', { params }),
+  categories: (params) => api.get('/categories/analytics', { params }),
 };
 
 // Utilidades

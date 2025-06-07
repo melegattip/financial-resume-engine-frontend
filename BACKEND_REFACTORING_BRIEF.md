@@ -1,16 +1,40 @@
 # Backend Refactoring Brief: Financial Dashboard Architecture
 
+## 🚨 CRITICAL STATUS UPDATE
+
+**FRONTEND READY**: El frontend ya está refactorizado y esperando los nuevos endpoints.
+
+**BACKEND STATUS**: ❌ **4 ENDPOINTS CRÍTICOS FALTANTES**
+
+### ❌ **ENDPOINTS QUE FALLAN (404 Not Found):**
+```http
+GET /api/v1/dashboard?year=2025&month=06
+GET /api/v1/expenses/summary?year=2025&month=06&sort=date&order=desc&limit=50  
+GET /api/v1/categories/analytics?year=2025&month=06
+GET /api/v1/incomes/summary?year=2025&month=06&sort=date&order=desc
+```
+
+### ✅ **ENDPOINTS QUE SÍ FUNCIONAN (referencia):**
+```http
+GET /api/v1/categories  → ✅ Responde correctamente
+GET /api/v1/expenses    → ✅ Responde correctamente
+GET /api/v1/incomes     → ✅ Responde correctamente (presumiblemente)
+```
+
+**ACCIÓN REQUERIDA**: Implementar los 4 endpoints faltantes usando los datos existentes.
+
+---
+
 ## CONTEXT & PROBLEM
 
-**Current State**: Frontend (`src/pages/Dashboard.jsx`) contains business logic that should be in backend:
-- All data filtering happens client-side in `filterDataByMonthAndYear()`
-- Financial calculations performed in React components
-- Category aggregation in `calculateCategoryData()`
-- Transaction sorting in `sortTransactions()`
+**Current State**: Frontend (`src/pages/Dashboard.jsx`) YA ESTÁ refactorizado con:
+- ✅ Fallback inteligente a endpoints viejos cuando nuevos fallan
+- ✅ Preparado para usar datos pre-calculados del backend
+- ✅ Elimina toda lógica de negocio client-side cuando nuevos endpoints funcionen
 
-**Impact**: Poor scalability, high client-side load, architectural violation.
+**Impact**: Frontend funciona pero usa cálculos client-side por endpoints faltantes.
 
-**Goal**: Move business logic to backend, create efficient API endpoints.
+**Goal**: Implementar endpoints faltantes para que frontend use datos pre-calculados del backend.
 
 ---
 
@@ -32,13 +56,28 @@ const dashboard = await dashboardAPI.get({year, month}); // Gets processed data
 
 ---
 
+## 🎯 IMPLEMENTACIÓN REQUERIDA - DATOS DE PRUEBA REALES
+
+**URGENTE**: El frontend está haciendo requests a estos endpoints que NO existen. Implementar usando los datos que ya funcionan en endpoints existentes.
+
+### 🧪 **DATOS DE PRUEBA DISPONIBLES:**
+```bash
+# Datos existentes que SÍ funcionan:
+curl -H "x-caller-id: user123" http://localhost:8080/api/v1/categories
+curl -H "x-caller-id: user123" http://localhost:8080/api/v1/expenses  
+curl -H "x-caller-id: user123" http://localhost:8080/api/v1/incomes
+```
+
+---
+
 ## API ENDPOINTS TO IMPLEMENT
 
-### 1. Dashboard Overview
+### 1. Dashboard Overview ⚡ **CRÍTICO**
 ```http
 GET /api/v1/dashboard
-Query Parameters: ?year=2025&month=04
+Query Parameters: ?year=2025&month=06  
 Headers: x-caller-id: user123
+Status: ❌ 404 Not Found (IMPLEMENTAR YA)
 ```
 
 **Response Schema:**
@@ -69,10 +108,12 @@ Headers: x-caller-id: user123
 }
 ```
 
-### 2. Expenses with Calculations
+### 2. Expenses with Calculations ⚡ **CRÍTICO**
 ```http
 GET /api/v1/expenses/summary
-Query Parameters: ?year=2025&month=04&sort_by=date&order=desc&limit=50
+Query Parameters: ?year=2025&month=06&sort=date&order=desc&limit=50
+Headers: x-caller-id: user123
+Status: ❌ 404 Not Found (IMPLEMENTAR YA)
 ```
 
 **Response Schema:**
@@ -110,10 +151,12 @@ Query Parameters: ?year=2025&month=04&sort_by=date&order=desc&limit=50
 }
 ```
 
-### 3. Category Analytics
+### 3. Category Analytics ⚡ **CRÍTICO**
 ```http
 GET /api/v1/categories/analytics
-Query Parameters: ?year=2025&month=04
+Query Parameters: ?year=2025&month=06
+Headers: x-caller-id: user123
+Status: ❌ 404 Not Found (IMPLEMENTAR YA)
 ```
 
 **Response Schema:**
@@ -140,10 +183,12 @@ Query Parameters: ?year=2025&month=04
 }
 ```
 
-### 4. Income Summary
+### 4. Income Summary ⚡ **CRÍTICO**
 ```http
 GET /api/v1/incomes/summary
-Query Parameters: ?year=2025&month=04&sort_by=date&order=desc
+Query Parameters: ?year=2025&month=06&sort=date&order=desc
+Headers: x-caller-id: user123
+Status: ❌ 404 Not Found (IMPLEMENTAR YA)
 ```
 
 ---
@@ -346,6 +391,31 @@ curl -H "x-caller-id: user123" "/api/v1/expenses/summary?sort_by=amount&limit=5"
 ```
 
 **This response will help the frontend team plan the integration timeline and coordinate the refactoring efforts.**
+
+---
+
+## 🚨 ESTADO ACTUAL - ACCIÓN INMEDIATA REQUERIDA
+
+### ✅ **LO QUE YA FUNCIONA:**
+- Frontend completamente refactorizado y listo
+- Fallback automático a endpoints viejos  
+- UI responsiva y mejorada
+- Conexión exitosa a endpoints existentes
+
+### ❌ **LO QUE FALTA (IMPLEMENTAR URGENTE):**
+Los 4 endpoints nuevos que el frontend está esperando:
+
+1. **`/api/v1/dashboard`** - Overview con métricas pre-calculadas
+2. **`/api/v1/expenses/summary`** - Gastos con porcentajes 
+3. **`/api/v1/categories/analytics`** - Análisis por categorías
+4. **`/api/v1/incomes/summary`** - Resumen de ingresos
+
+### 🎯 **IMPLEMENTACIÓN ESTRATÉGICA:**
+**Usa los datos existentes** de `/api/v1/expenses`, `/api/v1/incomes`, `/api/v1/categories` y agrega los cálculos requeridos.
+
+**Headers requeridos**: `x-caller-id: user123`
+
+**Cuando implementes estos endpoints**, el frontend automáticamente dejará de usar el fallback y comenzará a usar los datos pre-calculados del backend.
 
 ---
 

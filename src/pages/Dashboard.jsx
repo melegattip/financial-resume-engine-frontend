@@ -24,7 +24,7 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { expensesAPI, incomesAPI, categoriesAPI, formatCurrency, formatPercentage } from '../services/api';
+import { expensesAPI, incomesAPI, categoriesAPI, dashboardAPI, analyticsAPI, formatCurrency, formatPercentage } from '../services/api';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -45,6 +45,13 @@ const Dashboard = () => {
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  // Recargar datos cuando cambien los filtros
+  useEffect(() => {
+    if (data.expenses.length > 0) { // Solo recargar si ya tenemos datos iniciales
+      loadDashboardData();
+    }
+  }, [selectedMonth, selectedYear]);
 
      // Efecto para limpiar el mes seleccionado cuando cambie el año si el mes no está disponible
   useEffect(() => {
@@ -148,32 +155,96 @@ const Dashboard = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [expensesResponse, incomesResponse, categoriesResponse] = await Promise.all([
-        expensesAPI.list(),
-        incomesAPI.list(),
-        categoriesAPI.list(),
-      ]);
-
-      // Asegurar que siempre sean arrays
-      const expensesData = expensesResponse.data?.expenses || expensesResponse.data || [];
-      const incomesData = incomesResponse.data?.incomes || incomesResponse.data || [];
-      const categoriesData = categoriesResponse.data?.data || categoriesResponse.data || [];
       
-      const expenses = Array.isArray(expensesData) ? expensesData : [];
-      const incomes = Array.isArray(incomesData) ? incomesData : [];
-      const categories = Array.isArray(categoriesData) ? categoriesData : [];
+      // Preparar parámetros de filtro para los nuevos endpoints
+      const filterParams = {};
+      if (selectedYear) filterParams.year = selectedYear;
+      if (selectedMonth) {
+        const [year, month] = selectedMonth.split('-');
+        filterParams.year = year;
+        filterParams.month = month;
+      }
 
-      const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-      const totalIncome = incomes.reduce((sum, income) => sum + income.amount, 0);
+      let data = {};
 
-      setData({
-        totalIncome,
-        totalExpenses,
-        balance: totalIncome - totalExpenses,
-        expenses,
-        incomes,
-        categories,
-      });
+      try {
+        // Intentar usar los nuevos endpoints del backend
+        const [dashboardResponse, expensesResponse, categoriesResponse, oldCategoriesResponse] = await Promise.all([
+          dashboardAPI.overview(filterParams),
+          analyticsAPI.expenses({ ...filterParams, sort: 'date', order: 'desc', limit: 50 }),
+          analyticsAPI.categories(filterParams),
+          categoriesAPI.list(), // Mantener para dropdown de filtros
+        ]);
+
+        // Extraer datos de las respuestas del backend
+        const dashboard = dashboardResponse.data || {};
+        const expensesData = expensesResponse.data || {};
+        const categoriesData = categoriesResponse.data || {};
+        const categoriesForDropdown = oldCategoriesResponse.data?.data || oldCategoriesResponse.data || [];
+
+        // Usar datos pre-calculados del backend
+        data = {
+          // Métricas del dashboard (pre-calculadas por backend)
+          totalIncome: dashboard.Metrics?.TotalIncome || 0,
+          totalExpenses: dashboard.Metrics?.TotalExpenses || 0,
+          balance: dashboard.Metrics?.Balance || 0,
+          
+          // Transacciones con porcentajes calculados por backend
+          expenses: expensesData.Expenses || [],
+          incomes: [], // Cargaremos después si necesario
+          
+          // Categorías para dropdown de filtros
+          categories: Array.isArray(categoriesForDropdown) ? categoriesForDropdown : [],
+          
+          // Datos adicionales del backend
+          dashboardMetrics: dashboard.Metrics || {},
+          expensesSummary: expensesData.Summary || {},
+          categoriesAnalytics: categoriesData.Categories || [],
+        };
+
+        console.log('✅ Usando nuevos endpoints del backend');
+      } catch (newEndpointsError) {
+        console.warn('⚠️ Nuevos endpoints no disponibles, usando endpoints legacy:', newEndpointsError.message);
+        
+        // Fallback a endpoints viejos con cálculos client-side
+        const [expensesResponse, incomesResponse, categoriesResponse] = await Promise.all([
+          expensesAPI.list(),
+          incomesAPI.list(),
+          categoriesAPI.list(),
+        ]);
+
+        // Asegurar que siempre sean arrays
+        const expensesData = expensesResponse.data?.expenses || expensesResponse.data || [];
+        const incomesData = incomesResponse.data?.incomes || incomesResponse.data || [];
+        const categoriesData = categoriesResponse.data?.data || categoriesResponse.data || [];
+        
+        const expenses = Array.isArray(expensesData) ? expensesData : [];
+        const incomes = Array.isArray(incomesData) ? incomesData : [];
+        const categories = Array.isArray(categoriesData) ? categoriesData : [];
+
+        // Filtrar datos client-side si hay filtros activos
+        const filteredExpenses = filterDataByMonthAndYear(expenses, selectedMonth, selectedYear);
+        const filteredIncomes = filterDataByMonthAndYear(incomes, selectedMonth, selectedYear);
+
+        const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+        const totalIncome = filteredIncomes.reduce((sum, income) => sum + income.amount, 0);
+
+        data = {
+          totalIncome,
+          totalExpenses,
+          balance: totalIncome - totalExpenses,
+          expenses: filteredExpenses,
+          incomes: filteredIncomes,
+          categories,
+          dashboardMetrics: {},
+          expensesSummary: {},
+          categoriesAnalytics: [],
+        };
+
+        console.log('✅ Usando endpoints legacy con cálculos client-side');
+      }
+
+      setData(data);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       toast.error('Error al cargar los datos del dashboard');
@@ -184,6 +255,9 @@ const Dashboard = () => {
         expenses: [],
         incomes: [],
         categories: [],
+        dashboardMetrics: {},
+        expensesSummary: {},
+        categoriesAnalytics: [],
       });
     } finally {
       setLoading(false);
@@ -195,8 +269,14 @@ const Dashboard = () => {
     return formatCurrency(amount);
   };
 
-  // Función para filtrar datos por mes y año seleccionados
+  const formatPercentage = (percentage) => {
+    return `${percentage.toFixed(1)}%`;
+  };
+
+  // Función para filtrar datos client-side (fallback cuando nuevos endpoints no disponibles)
   const filterDataByMonthAndYear = (dataArray, monthFilter, yearFilter) => {
+    if (!hasActiveFilters) return dataArray;
+    
     return dataArray.filter(item => {
       const itemDate = new Date(item.created_at);
       
@@ -214,13 +294,6 @@ const Dashboard = () => {
       return true;
     });
   };
-
-  // Datos filtrados por mes y año (calcular después de cargar datos)
-  const filteredExpenses = filterDataByMonthAndYear(data.expenses, selectedMonth, selectedYear);
-  const filteredIncomes = filterDataByMonthAndYear(data.incomes, selectedMonth, selectedYear);
-  const monthlyTotalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const monthlyTotalIncome = filteredIncomes.reduce((sum, income) => sum + income.amount, 0);
-  const monthlyBalance = monthlyTotalIncome - monthlyTotalExpenses;
   
   // Variable para saber si hay algún filtro activo
   const hasActiveFilters = selectedMonth || selectedYear;
@@ -287,88 +360,40 @@ const Dashboard = () => {
     return colors[colorIndex];
   };
 
-  // Función para calcular datos reales del gráfico de torta por categorías
+  // Usar datos de categorías pre-calculados del backend
   const calculateCategoryData = () => {
-    // Usar datos filtrados si hay filtros activos, sino usar todos los datos
-    const expensesToUse = hasActiveFilters ? filteredExpenses : data.expenses;
-    const totalExpensesToUse = hasActiveFilters ? monthlyTotalExpenses : data.totalExpenses;
-    
-    if (!expensesToUse.length || !data.categories.length) {
+    if (!data.categoriesAnalytics || !data.categoriesAnalytics.length) {
       return [];
     }
 
-    // Agrupar gastos por categoría
-    const categoryTotals = {};
-    expensesToUse.forEach(expense => {
-      const categoryId = expense.category_id || 'sin_categoria';
-      if (!categoryTotals[categoryId]) {
-        categoryTotals[categoryId] = 0;
-      }
-      categoryTotals[categoryId] += expense.amount;
-    });
-
-    // Convertir a array con nombres y porcentajes
+    // Los datos ya vienen del backend con cálculos completos
     const colors = ['#009ee3', '#00a650', '#ff6900', '#e53e3e', '#6b7280', '#8b5cf6', '#f59e0b'];
-    let colorIndex = 0;
-
-    return Object.entries(categoryTotals).map(([categoryId, amount]) => {
-      const category = data.categories.find(c => c.id === categoryId);
-      const name = category ? category.name : 'Sin categoría';
-      const percentage = totalExpensesToUse > 0 ? Math.round((amount / totalExpensesToUse) * 100) : 0;
-      
-      return {
-        name,
-        value: percentage,
-        amount,
-        color: colors[colorIndex++ % colors.length]
-      };
-    }).filter(item => item.value > 0); // Solo mostrar categorías con gastos
+    
+    return data.categoriesAnalytics.map((category, index) => ({
+      name: category.Name,
+      value: category.Percentage,
+      amount: category.TotalAmount,
+      color: colors[index % colors.length]
+    })).filter(item => item.value > 0); // Solo mostrar categorías con gastos
   };
 
-  // Función para calcular datos del gráfico de área
+  // Datos simplificados del gráfico usando métricas del backend
   const calculateChartData = () => {
-    if (hasActiveFilters) {
-      // Si hay filtros activos, mostrar datos filtrados
-      let periodLabel = '';
-      if (selectedMonth && selectedYear) {
-        periodLabel = formatMonthLabel(selectedMonth);
-      } else if (selectedMonth) {
-        periodLabel = new Date(selectedMonth + '-01').toLocaleDateString('es-AR', { month: 'short' });
-      } else if (selectedYear) {
-        periodLabel = selectedYear;
-      }
-      
-      return [{
-        name: periodLabel,
-        ingresos: monthlyTotalIncome,
-        gastos: monthlyTotalExpenses
-      }];
-    } else {
-      // Lógica original para mostrar tendencia general
-      const currentMonth = new Date().toLocaleDateString('es-AR', { month: 'short' });
-      const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-      const currentMonthIndex = new Date().getMonth();
-      
-      const chartData = [];
-      
-      // Agregar 2-3 meses anteriores en 0
-      for (let i = Math.max(0, currentMonthIndex - 2); i < currentMonthIndex; i++) {
-        chartData.push({
-          name: months[i],
-          ingresos: 0,
-          gastos: 0
-        });
-      }
-      
-      // Agregar el mes actual con datos reales
-      chartData.push({
-        name: currentMonth,
-        ingresos: data.totalIncome,
-        gastos: data.totalExpenses
-      });
-      
-      return chartData;
+    let periodLabel = 'Total';
+    
+    if (selectedMonth && selectedYear) {
+      periodLabel = formatMonthLabel(selectedMonth);
+    } else if (selectedMonth) {
+      periodLabel = new Date(selectedMonth + '-01').toLocaleDateString('es-AR', { month: 'short' });
+    } else if (selectedYear) {
+      periodLabel = selectedYear;
     }
+    
+    return [{
+      name: periodLabel,
+      ingresos: data.totalIncome,
+      gastos: data.totalExpenses
+    }];
   };
 
   // Datos para los gráficos
@@ -467,111 +492,111 @@ const Dashboard = () => {
 
 
       {/* Métricas principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {/* Balance total */}
         <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-mp-gray-600">
                 Balance Total
               </p>
-              <p className={`text-2xl font-bold ${(hasActiveFilters ? monthlyBalance : data.balance) >= 0 ? 'text-mp-secondary' : 'text-mp-error'}`}>
-                {formatAmount(hasActiveFilters ? monthlyBalance : data.balance)}
+              <p className={`text-xl lg:text-2xl font-bold ${data.balance >= 0 ? 'text-mp-secondary' : 'text-mp-error'} break-words`}>
+                {formatAmount(data.balance)}
               </p>
             </div>
-            <div className={`p-3 rounded-mp ${(hasActiveFilters ? monthlyBalance : data.balance) >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-              <DollarSign className={`w-6 h-6 ${(hasActiveFilters ? monthlyBalance : data.balance) >= 0 ? 'text-mp-secondary' : 'text-mp-error'}`} />
+            <div className={`flex-shrink-0 p-2 lg:p-3 rounded-mp ${data.balance >= 0 ? 'bg-green-100' : 'bg-red-100'} ml-2`}>
+              <DollarSign className={`w-5 h-5 lg:w-6 lg:h-6 ${data.balance >= 0 ? 'text-mp-secondary' : 'text-mp-error'}`} />
             </div>
           </div>
-          <div className="mt-4 flex items-center">
-            {(hasActiveFilters ? monthlyBalance : data.balance) >= 0 ? (
-              <ArrowUpRight className="w-4 h-4 text-mp-secondary mr-1" />
+          <div className="mt-3 flex items-center">
+            {data.balance >= 0 ? (
+              <ArrowUpRight className="w-4 h-4 text-mp-secondary mr-1 flex-shrink-0" />
             ) : (
-              <ArrowDownRight className="w-4 h-4 text-mp-error mr-1" />
+              <ArrowDownRight className="w-4 h-4 text-mp-error mr-1 flex-shrink-0" />
             )}
-            <span className={`text-sm ${(hasActiveFilters ? monthlyBalance : data.balance) >= 0 ? 'text-mp-secondary' : 'text-mp-error'}`}>
-              {(hasActiveFilters ? monthlyBalance : data.balance) >= 0 ? 'Positivo' : 'Negativo'}
+            <span className={`text-sm ${data.balance >= 0 ? 'text-mp-secondary' : 'text-mp-error'}`}>
+              {data.balance >= 0 ? 'Positivo' : 'Negativo'}
             </span>
           </div>
         </div>
 
         {/* Total ingresos */}
         <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-mp-gray-600">
                 Total Ingresos
               </p>
-              <p className="text-2xl font-bold text-mp-secondary">
-                {formatAmount(hasActiveFilters ? monthlyTotalIncome : data.totalIncome)}
+              <p className="text-xl lg:text-2xl font-bold text-mp-secondary break-words">
+                {formatAmount(data.totalIncome)}
               </p>
             </div>
-            <div className="p-3 rounded-mp bg-green-100">
-              <TrendingUp className="w-6 h-6 text-mp-secondary" />
+            <div className="flex-shrink-0 p-2 lg:p-3 rounded-mp bg-green-100 ml-2">
+              <TrendingUp className="w-5 h-5 lg:w-6 lg:h-6 text-mp-secondary" />
             </div>
           </div>
-          <div className="mt-4 flex items-center">
-            <TrendingUp className="w-4 h-4 text-mp-secondary mr-1" />
+          <div className="mt-3 flex items-center">
+            <TrendingUp className="w-4 h-4 text-mp-secondary mr-1 flex-shrink-0" />
             <span className="text-sm text-mp-gray-500">
-              {(hasActiveFilters ? filteredIncomes : data.incomes).length} {(hasActiveFilters ? filteredIncomes : data.incomes).length === 1 ? 'ingreso' : 'ingresos'} registrados
+              {data.incomes.length} {data.incomes.length === 1 ? 'ingreso' : 'ingresos'} registrados
             </span>
           </div>
         </div>
 
         {/* Total gastos */}
         <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-mp-gray-600">
                 Total Gastos
               </p>
-              <p className="text-2xl font-bold text-mp-accent">
-                {formatAmount(hasActiveFilters ? monthlyTotalExpenses : data.totalExpenses)}
+              <p className="text-xl lg:text-2xl font-bold text-mp-accent break-words">
+                {formatAmount(data.totalExpenses)}
               </p>
             </div>
-            <div className="p-3 rounded-mp bg-orange-100">
-              <TrendingDown className="w-6 h-6 text-mp-accent" />
+            <div className="flex-shrink-0 p-2 lg:p-3 rounded-mp bg-orange-100 ml-2">
+              <TrendingDown className="w-5 h-5 lg:w-6 lg:h-6 text-mp-accent" />
             </div>
           </div>
-          <div className="mt-4 flex items-center">
-            <TrendingDown className="w-4 h-4 text-mp-accent mr-1" />
+          <div className="mt-3 flex items-center">
+            <TrendingDown className="w-4 h-4 text-mp-accent mr-1 flex-shrink-0" />
             <span className="text-sm text-mp-gray-500">
-              {(hasActiveFilters ? filteredExpenses : data.expenses).length} {(hasActiveFilters ? filteredExpenses : data.expenses).length === 1 ? 'gasto' : 'gastos'} registrados
+              {data.expenses.length} {data.expenses.length === 1 ? 'gasto' : 'gastos'} registrados
             </span>
           </div>
         </div>
 
         {/* Gastos pendientes */}
         <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-mp-gray-600">
                 Gastos Pendientes
               </p>
-              <p className="text-2xl font-bold text-mp-error">
-                {(hasActiveFilters ? filteredExpenses : data.expenses).filter(e => !e.paid).length}
+              <p className="text-xl lg:text-2xl font-bold text-mp-error">
+                {data.expenses.filter(e => !e.paid).length}
               </p>
             </div>
-            <div className="p-3 rounded-mp bg-red-100">
-              <Calendar className="w-6 h-6 text-mp-error" />
+            <div className="flex-shrink-0 p-2 lg:p-3 rounded-mp bg-red-100 ml-2">
+              <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-mp-error" />
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <span className="text-sm text-mp-gray-500">
-              {formatAmount((hasActiveFilters ? filteredExpenses : data.expenses).filter(e => !e.paid).reduce((sum, e) => sum + e.amount, 0))} por pagar
+              {formatAmount(data.expenses.filter(e => !e.paid).reduce((sum, e) => sum + e.amount, 0))} por pagar
             </span>
           </div>
         </div>
       </div>
 
       {/* Transacciones por mes - Dos columnas */}
-      {hasActiveFilters && (filteredExpenses.length > 0 || filteredIncomes.length > 0) && (
+      {hasActiveFilters && (data.expenses.length > 0 || data.incomes.length > 0) && (
         <div className="card">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-mp-gray-900">
               💰 Transacciones de {getPeriodTitle()}
             </h3>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
               {/* Dropdown de ordenamiento */}
               <div className="flex items-center space-x-2">
                 <label className="text-sm font-medium text-mp-gray-600">Ordenar por:</label>
@@ -590,17 +615,17 @@ const Dashboard = () => {
               <div className="flex items-center space-x-4 text-sm">
                 <div className="flex items-center">
                   <div className="w-3 h-3 bg-mp-error rounded-full mr-2"></div>
-                  <span className="text-mp-gray-600">Gastos ({filteredExpenses.length})</span>
+                  <span className="text-mp-gray-600">Gastos ({data.expenses.length})</span>
                 </div>
                 <div className="flex items-center">
                   <div className="w-3 h-3 bg-mp-secondary rounded-full mr-2"></div>
-                  <span className="text-mp-gray-600">Ingresos ({filteredIncomes.length})</span>
+                  <span className="text-mp-gray-600">Ingresos ({data.incomes.length})</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 xl:gap-8">
             {/* Columna de Gastos */}
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-4">
@@ -609,18 +634,18 @@ const Dashboard = () => {
                   Gastos
                 </h4>
                 <span className="text-lg font-bold text-mp-error">
-                  {formatAmount(monthlyTotalExpenses)}
+                  {formatAmount(data.totalExpenses)}
                 </span>
               </div>
               
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {filteredExpenses.length === 0 ? (
+                {data.expenses.length === 0 ? (
                   <div className="text-center py-8 text-mp-gray-500">
                     <TrendingDown className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>No hay gastos en este mes</p>
+                    <p>No hay gastos en este período</p>
                   </div>
                 ) : (
-                  sortTransactions(filteredExpenses, sortBy)
+                  sortTransactions(data.expenses, sortBy)
                     .map((expense, index) => {
                       const category = data.categories.find(c => c.id === expense.category_id);
                       const color = getCategoryColor(expense.category_id);
@@ -693,18 +718,18 @@ const Dashboard = () => {
                   Ingresos
                 </h4>
                 <span className="text-lg font-bold text-mp-secondary">
-                  {formatAmount(monthlyTotalIncome)}
+                  {formatAmount(data.totalIncome)}
                 </span>
               </div>
               
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {filteredIncomes.length === 0 ? (
+                {data.incomes.length === 0 ? (
                   <div className="text-center py-8 text-mp-gray-500">
                     <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>No hay ingresos en este mes</p>
+                    <p>No hay ingresos en este período</p>
                   </div>
                 ) : (
-                  sortTransactions(filteredIncomes, sortBy)
+                  sortTransactions(data.incomes, sortBy)
                     .map((income, index) => {
                       const color = getCategoryColor(income.category_id);
                       const category = data.categories.find(c => c.id === income.category_id);
@@ -743,8 +768,8 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Resumen de totales del mes */}
-          {(filteredExpenses.length > 0 || filteredIncomes.length > 0) && (
+          {/* Resumen de totales del período */}
+          {(data.expenses.length > 0 || data.incomes.length > 0) && (
             <div className="mt-6 pt-4 border-t border-mp-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 {/* Total gastos */}
@@ -752,11 +777,11 @@ const Dashboard = () => {
                   <span className="font-medium text-mp-gray-600">Total gastos:</span>
                   <div className="text-right">
                     <div className="font-bold text-mp-error">
-                      {formatAmount(monthlyTotalExpenses)}
+                      {formatAmount(data.totalExpenses)}
                     </div>
-                    {monthlyTotalIncome > 0 && (
+                    {data.totalIncome > 0 && (
                       <div className="text-xs text-mp-gray-500">
-                        {((monthlyTotalExpenses / monthlyTotalIncome) * 100).toFixed(1)}% de ingresos
+                        {((data.totalExpenses / data.totalIncome) * 100).toFixed(1)}% de ingresos
                       </div>
                     )}
                   </div>
@@ -767,7 +792,7 @@ const Dashboard = () => {
                   <span className="font-medium text-mp-gray-600">Total ingresos:</span>
                   <div className="text-right">
                     <div className="font-bold text-mp-secondary">
-                      {formatAmount(monthlyTotalIncome)}
+                      {formatAmount(data.totalIncome)}
                     </div>
                     <div className="text-xs text-mp-gray-500">
                       100% base
@@ -776,11 +801,11 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              {/* Balance del mes */}
+              {/* Balance del período */}
               <div className="flex items-center justify-between pt-3 border-t border-mp-gray-200">
-                <span className="text-mp-gray-600">Balance del mes:</span>
-                <span className={`text-xl font-bold ${monthlyBalance >= 0 ? 'text-mp-secondary' : 'text-mp-error'}`}>
-                  {monthlyBalance >= 0 ? '+' : ''}{formatAmount(monthlyBalance)}
+                <span className="text-mp-gray-600">Balance del período:</span>
+                <span className={`text-xl font-bold ${data.balance >= 0 ? 'text-mp-secondary' : 'text-mp-error'}`}>
+                  {data.balance >= 0 ? '+' : ''}{formatAmount(data.balance)}
                 </span>
               </div>
             </div>
@@ -789,7 +814,7 @@ const Dashboard = () => {
       )}
 
       {/* Gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
         {/* Gráfico de tendencias */}
         <div className="card">
           <div className="flex items-center justify-between mb-6">
@@ -804,7 +829,7 @@ const Dashboard = () => {
                 }
               </p>
             </div>
-            <div className="flex items-center space-x-4 text-sm">
+            <div className="flex flex-wrap items-center gap-4 text-sm">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-mp-secondary rounded-full mr-2"></div>
                 <span className="text-mp-gray-600">Ingresos</span>
@@ -815,7 +840,7 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis dataKey="name" stroke="#6b7280" />
@@ -856,7 +881,7 @@ const Dashboard = () => {
           </h3>
           {pieData.length > 0 ? (
             <div className="flex items-center justify-center">
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250}>
                 <RechartsPieChart>
                   <Pie
                     data={pieData}
