@@ -26,6 +26,8 @@ const Expenses = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPaid, setFilterPaid] = useState('all');
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('');
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -37,6 +39,41 @@ const Expenses = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Funciones para filtros de fecha
+  const getAvailableYears = () => {
+    if (!expenses.length) return [];
+    const years = [...new Set(expenses.map(expense => 
+      new Date(expense.created_at).getFullYear()
+    ))];
+    return years.sort((a, b) => b - a);
+  };
+
+  const getAvailableMonths = () => {
+    if (!expenses.length) return [];
+    let expensesToCheck = expenses;
+    
+    // Si hay año seleccionado, filtrar por ese año
+    if (selectedYear) {
+      expensesToCheck = expenses.filter(expense => 
+        new Date(expense.created_at).getFullYear().toString() === selectedYear
+      );
+    }
+    
+    const months = [...new Set(expensesToCheck.map(expense => 
+      expense.created_at.slice(0, 7) // YYYY-MM
+    ))];
+    return months.sort().reverse();
+  };
+
+  const formatMonthOnly = (monthString) => {
+    const [year, month] = monthString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+    const formatted = date.toLocaleDateString('es-AR', { 
+      month: 'long' 
+    });
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  };
 
   const loadData = async () => {
     try {
@@ -179,7 +216,13 @@ const Expenses = () => {
         const matchesFilter = filterPaid === 'all' || 
           (filterPaid === 'paid' && expense.paid) ||
           (filterPaid === 'unpaid' && !expense.paid);
-        return matchesSearch && matchesFilter;
+        
+        // Filtros de fecha
+        const expenseDate = new Date(expense.created_at);
+        const matchesYear = !selectedYear || expenseDate.getFullYear().toString() === selectedYear;
+        const matchesMonth = !selectedMonth || expense.created_at.slice(0, 7) === selectedMonth;
+        
+        return matchesSearch && matchesFilter && matchesYear && matchesMonth;
       })
     : [];
 
@@ -241,29 +284,68 @@ const Expenses = () => {
       {/* Controles */}
       <div className="card">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-          <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-            {/* Búsqueda */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-mp-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar gastos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 input w-full sm:w-64"
-              />
+          <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4">
+            {/* Primera fila: Búsqueda y Estado */}
+            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+              {/* Búsqueda */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-mp-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar gastos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 input w-full sm:w-64"
+                />
+              </div>
+
+              {/* Filtro */}
+              <select
+                value={filterPaid}
+                onChange={(e) => setFilterPaid(e.target.value)}
+                className="input w-full sm:w-auto"
+              >
+                <option value="all">Todos los gastos</option>
+                <option value="paid">Pagados</option>
+                <option value="unpaid">Pendientes</option>
+              </select>
             </div>
 
-            {/* Filtro */}
-            <select
-              value={filterPaid}
-              onChange={(e) => setFilterPaid(e.target.value)}
-              className="input w-full sm:w-auto"
-            >
-              <option value="all">Todos los gastos</option>
-              <option value="paid">Pagados</option>
-              <option value="unpaid">Pendientes</option>
-            </select>
+            {/* Segunda fila: Filtros de fecha */}
+            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+              {/* Selector de Año */}
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-mp-gray-400" />
+                <select
+                  value={selectedYear}
+                  onChange={(e) => {
+                    setSelectedYear(e.target.value);
+                    setSelectedMonth(''); // Reset mes cuando cambia año
+                  }}
+                  className="pl-10 input w-full sm:w-32"
+                >
+                  <option value="">Todos</option>
+                  {getAvailableYears().map(year => (
+                    <option key={year} value={year.toString()}>{year}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Selector de Mes */}
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="input w-full sm:w-40"
+                disabled={!selectedYear}
+              >
+                <option value="">Todos los meses</option>
+                {getAvailableMonths().map(month => (
+                  <option key={month} value={month}>
+                    {formatMonthOnly(month)}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <button

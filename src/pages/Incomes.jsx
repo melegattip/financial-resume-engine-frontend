@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Search, TrendingUp, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, TrendingUp, Edit, Trash2, Calendar } from 'lucide-react';
 import { incomesAPI, categoriesAPI, formatCurrency } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -11,6 +11,8 @@ const Incomes = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingIncome, setEditingIncome] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('');
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -20,6 +22,41 @@ const Incomes = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Funciones para filtros de fecha
+  const getAvailableYears = () => {
+    if (!incomes.length) return [];
+    const years = [...new Set(incomes.map(income => 
+      new Date(income.created_at).getFullYear()
+    ))];
+    return years.sort((a, b) => b - a);
+  };
+
+  const getAvailableMonths = () => {
+    if (!incomes.length) return [];
+    let incomesToCheck = incomes;
+    
+    // Si hay año seleccionado, filtrar por ese año
+    if (selectedYear) {
+      incomesToCheck = incomes.filter(income => 
+        new Date(income.created_at).getFullYear().toString() === selectedYear
+      );
+    }
+    
+    const months = [...new Set(incomesToCheck.map(income => 
+      income.created_at.slice(0, 7) // YYYY-MM
+    ))];
+    return months.sort().reverse();
+  };
+
+  const formatMonthOnly = (monthString) => {
+    const [year, month] = monthString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+    const formatted = date.toLocaleDateString('es-AR', { 
+      month: 'long' 
+    });
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  };
 
   const loadData = async () => {
     try {
@@ -93,9 +130,16 @@ const Incomes = () => {
   };
 
   const filteredIncomes = Array.isArray(incomes) 
-    ? incomes.filter(income =>
-        income.description.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+    ? incomes.filter(income => {
+        const matchesSearch = income.description.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        // Filtros de fecha
+        const incomeDate = new Date(income.created_at);
+        const matchesYear = !selectedYear || incomeDate.getFullYear().toString() === selectedYear;
+        const matchesMonth = !selectedMonth || income.created_at.slice(0, 7) === selectedMonth;
+        
+        return matchesSearch && matchesYear && matchesMonth;
+      })
     : [];
 
   const totalIncomes = filteredIncomes.reduce((sum, income) => sum + income.amount, 0);
@@ -141,15 +185,54 @@ const Incomes = () => {
       {/* Controles */}
       <div className="card">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-mp-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar ingresos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 input w-full sm:w-64"
-            />
+          <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4">
+            {/* Primera fila: Búsqueda */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-mp-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar ingresos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 input w-full sm:w-64"
+              />
+            </div>
+
+            {/* Segunda fila: Filtros de fecha */}
+            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+              {/* Selector de Año */}
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-mp-gray-400" />
+                <select
+                  value={selectedYear}
+                  onChange={(e) => {
+                    setSelectedYear(e.target.value);
+                    setSelectedMonth(''); // Reset mes cuando cambia año
+                  }}
+                  className="pl-10 input w-full sm:w-32"
+                >
+                  <option value="">Todos</option>
+                  {getAvailableYears().map(year => (
+                    <option key={year} value={year.toString()}>{year}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Selector de Mes */}
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="input w-full sm:w-40"
+                disabled={!selectedYear}
+              >
+                <option value="">Todos los meses</option>
+                {getAvailableMonths().map(month => (
+                  <option key={month} value={month}>
+                    {formatMonthOnly(month)}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <button

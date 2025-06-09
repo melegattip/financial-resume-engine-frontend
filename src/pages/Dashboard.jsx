@@ -24,7 +24,7 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { expensesAPI, incomesAPI, categoriesAPI, dashboardAPI, analyticsAPI, formatCurrency, formatPercentage } from '../services/api';
+import { expensesAPI, incomesAPI, categoriesAPI, dashboardAPI, analyticsAPI, formatCurrency } from '../services/api';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -44,6 +44,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     loadDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Recargar datos cuando cambien los filtros
@@ -51,7 +52,8 @@ const Dashboard = () => {
     if (data.expenses.length > 0) { // Solo recargar si ya tenemos datos iniciales
       loadDashboardData();
     }
-  }, [selectedMonth, selectedYear]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMonth, selectedYear, data.expenses.length]);
 
      // Efecto para limpiar el mes seleccionado cuando cambie el año si el mes no está disponible
   useEffect(() => {
@@ -628,14 +630,50 @@ const Dashboard = () => {
           <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 xl:gap-8">
             {/* Columna de Gastos */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold text-mp-error flex items-center">
-                  <TrendingDown className="w-5 h-5 mr-2" />
-                  Gastos
-                </h4>
-                <span className="text-lg font-bold text-mp-error">
-                  {formatAmount(data.totalExpenses)}
-                </span>
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-mp-error flex items-center">
+                    <TrendingDown className="w-5 h-5 mr-2" />
+                    Gastos
+                  </h4>
+                  <span className="text-lg font-bold text-mp-error">
+                    {formatAmount(data.totalExpenses)}
+                  </span>
+                </div>
+                
+                {/* Filtros de gastos */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex-1">
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(e.target.value)}
+                      className="input w-full text-sm"
+                    >
+                      <option value="">Todos los años</option>
+                      {getAvailableYears().map(year => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <select
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      className="input w-full text-sm"
+                    >
+                      <option value="">
+                        {selectedYear ? `Todo ${selectedYear}` : 'Todos los meses'}
+                      </option>
+                      {getAvailableMonthsForSelect().map(month => (
+                        <option key={month} value={month}>
+                          {formatMonthOnly(month)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
               
               <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -712,14 +750,50 @@ const Dashboard = () => {
 
             {/* Columna de Ingresos */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold text-mp-secondary flex items-center">
-                  <TrendingUp className="w-5 h-5 mr-2" />
-                  Ingresos
-                </h4>
-                <span className="text-lg font-bold text-mp-secondary">
-                  {formatAmount(data.totalIncome)}
-                </span>
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-mp-secondary flex items-center">
+                    <TrendingUp className="w-5 h-5 mr-2" />
+                    Ingresos
+                  </h4>
+                  <span className="text-lg font-bold text-mp-secondary">
+                    {formatAmount(data.totalIncome)}
+                  </span>
+                </div>
+                
+                {/* Filtros de ingresos */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex-1">
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(e.target.value)}
+                      className="input w-full text-sm"
+                    >
+                      <option value="">Todos los años</option>
+                      {getAvailableYears().map(year => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <select
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      className="input w-full text-sm"
+                    >
+                      <option value="">
+                        {selectedYear ? `Todo ${selectedYear}` : 'Todos los meses'}
+                      </option>
+                      {getAvailableMonthsForSelect().map(month => (
+                        <option key={month} value={month}>
+                          {formatMonthOnly(month)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
               
               <div className="space-y-3 max-h-96 overflow-y-auto">
