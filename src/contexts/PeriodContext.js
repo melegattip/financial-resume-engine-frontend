@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
 // Crear el contexto
 const PeriodContext = createContext();
@@ -21,7 +21,7 @@ export const PeriodProvider = ({ children }) => {
   const [balancesHidden, setBalancesHidden] = useState(false);
 
   // Función para actualizar los datos disponibles y auto-seleccionar el último período
-  const updateAvailableData = (expenses = [], incomes = []) => {
+  const updateAvailableData = useCallback((expenses = [], incomes = []) => {
     const years = new Set();
     const months = new Set();
     
@@ -64,26 +64,26 @@ export const PeriodProvider = ({ children }) => {
       setSelectedMonth(latestMonth);
       setSelectedYear(latestYear);
     }
-  };
+  }, [selectedMonth]);
 
   // Función para obtener meses disponibles para el año seleccionado
-  const getMonthsForSelectedYear = () => {
+  const getMonthsForSelectedYear = useCallback(() => {
     if (!selectedYear) return availableMonths;
     
     return availableMonths.filter(month => {
       const [year] = month.split('-');
       return year === selectedYear;
     });
-  };
+  }, [selectedYear, availableMonths]);
 
   // Función para limpiar filtros
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setSelectedYear('');
     setSelectedMonth('');
-  };
+  }, []);
 
   // Función para obtener parámetros de filtro para las APIs
-  const getFilterParams = () => {
+  const getFilterParams = useCallback(() => {
     const params = {};
     
     if (selectedYear) params.year = selectedYear;
@@ -94,10 +94,10 @@ export const PeriodProvider = ({ children }) => {
     }
     
     return params;
-  };
+  }, [selectedYear, selectedMonth]);
 
   // Función para obtener el título del período seleccionado
-  const getPeriodTitle = () => {
+  const getPeriodTitle = useCallback(() => {
     if (selectedMonth) {
       const [year, month] = selectedMonth.split('-');
       const date = new Date(parseInt(year), parseInt(month) - 1, 1);
@@ -110,15 +110,15 @@ export const PeriodProvider = ({ children }) => {
       return `Año ${selectedYear}`;
     }
     return 'Todos los períodos';
-  };
+  }, [selectedMonth, selectedYear]);
 
   // Verificar si hay filtros activos
   const hasActiveFilters = selectedMonth || selectedYear;
 
   // Función para alternar visibilidad de saldos
-  const toggleBalancesVisibility = () => {
+  const toggleBalancesVisibility = useCallback(() => {
     setBalancesHidden(!balancesHidden);
-  };
+  }, [balancesHidden]);
 
   const value = {
     // Estado

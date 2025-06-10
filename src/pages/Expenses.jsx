@@ -3,16 +3,15 @@ import { createPortal } from 'react-dom';
 import { 
   Plus, 
   Search, 
-  Filter, 
   TrendingDown, 
   Calendar,
   Edit,
   Trash2,
   CheckCircle,
-  XCircle,
-  MoreVertical
+  XCircle
 } from 'lucide-react';
 import { expensesAPI, categoriesAPI, formatCurrency, formatPercentage } from '../services/api';
+import { mockExpenses, mockCategories, simulateNetworkDelay, createMockResponse } from '../services/mockData';
 import { usePeriod } from '../contexts/PeriodContext';
 import toast from 'react-hot-toast';
 
@@ -39,23 +38,15 @@ const Expenses = () => {
   const {
     selectedYear,
     selectedMonth,
-    hasActiveFilters,
     balancesHidden,
-    updateAvailableData,
   } = usePeriod();
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   const formatAmount = (amount) => {
     if (balancesHidden) return '••••••';
     return formatCurrency(amount);
   };
 
-
-
-  const loadData = async () => {
+  const loadData = React.useCallback(async () => {
     try {
       setLoading(true);
       const [expensesResponse, categoriesResponse] = await Promise.all([
@@ -69,18 +60,25 @@ const Expenses = () => {
       
       setExpenses(Array.isArray(expensesData) ? expensesData : []);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-      
-      // Actualizar datos disponibles en el contexto global
-      updateAvailableData(Array.isArray(expensesData) ? expensesData : [], []);
     } catch (error) {
-      console.error('Error loading data:', error);
-      toast.error('Error al cargar los datos');
-      setExpenses([]);
-      setCategories([]);
+      console.warn('⚠️ API no disponible, usando datos mock:', error.message);
+      
+      // Fallback a datos mock
+      await simulateNetworkDelay(300);
+      setExpenses(mockExpenses);
+      setCategories(mockCategories);
+      
+      toast.success('🚧 Usando datos de ejemplo (backend no disponible)', {
+        duration: 2000,
+      });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

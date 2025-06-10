@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, X, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { usePeriod } from '../../contexts/PeriodContext';
 
 const PeriodFilter = () => {
@@ -7,13 +7,9 @@ const PeriodFilter = () => {
     selectedYear,
     selectedMonth,
     availableYears,
-    availableMonths,
-    hasActiveFilters,
     balancesHidden,
     setSelectedYear,
     setSelectedMonth,
-    clearFilters,
-    getPeriodTitle,
     getMonthsForSelectedYear,
     toggleBalancesVisibility,
   } = usePeriod();

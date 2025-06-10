@@ -23,6 +23,7 @@ import {
   Cell
 } from 'recharts';
 import { expensesAPI, incomesAPI, categoriesAPI, dashboardAPI, analyticsAPI, formatCurrency, formatDate, formatPercentage as formatPercentageUtil } from '../services/api';
+import { mockDashboardData, simulateNetworkDelay, createMockResponse } from '../services/mockData';
 import { usePeriod } from '../contexts/PeriodContext';
 import toast from 'react-hot-toast';
 
@@ -183,18 +184,15 @@ const Dashboard = () => {
       // Actualizar datos disponibles en el contexto global
       updateAvailableData(data.expenses, data.incomes);
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
-      toast.error('Error al cargar los datos del dashboard');
-      setData({
-        totalIncome: 0,
-        totalExpenses: 0,
-        balance: 0,
-        expenses: [],
-        incomes: [],
-        categories: [],
-        dashboardMetrics: {},
-        expensesSummary: {},
-        categoriesAnalytics: [],
+      console.warn('⚠️ Todos los endpoints fallaron, usando datos mock:', error.message);
+      
+      // Último fallback: usar datos mock para desarrollo
+      await simulateNetworkDelay(300);
+      setData(mockDashboardData);
+      updateAvailableData(mockDashboardData.expenses, mockDashboardData.incomes);
+      
+      toast.success('🚧 Usando datos de ejemplo (backend no disponible)', {
+        duration: 3000,
       });
     } finally {
       setLoading(false);
@@ -253,16 +251,7 @@ const Dashboard = () => {
     return capitalized;
   };
 
-  // Función para formatear solo el mes (sin año) para el dropdown
-  const formatMonthOnly = (monthString) => {
-    const [year, month] = monthString.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-    const formatted = date.toLocaleDateString('es-AR', { 
-      month: 'long' 
-    });
-    // Capitalizar la primera letra del mes
-    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
-  };
+
 
   // Función para obtener colores por categoría
   const getCategoryColor = (categoryId) => {

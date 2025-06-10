@@ -4,7 +4,6 @@ import {
   Home,
   TrendingUp,
   TrendingDown,
-  PieChart,
   Settings,
   CreditCard,
   BarChart3,
