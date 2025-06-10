@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Search, TrendingUp, Edit, Trash2, Calendar } from 'lucide-react';
 import { incomesAPI, categoriesAPI, formatCurrency } from '../services/api';
+import { usePeriod } from '../contexts/PeriodContext';
 import toast from 'react-hot-toast';
 
 const Incomes = () => {
@@ -11,52 +12,31 @@ const Incomes = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingIncome, setEditingIncome] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedYear, setSelectedYear] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState('');
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
     category_id: '',
   });
 
+  // Usar el contexto global de período
+  const {
+    selectedYear,
+    selectedMonth,
+    hasActiveFilters,
+    balancesHidden,
+    updateAvailableData,
+  } = usePeriod();
+
   useEffect(() => {
     loadData();
   }, []);
 
-  // Funciones para filtros de fecha
-  const getAvailableYears = () => {
-    if (!incomes.length) return [];
-    const years = [...new Set(incomes.map(income => 
-      new Date(income.created_at).getFullYear()
-    ))];
-    return years.sort((a, b) => b - a);
+  const formatAmount = (amount) => {
+    if (balancesHidden) return '••••••';
+    return formatCurrency(amount);
   };
 
-  const getAvailableMonths = () => {
-    if (!incomes.length) return [];
-    let incomesToCheck = incomes;
-    
-    // Si hay año seleccionado, filtrar por ese año
-    if (selectedYear) {
-      incomesToCheck = incomes.filter(income => 
-        new Date(income.created_at).getFullYear().toString() === selectedYear
-      );
-    }
-    
-    const months = [...new Set(incomesToCheck.map(income => 
-      income.created_at.slice(0, 7) // YYYY-MM
-    ))];
-    return months.sort().reverse();
-  };
 
-  const formatMonthOnly = (monthString) => {
-    const [year, month] = monthString.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-    const formatted = date.toLocaleDateString('es-AR', { 
-      month: 'long' 
-    });
-    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
-  };
 
   const loadData = async () => {
     try {
@@ -72,6 +52,9 @@ const Incomes = () => {
       
       setIncomes(Array.isArray(incomesData) ? incomesData : []);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+      
+      // Actualizar datos disponibles en el contexto global
+      updateAvailableData([], Array.isArray(incomesData) ? incomesData : []);
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Error al cargar los datos');
@@ -161,7 +144,7 @@ const Incomes = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-mp-gray-600">Total Ingresos</p>
-              <p className="text-2xl font-bold text-mp-secondary">{formatCurrency(totalIncomes)}</p>
+              <p className="text-2xl font-bold text-mp-secondary">{formatAmount(totalIncomes)}</p>
             </div>
             <div className="p-3 rounded-mp bg-green-100">
               <TrendingUp className="w-6 h-6 text-mp-secondary" />
@@ -198,41 +181,7 @@ const Incomes = () => {
               />
             </div>
 
-            {/* Segunda fila: Filtros de fecha */}
-            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-              {/* Selector de Año */}
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-mp-gray-400" />
-                <select
-                  value={selectedYear}
-                  onChange={(e) => {
-                    setSelectedYear(e.target.value);
-                    setSelectedMonth(''); // Reset mes cuando cambia año
-                  }}
-                  className="pl-10 input w-full sm:w-32"
-                >
-                  <option value="">Todos</option>
-                  {getAvailableYears().map(year => (
-                    <option key={year} value={year.toString()}>{year}</option>
-                  ))}
-                </select>
-              </div>
 
-              {/* Selector de Mes */}
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="input w-full sm:w-40"
-                disabled={!selectedYear}
-              >
-                <option value="">Todos los meses</option>
-                {getAvailableMonths().map(month => (
-                  <option key={month} value={month}>
-                    {formatMonthOnly(month)}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
 
           <button
@@ -280,7 +229,7 @@ const Incomes = () => {
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
                       <p className="font-semibold text-mp-secondary text-lg">
-                        +{formatCurrency(income.amount)}
+                        +{formatAmount(income.amount)}
                       </p>
                     </div>
 
