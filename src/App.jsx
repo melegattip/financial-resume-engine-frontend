@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { PeriodProvider } from './contexts/PeriodContext';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
 import Dashboard from './pages/Dashboard';
@@ -27,71 +28,73 @@ function App() {
 
   return (
     <Router>
-      <div className="flex h-screen bg-mp-gray-50">
-        {/* Sidebar */}
-        <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block fixed lg:relative z-30 lg:z-auto`}>
-          <Sidebar />
-        </div>
+      <PeriodProvider>
+        <div className="flex h-screen bg-mp-gray-50">
+          {/* Sidebar */}
+          <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block fixed lg:relative z-30 lg:z-auto`}>
+            <Sidebar />
+          </div>
 
-        {/* Overlay para móvil */}
-        {sidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
+          {/* Overlay para móvil */}
+          {sidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
+          {/* Main content */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Routes>
+              <Route path="*" element={
+                <>
+                  <Header 
+                    {...getPageTitle(window.location.pathname)}
+                    onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+                  />
+                  <main className="flex-1 overflow-y-auto p-6">
+                    <Routes>
+                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/gastos" element={<Expenses />} />
+                      <Route path="/ingresos" element={<Incomes />} />
+                      <Route path="/categorias" element={<Categories />} />
+                      <Route path="/reportes" element={<Reports />} />
+                      <Route path="/configuracion" element={<Settings />} />
+                    </Routes>
+                  </main>
+                </>
+              } />
+            </Routes>
+          </div>
+
+          {/* Toast notifications */}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: 'white',
+                color: '#374151',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.15)',
+              },
+              success: {
+                iconTheme: {
+                  primary: '#00a650',
+                  secondary: 'white',
+                },
+              },
+              error: {
+                iconTheme: {
+                  primary: '#e53e3e',
+                  secondary: 'white',
+                },
+              },
+            }}
           />
-        )}
-
-        {/* Main content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Routes>
-            <Route path="*" element={
-              <>
-                <Header 
-                  {...getPageTitle(window.location.pathname)}
-                  onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-                />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/gastos" element={<Expenses />} />
-                    <Route path="/ingresos" element={<Incomes />} />
-                    <Route path="/categorias" element={<Categories />} />
-                    <Route path="/reportes" element={<Reports />} />
-                    <Route path="/configuracion" element={<Settings />} />
-                  </Routes>
-                </main>
-              </>
-            } />
-          </Routes>
         </div>
-
-        {/* Toast notifications */}
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: 'white',
-              color: '#374151',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.15)',
-            },
-            success: {
-              iconTheme: {
-                primary: '#00a650',
-                secondary: 'white',
-              },
-            },
-            error: {
-              iconTheme: {
-                primary: '#e53e3e',
-                secondary: 'white',
-              },
-            },
-          }}
-        />
-      </div>
+      </PeriodProvider>
     </Router>
   );
 }

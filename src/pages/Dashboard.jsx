@@ -24,7 +24,7 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { expensesAPI, incomesAPI, categoriesAPI, dashboardAPI, analyticsAPI, formatCurrency } from '../services/api';
+import { expensesAPI, incomesAPI, categoriesAPI, dashboardAPI, analyticsAPI, formatCurrency, formatDate, formatPercentage as formatPercentageUtil } from '../services/api';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -76,9 +76,13 @@ const Dashboard = () => {
       [...data.expenses, ...data.incomes].forEach(item => {
         if (item.created_at) {
           const date = new Date(item.created_at);
-          const month = date.toISOString().slice(0, 7);
-          console.log(`[useEffect] Procesando fecha: ${item.created_at} -> ${month} (${date.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })})`);
-          months.add(month);
+          
+          // Validar que la fecha sea válida
+          if (!isNaN(date.getTime())) {
+            const month = date.toISOString().slice(0, 7);
+            console.log(`[useEffect] Procesando fecha: ${item.created_at} -> ${month} (${date.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })})`);
+            months.add(month);
+          }
         }
       });
       
@@ -109,15 +113,19 @@ const Dashboard = () => {
     [...data.expenses, ...data.incomes].forEach(item => {
       if (item.created_at) {
         const date = new Date(item.created_at);
-        const itemYear = date.getFullYear().toString();
         
-        // Si hay un año seleccionado, solo incluir meses de ese año
-        if (selectedYear && itemYear !== selectedYear) {
-          return;
+        // Validar que la fecha sea válida
+        if (!isNaN(date.getTime())) {
+          const itemYear = date.getFullYear().toString();
+          
+          // Si hay un año seleccionado, solo incluir meses de ese año
+          if (selectedYear && itemYear !== selectedYear) {
+            return;
+          }
+          
+          const month = date.toISOString().slice(0, 7);
+          months.add(month);
         }
-        
-        const month = date.toISOString().slice(0, 7);
-        months.add(month);
       }
     });
     
@@ -141,8 +149,12 @@ const Dashboard = () => {
     [...data.expenses, ...data.incomes].forEach(item => {
       if (item.created_at) {
         const date = new Date(item.created_at);
-        const year = date.getFullYear().toString();
-        years.add(year);
+        
+        // Validar que la fecha sea válida
+        if (!isNaN(date.getTime())) {
+          const year = date.getFullYear().toString();
+          years.add(year);
+        }
       }
     });
     
@@ -171,9 +183,10 @@ const Dashboard = () => {
 
       try {
         // Intentar usar los nuevos endpoints del backend
-        const [dashboardResponse, expensesResponse, categoriesResponse, oldCategoriesResponse] = await Promise.all([
+        const [dashboardResponse, expensesResponse, incomesResponse, categoriesResponse, oldCategoriesResponse] = await Promise.all([
           dashboardAPI.overview(filterParams),
           analyticsAPI.expenses({ ...filterParams, sort: 'date', order: 'desc', limit: 50 }),
+          analyticsAPI.incomes({ ...filterParams, sort: 'date', order: 'desc', limit: 50 }),
           analyticsAPI.categories(filterParams),
           categoriesAPI.list(), // Mantener para dropdown de filtros
         ]);
@@ -181,8 +194,37 @@ const Dashboard = () => {
         // Extraer datos de las respuestas del backend
         const dashboard = dashboardResponse.data || {};
         const expensesData = expensesResponse.data || {};
+        const incomesData = incomesResponse.data || {};
         const categoriesData = categoriesResponse.data || {};
         const categoriesForDropdown = oldCategoriesResponse.data?.data || oldCategoriesResponse.data || [];
+
+
+
+        // Normalizar datos del backend (convertir PascalCase a camelCase)
+        const normalizedExpenses = (expensesData.Expenses || []).map(expense => ({
+          id: expense.ID || expense.id,
+          user_id: expense.UserID || expense.user_id,
+          amount: expense.Amount || expense.amount,
+          amount_paid: expense.AmountPaid || expense.amount_paid,
+          pending_amount: expense.PendingAmount || expense.pending_amount,
+          description: expense.Description || expense.description,
+          category_id: expense.CategoryID || expense.category_id,
+          paid: expense.Paid !== undefined ? expense.Paid : expense.paid,
+          due_date: expense.DueDate || expense.due_date,
+          percentage: expense.PercentageOfIncome || expense.percentage,
+          created_at: expense.CreatedAt || expense.created_at,
+          updated_at: expense.UpdatedAt || expense.updated_at
+        }));
+
+        const normalizedIncomes = (incomesData.Incomes || []).map(income => ({
+          id: income.ID || income.id,
+          user_id: income.UserID || income.user_id,
+          amount: income.Amount || income.amount,
+          description: income.Description || income.description,
+          category_id: income.CategoryID || income.category_id,
+          created_at: income.CreatedAt || income.created_at,
+          updated_at: income.UpdatedAt || income.updated_at
+        }));
 
         // Usar datos pre-calculados del backend
         data = {
@@ -191,9 +233,9 @@ const Dashboard = () => {
           totalExpenses: dashboard.Metrics?.TotalExpenses || 0,
           balance: dashboard.Metrics?.Balance || 0,
           
-          // Transacciones con porcentajes calculados por backend
-          expenses: expensesData.Expenses || [],
-          incomes: [], // Cargaremos después si necesario
+          // Transacciones normalizadas con porcentajes calculados por backend
+          expenses: normalizedExpenses,
+          incomes: normalizedIncomes,
           
           // Categorías para dropdown de filtros
           categories: Array.isArray(categoriesForDropdown) ? categoriesForDropdown : [],
@@ -272,7 +314,7 @@ const Dashboard = () => {
   };
 
   const formatPercentage = (percentage) => {
-    return `${percentage.toFixed(1)}%`;
+    return formatPercentageUtil(percentage);
   };
 
   // Función para filtrar datos client-side (fallback cuando nuevos endpoints no disponibles)
@@ -280,7 +322,13 @@ const Dashboard = () => {
     if (!hasActiveFilters) return dataArray;
     
     return dataArray.filter(item => {
+      // Validar que tenga fecha válida
+      if (!item.created_at) return false;
+      
       const itemDate = new Date(item.created_at);
+      
+      // Validar que la fecha sea válida
+      if (isNaN(itemDate.getTime())) return false;
       
       // Filtrar por año si está seleccionado
       if (yearFilter && itemDate.getFullYear().toString() !== yearFilter) {
@@ -408,9 +456,23 @@ const Dashboard = () => {
     
     switch (sortType) {
       case 'fecha':
-        return sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        return sorted.sort((a, b) => {
+          const dateA = new Date(a.created_at);
+          const dateB = new Date(b.created_at);
+          
+          // Manejar fechas inválidas - ponerlas al final
+          if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+          if (isNaN(dateA.getTime())) return 1;
+          if (isNaN(dateB.getTime())) return -1;
+          
+          return dateB - dateA;
+        });
       case 'monto':
-        return sorted.sort((a, b) => b.amount - a.amount);
+        return sorted.sort((a, b) => {
+          const amountA = Number(a.amount) || 0;
+          const amountB = Number(b.amount) || 0;
+          return amountB - amountA;
+        });
       case 'categoria':
         return sorted.sort((a, b) => {
           const categoryA = data.categories.find(c => c.id === a.category_id)?.name || 'Sin categoría';
@@ -1006,10 +1068,13 @@ const Dashboard = () => {
           <button className="btn-ghost">Ver todas</button>
         </div>
         <div className="space-y-4">
-          {[...data.expenses.slice(0, 3), ...data.incomes.slice(0, 2)]
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-            .slice(0, 5)
-            .map((transaction, index) => {
+          {(() => {
+            const allTransactions = [...data.expenses.slice(0, 3), ...data.incomes.slice(0, 2)];
+            const sortedTransactions = allTransactions
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+              .slice(0, 5);
+            
+            return sortedTransactions.map((transaction, index) => {
               const isExpense = transaction.hasOwnProperty('paid');
               const color = getCategoryColor(transaction.category_id);
               const category = data.categories.find(c => c.id === transaction.category_id);
@@ -1047,7 +1112,7 @@ const Dashboard = () => {
                         )}
                       </div>
                       <p className="text-sm text-mp-gray-500">
-                        {new Date(transaction.created_at).toLocaleDateString('es-AR')}
+                        {transaction.created_at ? formatDate(transaction.created_at) : 'Fecha no disponible'}
                       </p>
                     </div>
                   </div>
@@ -1063,7 +1128,8 @@ const Dashboard = () => {
                   </div>
                 </div>
               );
-            })}
+            });
+          })()}
         </div>
       </div>
     </div>

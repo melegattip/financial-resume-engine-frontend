@@ -96,22 +96,44 @@ export const analyticsAPI = {
 
 // Utilidades
 export const formatCurrency = (amount) => {
+  // Validar que amount sea un número válido
+  const numericAmount = Number(amount);
+  if (isNaN(numericAmount) || amount === null || amount === undefined) {
+    return '$0,00';
+  }
+  
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: 'ARS',
-  }).format(amount);
+  }).format(numericAmount);
 };
 
 export const formatDate = (date) => {
+  // Validar que date sea válida
+  if (!date || date === null || date === undefined) {
+    return 'Fecha no disponible';
+  }
+  
+  const dateObj = new Date(date);
+  if (isNaN(dateObj.getTime())) {
+    return 'Fecha inválida';
+  }
+  
   return new Intl.DateTimeFormat('es-AR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  }).format(new Date(date));
+  }).format(dateObj);
 };
 
 export const formatPercentage = (percentage) => {
-  return `${percentage.toFixed(1)}%`;
+  // Validar que percentage sea un número válido
+  const numericPercentage = Number(percentage);
+  if (isNaN(numericPercentage) || percentage === null || percentage === undefined) {
+    return '0.0%';
+  }
+  
+  return `${numericPercentage.toFixed(1)}%`;
 };
 
 export default api; 
