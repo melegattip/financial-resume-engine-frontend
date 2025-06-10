@@ -13,6 +13,7 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { expensesAPI, categoriesAPI, formatCurrency, formatPercentage } from '../services/api';
+import { usePeriod } from '../contexts/PeriodContext';
 import toast from 'react-hot-toast';
 
 const Expenses = () => {
@@ -26,8 +27,6 @@ const Expenses = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPaid, setFilterPaid] = useState('all');
   const [paymentAmount, setPaymentAmount] = useState('');
-  const [selectedYear, setSelectedYear] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState('');
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -36,44 +35,25 @@ const Expenses = () => {
     paid: false,
   });
 
+  // Usar el contexto global de período
+  const {
+    selectedYear,
+    selectedMonth,
+    hasActiveFilters,
+    balancesHidden,
+    updateAvailableData,
+  } = usePeriod();
+
   useEffect(() => {
     loadData();
   }, []);
 
-  // Funciones para filtros de fecha
-  const getAvailableYears = () => {
-    if (!expenses.length) return [];
-    const years = [...new Set(expenses.map(expense => 
-      new Date(expense.created_at).getFullYear()
-    ))];
-    return years.sort((a, b) => b - a);
+  const formatAmount = (amount) => {
+    if (balancesHidden) return '••••••';
+    return formatCurrency(amount);
   };
 
-  const getAvailableMonths = () => {
-    if (!expenses.length) return [];
-    let expensesToCheck = expenses;
-    
-    // Si hay año seleccionado, filtrar por ese año
-    if (selectedYear) {
-      expensesToCheck = expenses.filter(expense => 
-        new Date(expense.created_at).getFullYear().toString() === selectedYear
-      );
-    }
-    
-    const months = [...new Set(expensesToCheck.map(expense => 
-      expense.created_at.slice(0, 7) // YYYY-MM
-    ))];
-    return months.sort().reverse();
-  };
 
-  const formatMonthOnly = (monthString) => {
-    const [year, month] = monthString.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-    const formatted = date.toLocaleDateString('es-AR', { 
-      month: 'long' 
-    });
-    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
-  };
 
   const loadData = async () => {
     try {
@@ -89,6 +69,9 @@ const Expenses = () => {
       
       setExpenses(Array.isArray(expensesData) ? expensesData : []);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+      
+      // Actualizar datos disponibles en el contexto global
+      updateAvailableData(Array.isArray(expensesData) ? expensesData : [], []);
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Error al cargar los datos');
@@ -246,10 +229,10 @@ const Expenses = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-mp-gray-600">Total Gastos</p>
-              <p className="text-2xl font-bold text-mp-accent">{formatCurrency(totalExpenses)}</p>
+              <p className="text-2xl font-bold text-mp-gray-900">{formatAmount(totalExpenses)}</p>
             </div>
-            <div className="p-3 rounded-mp bg-orange-100">
-              <TrendingDown className="w-6 h-6 text-mp-accent" />
+            <div className="p-3 rounded-mp bg-gray-100">
+              <TrendingDown className="w-6 h-6 text-mp-gray-900" />
             </div>
           </div>
         </div>
@@ -258,10 +241,10 @@ const Expenses = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-mp-gray-600">Gastos Pendientes</p>
-              <p className="text-2xl font-bold text-mp-error">{unpaidExpenses.length}</p>
+              <p className="text-2xl font-bold text-mp-gray-900">{unpaidExpenses.length}</p>
             </div>
-            <div className="p-3 rounded-mp bg-red-100">
-              <Calendar className="w-6 h-6 text-mp-error" />
+            <div className="p-3 rounded-mp bg-gray-100">
+              <Calendar className="w-6 h-6 text-mp-gray-900" />
             </div>
           </div>
         </div>
@@ -270,12 +253,12 @@ const Expenses = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-mp-gray-600">Monto Pendiente</p>
-              <p className="text-2xl font-bold text-mp-error">
-                {formatCurrency(unpaidExpenses.reduce((sum, e) => sum + e.amount, 0))}
-              </p>
+                              <p className="text-2xl font-bold text-mp-gray-900">
+                  {formatAmount(unpaidExpenses.reduce((sum, e) => sum + e.amount, 0))}
+                </p>
             </div>
-            <div className="p-3 rounded-mp bg-red-100">
-              <XCircle className="w-6 h-6 text-mp-error" />
+            <div className="p-3 rounded-mp bg-gray-100">
+              <XCircle className="w-6 h-6 text-mp-gray-900" />
             </div>
           </div>
         </div>
@@ -311,41 +294,7 @@ const Expenses = () => {
               </select>
             </div>
 
-            {/* Segunda fila: Filtros de fecha */}
-            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-              {/* Selector de Año */}
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-mp-gray-400" />
-                <select
-                  value={selectedYear}
-                  onChange={(e) => {
-                    setSelectedYear(e.target.value);
-                    setSelectedMonth(''); // Reset mes cuando cambia año
-                  }}
-                  className="pl-10 input w-full sm:w-32"
-                >
-                  <option value="">Todos</option>
-                  {getAvailableYears().map(year => (
-                    <option key={year} value={year.toString()}>{year}</option>
-                  ))}
-                </select>
-              </div>
 
-              {/* Selector de Mes */}
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="input w-full sm:w-40"
-                disabled={!selectedYear}
-              >
-                <option value="">Todos los meses</option>
-                {getAvailableMonths().map(month => (
-                  <option key={month} value={month}>
-                    {formatMonthOnly(month)}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
 
           <button
@@ -412,20 +361,20 @@ const Expenses = () => {
                       {expense.amount_paid > 0 && expense.amount_paid < expense.amount ? (
                         // Pago parcial - mostrar total vs pendiente
                         <div>
-                          <p className="font-semibold text-mp-accent text-lg">
-                            {formatCurrency(expense.pending_amount || (expense.amount - (expense.amount_paid || 0)))}
+                          <p className="font-semibold text-mp-gray-900 text-lg">
+                            {formatAmount(expense.pending_amount || (expense.amount - (expense.amount_paid || 0)))}
                           </p>
                           <p className="text-sm text-mp-gray-500">
-                            de {formatCurrency(expense.amount)} total
+                            de {formatAmount(expense.amount)} total
                           </p>
                           <p className="text-xs text-mp-secondary">
-                            Pagado: {formatCurrency(expense.amount_paid || 0)}
+                            Pagado: {formatAmount(expense.amount_paid || 0)}
                           </p>
                         </div>
                       ) : (
                         // Sin pagos parciales - mostrar solo el monto
-                        <p className="font-semibold text-mp-accent text-lg">
-                          {formatCurrency(expense.amount)}
+                        <p className="font-semibold text-mp-gray-900 text-lg">
+                          {formatAmount(expense.amount)}
                         </p>
                       )}
                       {expense.percentage && (

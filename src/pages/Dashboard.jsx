@@ -7,8 +7,6 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Calendar,
-  Eye,
-  EyeOff,
   CheckCircle,
   XCircle
 } from 'lucide-react';
@@ -25,13 +23,11 @@ import {
   Cell
 } from 'recharts';
 import { expensesAPI, incomesAPI, categoriesAPI, dashboardAPI, analyticsAPI, formatCurrency, formatDate, formatPercentage as formatPercentageUtil } from '../services/api';
+import { usePeriod } from '../contexts/PeriodContext';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
-  const [showAmounts, setShowAmounts] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState(''); // Inicializar vacío para auto-seleccionar
-  const [selectedYear, setSelectedYear] = useState(''); // Filtro de año
   const [sortBy, setSortBy] = useState('fecha'); // nuevo estado para ordenamiento
   const [data, setData] = useState({
     totalIncome: 0,
@@ -42,142 +38,36 @@ const Dashboard = () => {
     categories: [],
   });
 
+  // Usar el contexto global de período
+  const {
+    selectedYear,
+    selectedMonth,
+    hasActiveFilters,
+    balancesHidden,
+    getFilterParams,
+    getPeriodTitle,
+    updateAvailableData,
+  } = usePeriod();
+
   useEffect(() => {
     loadDashboardData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Recargar datos cuando cambien los filtros
+  // Recargar datos cuando cambien los filtros del contexto global
   useEffect(() => {
-    if (data.expenses.length > 0) { // Solo recargar si ya tenemos datos iniciales
-      loadDashboardData();
-    }
+    loadDashboardData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMonth, selectedYear, data.expenses.length]);
+  }, [selectedMonth, selectedYear]);
 
-     // Efecto para limpiar el mes seleccionado cuando cambie el año si el mes no está disponible
-  useEffect(() => {
-    if (selectedYear && selectedMonth) {
-      const availableMonths = getAvailableMonthsForSelect();
-      if (!availableMonths.includes(selectedMonth)) {
-        setSelectedMonth(''); // Limpiar mes si no está disponible en el año seleccionado
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedYear, data]); // Se ejecuta cuando cambia selectedYear o data
 
-  // Auto-seleccionar el primer mes con datos después de cargar
-  useEffect(() => {
-    // Generar opciones de meses basadas en los datos disponibles
-    const getAvailableMonths = () => {
-      const months = new Set();
-      
-      // Agregar meses de gastos e ingresos
-      [...data.expenses, ...data.incomes].forEach(item => {
-        if (item.created_at) {
-          const date = new Date(item.created_at);
-          
-          // Validar que la fecha sea válida
-          if (!isNaN(date.getTime())) {
-            const month = date.toISOString().slice(0, 7);
-            console.log(`[useEffect] Procesando fecha: ${item.created_at} -> ${month} (${date.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })})`);
-            months.add(month);
-          }
-        }
-      });
-      
-      // Siempre incluir el mes actual
-      const currentMonth = new Date().toISOString().slice(0, 7);
-      months.add(currentMonth);
-      
-      // Convertir a array y ordenar
-      return Array.from(months).sort().reverse();
-    };
-
-    if (!selectedMonth && (data.expenses.length > 0 || data.incomes.length > 0)) {
-      const availableMonths = getAvailableMonths();
-      console.log('Meses disponibles:', availableMonths); // Debug
-      console.log('Datos de ejemplo:', data.expenses[0]?.created_at, data.incomes[0]?.created_at); // Debug
-      console.log('Seleccionando mes:', availableMonths[0]); // Debug
-      if (availableMonths.length > 0) {
-        setSelectedMonth(availableMonths[0]); // Seleccionar el mes más reciente
-      }
-    }
-  }, [data, selectedMonth]);
-
-  // Función para generar opciones del selector filtradas por año
-  const getAvailableMonthsForSelect = () => {
-    const months = new Set();
-    
-    // Agregar meses de gastos e ingresos
-    [...data.expenses, ...data.incomes].forEach(item => {
-      if (item.created_at) {
-        const date = new Date(item.created_at);
-        
-        // Validar que la fecha sea válida
-        if (!isNaN(date.getTime())) {
-          const itemYear = date.getFullYear().toString();
-          
-          // Si hay un año seleccionado, solo incluir meses de ese año
-          if (selectedYear && itemYear !== selectedYear) {
-            return;
-          }
-          
-          const month = date.toISOString().slice(0, 7);
-          months.add(month);
-        }
-      }
-    });
-    
-    // Siempre incluir el mes actual si corresponde al año seleccionado o no hay año seleccionado
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear().toString();
-    if (!selectedYear || currentYear === selectedYear) {
-      const currentMonth = currentDate.toISOString().slice(0, 7);
-      months.add(currentMonth);
-    }
-    
-    // Convertir a array y ordenar
-    return Array.from(months).sort().reverse();
-  };
-
-  // Función para obtener años disponibles
-  const getAvailableYears = () => {
-    const years = new Set();
-    
-    // Agregar años de gastos e ingresos
-    [...data.expenses, ...data.incomes].forEach(item => {
-      if (item.created_at) {
-        const date = new Date(item.created_at);
-        
-        // Validar que la fecha sea válida
-        if (!isNaN(date.getTime())) {
-          const year = date.getFullYear().toString();
-          years.add(year);
-        }
-      }
-    });
-    
-    // Siempre incluir el año actual
-    const currentYear = new Date().getFullYear().toString();
-    years.add(currentYear);
-    
-    // Convertir a array y ordenar
-    return Array.from(years).sort().reverse();
-  };
 
   const loadDashboardData = async () => {
     try {
       setLoading(true);
       
-      // Preparar parámetros de filtro para los nuevos endpoints
-      const filterParams = {};
-      if (selectedYear) filterParams.year = selectedYear;
-      if (selectedMonth) {
-        const [year, month] = selectedMonth.split('-');
-        filterParams.year = year;
-        filterParams.month = month;
-      }
+      // Obtener parámetros de filtro del contexto global
+      const filterParams = getFilterParams();
 
       let data = {};
 
@@ -289,6 +179,9 @@ const Dashboard = () => {
       }
 
       setData(data);
+      
+      // Actualizar datos disponibles en el contexto global
+      updateAvailableData(data.expenses, data.incomes);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       toast.error('Error al cargar los datos del dashboard');
@@ -309,7 +202,7 @@ const Dashboard = () => {
   };
 
   const formatAmount = (amount) => {
-    if (!showAmounts) return '••••••';
+    if (balancesHidden) return '••••••';
     return formatCurrency(amount);
   };
 
@@ -345,20 +238,7 @@ const Dashboard = () => {
     });
   };
   
-  // Variable para saber si hay algún filtro activo
-  const hasActiveFilters = selectedMonth || selectedYear;
-  
-  // Función para generar el título del período seleccionado
-  const getPeriodTitle = () => {
-    if (selectedMonth && selectedYear) {
-      return formatMonthLabel(selectedMonth);
-    } else if (selectedMonth) {
-      return formatMonthLabel(selectedMonth);
-    } else if (selectedYear) {
-      return `Año ${selectedYear}`;
-    }
-    return '';
-  };
+
 
   const formatMonthLabel = (monthString) => {
     // Evitar problemas de zona horaria usando constructor numérico
@@ -495,64 +375,6 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header con toggle de visibilidad y selector de mes */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
-          {/* Selector de año */}
-          <div className="relative">
-            <label className="block text-sm font-medium text-mp-gray-700 mb-2 flex items-center">
-              <Calendar className="w-4 h-4 mr-2 text-mp-gray-500" />
-              Filtrar por año
-            </label>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="input w-full sm:w-auto min-w-[150px]"
-            >
-              <option value="">Todos los años</option>
-              {getAvailableYears().map(year => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Selector de mes */}
-          <div className="relative">
-            <label className="block text-sm font-medium text-mp-gray-700 mb-2 flex items-center">
-              <Calendar className="w-4 h-4 mr-2 text-mp-gray-500" />
-              Filtrar por mes
-            </label>
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="input w-full sm:w-auto min-w-[200px]"
-            >
-              <option value="">
-                {selectedYear ? `Todos los meses de ${selectedYear}` : 'Todos los meses'}
-              </option>
-              {getAvailableMonthsForSelect().map(month => (
-                <option key={month} value={month}>
-                  {formatMonthOnly(month)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Toggle de visibilidad */}
-          <div className="self-end">
-            <button
-              onClick={() => setShowAmounts(!showAmounts)}
-              className="btn-ghost flex items-center space-x-2"
-            >
-              {showAmounts ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              <span>{showAmounts ? 'Ocultar' : 'Mostrar'} montos</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
 
 
       {/* Métricas principales */}
@@ -614,16 +436,16 @@ const Dashboard = () => {
               <p className="text-sm font-medium text-mp-gray-600">
                 Total Gastos
               </p>
-              <p className="text-xl lg:text-2xl font-bold text-mp-accent break-words">
+              <p className="text-xl lg:text-2xl font-bold text-mp-gray-900 break-words">
                 {formatAmount(data.totalExpenses)}
               </p>
             </div>
-            <div className="flex-shrink-0 p-2 lg:p-3 rounded-mp bg-orange-100 ml-2">
-              <TrendingDown className="w-5 h-5 lg:w-6 lg:h-6 text-mp-accent" />
+            <div className="flex-shrink-0 p-2 lg:p-3 rounded-mp bg-gray-100 ml-2">
+              <TrendingDown className="w-5 h-5 lg:w-6 lg:h-6 text-mp-gray-900" />
             </div>
           </div>
           <div className="mt-3 flex items-center">
-            <TrendingDown className="w-4 h-4 text-mp-accent mr-1 flex-shrink-0" />
+            <TrendingDown className="w-4 h-4 text-mp-gray-900 mr-1 flex-shrink-0" />
             <span className="text-sm text-mp-gray-500">
               {data.expenses.length} {data.expenses.length === 1 ? 'gasto' : 'gastos'} registrados
             </span>
@@ -637,12 +459,12 @@ const Dashboard = () => {
               <p className="text-sm font-medium text-mp-gray-600">
                 Gastos Pendientes
               </p>
-              <p className="text-xl lg:text-2xl font-bold text-mp-error">
+              <p className="text-xl lg:text-2xl font-bold text-mp-gray-900">
                 {data.expenses.filter(e => !e.paid).length}
               </p>
             </div>
-            <div className="flex-shrink-0 p-2 lg:p-3 rounded-mp bg-red-100 ml-2">
-              <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-mp-error" />
+            <div className="flex-shrink-0 p-2 lg:p-3 rounded-mp bg-gray-100 ml-2">
+              <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-mp-gray-900" />
             </div>
           </div>
           <div className="mt-3">
@@ -694,48 +516,16 @@ const Dashboard = () => {
             <div className="space-y-4">
               <div className="space-y-3 mb-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-mp-error flex items-center">
+                  <h4 className="font-semibold text-mp-gray-900 flex items-center">
                     <TrendingDown className="w-5 h-5 mr-2" />
                     Gastos
                   </h4>
-                  <span className="text-lg font-bold text-mp-error">
+                  <span className="text-lg font-bold text-mp-gray-900">
                     {formatAmount(data.totalExpenses)}
                   </span>
                 </div>
                 
-                {/* Filtros de gastos */}
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <div className="flex-1">
-                    <select
-                      value={selectedYear}
-                      onChange={(e) => setSelectedYear(e.target.value)}
-                      className="input w-full text-sm"
-                    >
-                      <option value="">Todos los años</option>
-                      {getAvailableYears().map(year => (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex-1">
-                    <select
-                      value={selectedMonth}
-                      onChange={(e) => setSelectedMonth(e.target.value)}
-                      className="input w-full text-sm"
-                    >
-                      <option value="">
-                        {selectedYear ? `Todo ${selectedYear}` : 'Todos los meses'}
-                      </option>
-                      {getAvailableMonthsForSelect().map(month => (
-                        <option key={month} value={month}>
-                          {formatMonthOnly(month)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+
               </div>
               
               <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -786,7 +576,7 @@ const Dashboard = () => {
                             </div>
                           </div>
                           <div className="text-right ml-3">
-                            <p className="font-semibold text-mp-error">
+                            <p className="font-semibold text-mp-gray-900">
                               -{formatAmount(expense.amount)}
                             </p>
                             {expense.percentage && (
@@ -822,40 +612,7 @@ const Dashboard = () => {
                     {formatAmount(data.totalIncome)}
                   </span>
                 </div>
-                
-                {/* Filtros de ingresos */}
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <div className="flex-1">
-                    <select
-                      value={selectedYear}
-                      onChange={(e) => setSelectedYear(e.target.value)}
-                      className="input w-full text-sm"
-                    >
-                      <option value="">Todos los años</option>
-                      {getAvailableYears().map(year => (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex-1">
-                    <select
-                      value={selectedMonth}
-                      onChange={(e) => setSelectedMonth(e.target.value)}
-                      className="input w-full text-sm"
-                    >
-                      <option value="">
-                        {selectedYear ? `Todo ${selectedYear}` : 'Todos los meses'}
-                      </option>
-                      {getAvailableMonthsForSelect().map(month => (
-                        <option key={month} value={month}>
-                          {formatMonthOnly(month)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+
               </div>
               
               <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -912,7 +669,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-mp-gray-600">Total gastos:</span>
                   <div className="text-right">
-                    <div className="font-bold text-mp-error">
+                    <div className="font-bold text-mp-gray-900">
                       {formatAmount(data.totalExpenses)}
                     </div>
                     {data.totalIncome > 0 && (
@@ -1079,11 +836,11 @@ const Dashboard = () => {
               const color = getCategoryColor(transaction.category_id);
               const category = data.categories.find(c => c.id === transaction.category_id);
               return (
-                <div key={index} className={`flex items-center justify-between p-4 rounded-mp bg-mp-gray-50 border-l-4 ${color.border || (isExpense ? 'border-mp-error' : 'border-mp-secondary')}`}>
+                <div key={index} className={`flex items-center justify-between p-4 rounded-mp bg-mp-gray-50 border-l-4 ${color.border || (isExpense ? 'border-mp-gray-900' : 'border-mp-secondary')}`}>
                   <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-mp ${isExpense ? 'bg-red-100' : 'bg-green-100'}`}>
+                    <div className={`p-2 rounded-mp ${isExpense ? 'bg-gray-100' : 'bg-green-100'}`}>
                       {isExpense ? (
-                        <TrendingDown className="w-4 h-4 text-mp-error" />
+                        <TrendingDown className="w-4 h-4 text-mp-gray-900" />
                       ) : (
                         <TrendingUp className="w-4 h-4 text-mp-secondary" />
                       )}
@@ -1117,7 +874,7 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`font-semibold ${isExpense ? 'text-mp-error' : 'text-mp-secondary'}`}>
+                    <p className={`font-semibold ${isExpense ? 'text-mp-gray-900' : 'text-mp-secondary'}`}>
                       {isExpense ? '-' : '+'}{formatAmount(transaction.amount)}
                     </p>
                     {transaction.percentage && (

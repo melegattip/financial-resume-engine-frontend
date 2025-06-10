@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Download, BarChart3, TrendingUp, TrendingDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { reportsAPI, formatCurrency } from '../services/api';
+import { usePeriod } from '../contexts/PeriodContext';
 import toast from 'react-hot-toast';
 
 const Reports = () => {
@@ -11,6 +12,14 @@ const Reports = () => {
     start_date: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
     end_date: new Date().toISOString().split('T')[0],
   });
+
+  // Usar el contexto global para ocultar saldos
+  const { balancesHidden } = usePeriod();
+
+  const formatAmount = (amount) => {
+    if (balancesHidden) return '••••••';
+    return formatCurrency(amount);
+  };
 
   useEffect(() => {
     generateReport();
@@ -136,7 +145,7 @@ const Reports = () => {
             <div>
               <p className="text-sm font-medium text-mp-gray-600">Total Ingresos</p>
               <p className="text-2xl font-bold text-mp-secondary">
-                {formatCurrency(reportData?.total_income || 0)}
+                {formatAmount(reportData?.total_income || 0)}
               </p>
             </div>
             <div className="p-3 rounded-mp bg-green-100">
@@ -149,12 +158,12 @@ const Reports = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-mp-gray-600">Total Gastos</p>
-              <p className="text-2xl font-bold text-mp-accent">
-                {formatCurrency(reportData?.total_expenses || 0)}
+              <p className="text-2xl font-bold text-mp-gray-900">
+                {formatAmount(reportData?.total_expenses || 0)}
               </p>
             </div>
-            <div className="p-3 rounded-mp bg-orange-100">
-              <TrendingDown className="w-6 h-6 text-mp-accent" />
+            <div className="p-3 rounded-mp bg-gray-100">
+              <TrendingDown className="w-6 h-6 text-mp-gray-900" />
             </div>
           </div>
         </div>
@@ -164,7 +173,7 @@ const Reports = () => {
             <div>
               <p className="text-sm font-medium text-mp-gray-600">Balance</p>
               <p className="text-2xl font-bold text-mp-secondary">
-                {formatCurrency((reportData?.total_income || 0) - (reportData?.total_expenses || 0))}
+                {formatAmount((reportData?.total_income || 0) - (reportData?.total_expenses || 0))}
               </p>
             </div>
             <div className="p-3 rounded-mp bg-blue-100">
@@ -287,7 +296,7 @@ const Reports = () => {
                   <tr key={index} className="border-b border-mp-gray-100 hover:bg-mp-gray-50">
                     <td className="py-3 px-4 text-mp-gray-900">{item.category}</td>
                     <td className="py-3 px-4 text-right font-medium text-mp-gray-900">
-                      {formatCurrency(item.amount)}
+                      {formatAmount(item.amount)}
                     </td>
                     <td className="py-3 px-4 text-right text-mp-gray-600">
                       {item.percentage}%

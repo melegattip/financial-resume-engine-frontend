@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bell, Search, User, Menu } from 'lucide-react';
+import PeriodFilter from './PeriodFilter';
 
 const Header = ({ title, subtitle, onMenuClick }) => {
   return (
@@ -24,6 +25,9 @@ const Header = ({ title, subtitle, onMenuClick }) => {
 
         {/* Right side */}
         <div className="flex items-center space-x-4">
+          {/* Period Filter */}
+          <PeriodFilter />
+
           {/* Search */}
           <div className="hidden md:flex relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-mp-gray-400" />

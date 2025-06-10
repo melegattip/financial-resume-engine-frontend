@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, X } from 'lucide-react';
+import { Calendar, X, Eye, EyeOff } from 'lucide-react';
 import { usePeriod } from '../../contexts/PeriodContext';
 
 const PeriodFilter = () => {
@@ -9,11 +9,13 @@ const PeriodFilter = () => {
     availableYears,
     availableMonths,
     hasActiveFilters,
+    balancesHidden,
     setSelectedYear,
     setSelectedMonth,
     clearFilters,
     getPeriodTitle,
     getMonthsForSelectedYear,
+    toggleBalancesVisibility,
   } = usePeriod();
 
   const formatMonthOnly = (monthString) => {
@@ -27,20 +29,18 @@ const PeriodFilter = () => {
 
   return (
     <div className="flex items-center space-x-3">
-      {/* Indicador de período activo */}
-      {hasActiveFilters && (
-        <div className="flex items-center space-x-2 bg-mp-primary/10 text-mp-primary px-3 py-1 rounded-full text-sm font-medium">
-          <Calendar className="w-4 h-4" />
-          <span>{getPeriodTitle()}</span>
-          <button
-            onClick={clearFilters}
-            className="ml-1 hover:bg-mp-primary/20 rounded-full p-1 transition-colors"
-            title="Limpiar filtros"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        </div>
-      )}
+      {/* Botón para ocultar/mostrar saldos */}
+      <button
+        onClick={toggleBalancesVisibility}
+        className="p-2 rounded-mp hover:bg-mp-gray-100 transition-colors"
+        title={balancesHidden ? "Mostrar saldos" : "Ocultar saldos"}
+      >
+        {balancesHidden ? (
+          <EyeOff className="w-5 h-5 text-mp-gray-600" />
+        ) : (
+          <Eye className="w-5 h-5 text-mp-gray-600" />
+        )}
+      </button>
 
       {/* Selector de año */}
       <div className="relative">
@@ -68,7 +68,7 @@ const PeriodFilter = () => {
           <option value="">Todos los meses</option>
           {getMonthsForSelectedYear().map(month => (
             <option key={month} value={month}>
-              {formatMonthOnly(month)} {month.split('-')[0]}
+              {formatMonthOnly(month)}
             </option>
           ))}
         </select>

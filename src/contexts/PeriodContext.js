@@ -18,6 +18,7 @@ export const PeriodProvider = ({ children }) => {
   const [selectedMonth, setSelectedMonth] = useState('');
   const [availableYears, setAvailableYears] = useState([]);
   const [availableMonths, setAvailableMonths] = useState([]);
+  const [balancesHidden, setBalancesHidden] = useState(false);
 
   // Función para actualizar los datos disponibles y auto-seleccionar el último período
   const updateAvailableData = (expenses = [], incomes = []) => {
@@ -114,6 +115,11 @@ export const PeriodProvider = ({ children }) => {
   // Verificar si hay filtros activos
   const hasActiveFilters = selectedMonth || selectedYear;
 
+  // Función para alternar visibilidad de saldos
+  const toggleBalancesVisibility = () => {
+    setBalancesHidden(!balancesHidden);
+  };
+
   const value = {
     // Estado
     selectedYear,
@@ -121,12 +127,14 @@ export const PeriodProvider = ({ children }) => {
     availableYears,
     availableMonths,
     hasActiveFilters,
+    balancesHidden,
     
     // Acciones
     setSelectedYear,
     setSelectedMonth,
     updateAvailableData,
     clearFilters,
+    toggleBalancesVisibility,
     
     // Utilidades
     getFilterParams,
