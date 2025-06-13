@@ -6,8 +6,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Colores principales de Mercado Pago
-        'mp-blue': {
+        // Colores principales del sistema
+        'fr-blue': {
           50: '#eff6ff',
           100: '#dbeafe',
           200: '#bfdbfe',
@@ -19,10 +19,10 @@ module.exports = {
           800: '#1e40af',
           900: '#1e3a8a',
         },
-        'mp-primary': '#009ee3',
-        'mp-secondary': '#00a650',
-        'mp-accent': '#ff6900',
-        'mp-gray': {
+        'fr-primary': '#009ee3',
+        'fr-secondary': '#00a650',
+        'fr-accent': '#ff6900',
+        'fr-gray': {
           50: '#f9fafb',
           100: '#f3f4f6',
           200: '#e5e7eb',
@@ -34,9 +34,9 @@ module.exports = {
           800: '#1f2937',
           900: '#111827',
         },
-        'mp-success': '#00a650',
-        'mp-warning': '#ff6900',
-        'mp-error': '#e53e3e',
+        'fr-success': '#00a650',
+        'fr-warning': '#ff6900',
+        'fr-error': '#e53e3e',
         
         // Colores base para componentes
         border: '#e5e7eb',
@@ -77,16 +77,16 @@ module.exports = {
         'sans': ['Inter', 'Proxima Nova', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
-        'mp': '8px',
-        'mp-lg': '12px',
+        'fr': '8px',
+        'fr-lg': '12px',
         lg: '8px',
         md: '6px',
         sm: '4px',
       },
       boxShadow: {
-        'mp': '0 2px 4px 0 rgba(0, 0, 0, 0.1)',
-        'mp-lg': '0 4px 12px 0 rgba(0, 0, 0, 0.15)',
-        'mp-xl': '0 8px 24px 0 rgba(0, 0, 0, 0.15)',
+        'fr': '0 2px 4px 0 rgba(0, 0, 0, 0.1)',
+        'fr-lg': '0 4px 12px 0 rgba(0, 0, 0, 0.15)',
+        'fr-xl': '0 8px 24px 0 rgba(0, 0, 0, 0.15)',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',

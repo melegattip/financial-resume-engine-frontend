@@ -106,7 +106,7 @@ const AccessibleModal = ({
               className="
                 ml-4 p-2 text-gray-400 hover:text-gray-600
                 rounded-md hover:bg-gray-100 transition-colors
-                focus:outline-none focus:ring-2 focus:ring-mp-primary
+                focus:outline-none focus:ring-2 focus:ring-fr-primary
               "
               aria-label="Cerrar modal"
             >

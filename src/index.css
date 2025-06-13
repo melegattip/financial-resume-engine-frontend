@@ -9,53 +9,53 @@
   }
   
   body {
-    @apply bg-mp-gray-50 font-sans text-mp-gray-900;
+    @apply bg-fr-gray-50 font-sans text-fr-gray-900;
     font-family: 'Inter', 'Proxima Nova', system-ui, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold text-mp-gray-900;
+    @apply font-semibold text-fr-gray-900;
   }
 }
 
 @layer components {
-  /* Botones estilo Mercado Pago */
+  /* Botones principales */
   .btn-primary {
-    @apply bg-mp-primary hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-mp transition-all duration-200 shadow-mp hover:shadow-mp-lg focus:outline-none focus:ring-2 focus:ring-mp-primary focus:ring-opacity-50;
+    @apply bg-fr-primary hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-fr transition-all duration-200 shadow-fr hover:shadow-fr-lg focus:outline-none focus:ring-2 focus:ring-fr-primary focus:ring-opacity-50;
   }
 
   .btn-secondary {
-    @apply bg-mp-secondary hover:bg-green-600 text-white font-medium py-3 px-6 rounded-mp transition-all duration-200 shadow-mp hover:shadow-mp-lg focus:outline-none focus:ring-2 focus:ring-mp-secondary focus:ring-opacity-50;
+    @apply bg-fr-secondary hover:bg-green-600 text-white font-medium py-3 px-6 rounded-fr transition-all duration-200 shadow-fr hover:shadow-fr-lg focus:outline-none focus:ring-2 focus:ring-fr-secondary focus:ring-opacity-50;
   }
 
   .btn-outline {
-    @apply border-2 border-mp-primary text-mp-primary hover:bg-mp-primary hover:text-white font-medium py-3 px-6 rounded-mp transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-mp-primary focus:ring-opacity-50;
+    @apply border-2 border-fr-primary text-fr-primary hover:bg-fr-primary hover:text-white font-medium py-3 px-6 rounded-fr transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-fr-primary focus:ring-opacity-50;
   }
 
   .btn-ghost {
-    @apply text-mp-gray-600 hover:text-mp-primary hover:bg-mp-gray-100 font-medium py-2 px-4 rounded-mp transition-all duration-200;
+    @apply text-fr-gray-600 hover:text-fr-primary hover:bg-fr-gray-100 font-medium py-2 px-4 rounded-fr transition-all duration-200;
   }
 
-  /* Cards estilo Mercado Pago */
+  /* Cards principales */
   .card {
-    @apply bg-white rounded-mp-lg shadow-mp border border-mp-gray-200 p-6;
+    @apply bg-white rounded-fr-lg shadow-fr border border-fr-gray-200 p-6;
   }
 
   .card-hover {
-    @apply card hover:shadow-mp-lg transition-all duration-200 cursor-pointer;
+    @apply card hover:shadow-fr-lg transition-all duration-200 cursor-pointer;
   }
 
-  /* Inputs estilo Mercado Pago */
+  /* Inputs principales */
   .input {
-    @apply w-full px-4 py-3 border border-mp-gray-300 rounded-mp focus:outline-none focus:ring-2 focus:ring-mp-primary focus:border-transparent transition-all duration-200 bg-white;
+    @apply w-full px-4 py-3 border border-fr-gray-300 rounded-fr focus:outline-none focus:ring-2 focus:ring-fr-primary focus:border-transparent transition-all duration-200 bg-white;
   }
 
   .input-sm {
-    @apply px-3 py-2 border border-mp-gray-300 rounded-mp focus:outline-none focus:ring-2 focus:ring-mp-primary focus:border-transparent transition-all duration-200 bg-white text-sm;
+    @apply px-3 py-2 border border-fr-gray-300 rounded-fr focus:outline-none focus:ring-2 focus:ring-fr-primary focus:border-transparent transition-all duration-200 bg-white text-sm;
   }
 
   .input-error {
-    @apply input border-mp-error focus:ring-mp-error;
+    @apply input border-fr-error focus:ring-fr-error;
   }
 
   /* Badges y estados */
@@ -81,11 +81,11 @@
 
   /* Navegación */
   .nav-link {
-    @apply flex items-center px-4 py-3 text-mp-gray-600 hover:text-mp-primary hover:bg-mp-gray-100 rounded-mp transition-all duration-200 font-medium;
+    @apply flex items-center px-4 py-3 text-fr-gray-600 hover:text-fr-primary hover:bg-fr-gray-100 rounded-fr transition-all duration-200 font-medium;
   }
 
   .nav-link-active {
-    @apply nav-link text-mp-primary bg-blue-50 border-r-2 border-mp-primary;
+    @apply nav-link text-fr-primary bg-blue-50 border-r-2 border-fr-primary;
   }
 
   /* Animaciones suaves */

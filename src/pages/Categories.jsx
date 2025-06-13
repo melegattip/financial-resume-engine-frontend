@@ -83,7 +83,7 @@ const Categories = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="spinner"></div>
-        <span className="ml-2 text-mp-gray-600">Cargando categorías...</span>
+        <span className="ml-2 text-fr-gray-600">Cargando categorías...</span>
       </div>
     );
   }
@@ -94,7 +94,7 @@ const Categories = () => {
       <div className="card">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-mp-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-fr-gray-400" />
             <input
               type="text"
               placeholder="Buscar categorías..."
@@ -118,22 +118,22 @@ const Categories = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredCategories.length === 0 ? (
           <div className="col-span-full text-center py-12">
-            <Tag className="w-12 h-12 text-mp-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-mp-gray-900 mb-2">No hay categorías</h3>
-            <p className="text-mp-gray-500">Comienza creando tu primera categoría</p>
+            <Tag className="w-12 h-12 text-fr-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-fr-gray-900 mb-2">No hay categorías</h3>
+            <p className="text-fr-gray-500">Comienza creando tu primera categoría</p>
           </div>
         ) : (
           filteredCategories.map((category) => (
             <div key={category.id} className="card-hover">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 rounded-mp bg-blue-100">
-                    <Tag className="w-5 h-5 text-mp-primary" />
+                  <div className="p-2 rounded-fr bg-blue-100">
+                    <Tag className="w-5 h-5 text-fr-primary" />
                   </div>
                   <div>
-                    <h3 className="font-medium text-mp-gray-900">{category.name}</h3>
+                    <h3 className="font-medium text-fr-gray-900">{category.name}</h3>
                     {category.description && (
-                      <p className="text-sm text-mp-gray-500 mt-1">{category.description}</p>
+                      <p className="text-sm text-fr-gray-500 mt-1">{category.description}</p>
                     )}
                   </div>
                 </div>
@@ -141,13 +141,13 @@ const Categories = () => {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => handleEdit(category)}
-                    className="p-2 rounded-mp text-mp-gray-600 hover:bg-mp-gray-200 transition-colors"
+                    className="p-2 rounded-fr text-fr-gray-600 hover:bg-fr-gray-200 transition-colors"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(category)}
-                    className="p-2 rounded-mp text-mp-error hover:bg-red-100 transition-colors"
+                    className="p-2 rounded-fr text-fr-error hover:bg-red-100 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -161,14 +161,14 @@ const Categories = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-mp-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-mp-gray-900 mb-6">
+          <div className="bg-white rounded-fr-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-fr-gray-900 mb-6">
               {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-mp-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fr-gray-700 mb-2">
                   Nombre
                 </label>
                 <input
@@ -181,7 +181,7 @@ const Categories = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-mp-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fr-gray-700 mb-2">
                   Descripción
                 </label>
                 <textarea

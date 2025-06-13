@@ -1,10 +1,10 @@
 # Financial Resume Engine - Frontend
 
-Frontend moderno para la aplicación Financial Resume Engine, desarrollado con React y diseñado con el estilo visual de Mercado Pago.
+Frontend moderno para la aplicación Financial Resume Engine, desarrollado con React y un diseño visual profesional y elegante.
 
 ## 🚀 Características
 
-- **Diseño moderno**: Inspirado en el estilo visual de Mercado Pago
+- **Diseño moderno**: Interface limpia y profesional
 - **Responsive**: Optimizado para dispositivos móviles y desktop
 - **Dashboard interactivo**: Métricas en tiempo real y gráficos dinámicos
 - **Gestión completa**: CRUD para gastos, ingresos y categorías
@@ -101,11 +101,11 @@ src/
 
 ## 🎨 Diseño
 
-El frontend utiliza el sistema de diseño de Mercado Pago con:
+El frontend utiliza un sistema de diseño profesional con:
 
-- **Colores**: Azul primario (#009ee3), verde secundario (#00a650), naranja de acento (#ff6900)
+- **Colores**: Paleta moderna y profesional con azul primario, verde y naranja de acento
 - **Tipografía**: Inter como fuente principal
-- **Componentes**: Cards, botones, inputs y navegación con estilo MP
+- **Componentes**: Cards, botones, inputs y navegación con diseño limpio
 - **Animaciones**: Transiciones suaves y feedback visual
 - **Iconografía**: Lucide React para iconos consistentes
 

@@ -29,7 +29,7 @@ function App() {
   return (
     <Router>
       <PeriodProvider>
-        <div className="flex h-screen bg-mp-gray-50">
+        <div className="flex h-screen bg-fr-gray-50">
           {/* Sidebar */}
           <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block fixed lg:relative z-30 lg:z-auto`}>
             <Sidebar />
