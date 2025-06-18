@@ -20,12 +20,12 @@ export const PeriodProvider = ({ children }) => {
   const [availableMonths, setAvailableMonths] = useState([]);
   const [balancesHidden, setBalancesHidden] = useState(false);
 
-  // Función para actualizar los datos disponibles y auto-seleccionar el último período
+  // Función para actualizar los datos disponibles (solo se ejecuta una vez al cargar)
   const updateAvailableData = useCallback((expenses = [], incomes = []) => {
     const years = new Set();
     const months = new Set();
     
-    // Procesar todas las transacciones
+    // Procesar todas las transacciones sin filtrar
     [...expenses, ...incomes].forEach(item => {
       if (item.created_at) {
         const date = new Date(item.created_at);
@@ -53,18 +53,26 @@ export const PeriodProvider = ({ children }) => {
     const sortedYears = Array.from(years).sort().reverse();
     const sortedMonths = Array.from(months).sort().reverse();
     
-    setAvailableYears(sortedYears);
-    setAvailableMonths(sortedMonths);
+    // SOLO actualizar si realmente hay cambios para evitar loops infinitos
+    setAvailableYears(prevYears => {
+      const yearsChanged = JSON.stringify(prevYears) !== JSON.stringify(sortedYears);
+      return yearsChanged ? sortedYears : prevYears;
+    });
     
-    // Auto-seleccionar el último mes si no hay selección actual
-    if (!selectedMonth && sortedMonths.length > 0) {
-      const latestMonth = sortedMonths[0];
-      const [latestYear] = latestMonth.split('-');
-      
-      setSelectedMonth(latestMonth);
-      setSelectedYear(latestYear);
-    }
-  }, [selectedMonth]);
+    setAvailableMonths(prevMonths => {
+      const monthsChanged = JSON.stringify(prevMonths) !== JSON.stringify(sortedMonths);
+      return monthsChanged ? sortedMonths : prevMonths;
+    });
+    
+    // Comentado: Auto-seleccionar el último mes (para mostrar todos los datos por defecto)
+    // if (!selectedMonth && sortedMonths.length > 0) {
+    //   const latestMonth = sortedMonths[0];
+    //   const [latestYear] = latestMonth.split('-');
+    //   
+    //   setSelectedMonth(latestMonth);
+    //   setSelectedYear(latestYear);
+    // }
+  }, []); // Remover selectedMonth de las dependencias
 
   // Función para obtener meses disponibles para el año seleccionado
   const getMonthsForSelectedYear = useCallback(() => {

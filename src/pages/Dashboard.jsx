@@ -50,20 +50,23 @@ const Dashboard = () => {
     updateAvailableData,
   } = usePeriod();
 
+  // Cargar datos iniciales (incluyendo calcular meses disponibles)
   useEffect(() => {
     loadDashboardData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Recargar datos cuando cambien los filtros del contexto global
+  // Recargar datos cuando cambien los filtros del contexto global (sin recalcular meses)
   useEffect(() => {
-    loadDashboardData();
+    if (selectedMonth !== null || selectedYear !== null) {
+      loadDashboardData(false); // false = no recalcular meses disponibles
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMonth, selectedYear]);
 
 
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (shouldUpdateAvailableData = true) => {
     try {
       setLoading(true);
       
@@ -135,6 +138,10 @@ const Dashboard = () => {
           dashboardMetrics: dashboard.Metrics || {},
           expensesSummary: expensesData.Summary || {},
           categoriesAnalytics: categoriesData.Categories || [],
+          
+          // Datos sin filtrar para calcular meses disponibles
+          allExpenses: normalizedExpenses,
+          allIncomes: normalizedIncomes,
         };
 
         console.log('✅ Usando nuevos endpoints del backend');
@@ -174,6 +181,10 @@ const Dashboard = () => {
           dashboardMetrics: {},
           expensesSummary: {},
           categoriesAnalytics: [],
+          
+          // Datos sin filtrar para calcular meses disponibles
+          allExpenses: expenses,
+          allIncomes: incomes,
         };
 
         console.log('✅ Usando endpoints legacy con cálculos client-side');
@@ -181,15 +192,19 @@ const Dashboard = () => {
 
       setData(data);
       
-      // Actualizar datos disponibles en el contexto global
-      updateAvailableData(data.expenses, data.incomes);
+      // Actualizar datos disponibles en el contexto global solo la primera vez
+      if (shouldUpdateAvailableData) {
+        updateAvailableData(data.allExpenses || data.expenses, data.allIncomes || data.incomes);
+      }
     } catch (error) {
       console.warn('⚠️ Todos los endpoints fallaron, usando datos mock:', error.message);
       
       // Último fallback: usar datos mock para desarrollo
       await simulateNetworkDelay(300);
       setData(mockDashboardData);
-      updateAvailableData(mockDashboardData.expenses, mockDashboardData.incomes);
+      if (shouldUpdateAvailableData) {
+        updateAvailableData(mockDashboardData.expenses, mockDashboardData.incomes);
+      }
       
       toast.success('🚧 Usando datos de ejemplo (backend no disponible)', {
         duration: 3000,
