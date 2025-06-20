@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Search, TrendingUp, Edit, Trash2 } from 'lucide-react';
 import { incomesAPI, categoriesAPI, formatCurrency } from '../services/api';
-import { mockIncomes, mockCategories, simulateNetworkDelay, createMockResponse } from '../services/mockData';
 import { usePeriod } from '../contexts/PeriodContext';
 import toast from 'react-hot-toast';
 
@@ -40,21 +39,20 @@ const Incomes = () => {
       ]);
       
       // Asegurar que siempre sean arrays
-      const incomesData = incomesResponse.data?.incomes || incomesResponse.data || [];
+      const incomesData = incomesResponse.data?.incomes || incomesResponse.incomes || [];
       const categoriesData = categoriesResponse.data?.data || categoriesResponse.data || [];
       
       setIncomes(Array.isArray(incomesData) ? incomesData : []);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
-      console.warn('⚠️ API no disponible, usando datos mock:', error.message);
+      console.warn('⚠️ Error al cargar ingresos:', error.message);
       
-      // Fallback a datos mock
-      await simulateNetworkDelay(300);
-      setIncomes(mockIncomes);
-      setCategories(mockCategories);
+      // Establecer datos vacíos
+      setIncomes([]);
+      setCategories([]);
       
-      toast.success('🚧 Usando datos de ejemplo (backend no disponible)', {
-        duration: 2000,
+      toast.error('Error al cargar los ingresos', {
+        duration: 3000,
       });
     } finally {
       setLoading(false);

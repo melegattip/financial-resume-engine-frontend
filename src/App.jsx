@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 import { PeriodProvider } from './contexts/PeriodContext';
-import Sidebar from './components/Layout/Sidebar';
-import Header from './components/Layout/Header';
+import ProtectedRoute, { PublicOnlyRoute } from './components/ProtectedRoute';
+
+// Páginas principales
 import Dashboard from './pages/Dashboard';
 import Expenses from './pages/Expenses';
 import Incomes from './pages/Incomes';
@@ -11,90 +12,141 @@ import Categories from './pages/Categories';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 
+// Páginas de autenticación
+import Login from './pages/Login';
+import Register from './pages/Register';
+
+// Layout components
+import Layout from './components/Layout/Layout';
+
+// Estilos
+import './index.css';
+
+// Componente de rutas que usa los contexts
+function AppContent() {
+  console.log('🚀 AppContent rendering...');
+  
+  return (
+    <Routes>
+      {/* Rutas públicas (solo para usuarios NO autenticados) */}
+      <Route 
+        path="/login" 
+        element={
+          <PublicOnlyRoute>
+            <Login />
+          </PublicOnlyRoute>
+        } 
+      />
+      <Route 
+        path="/register" 
+        element={
+          <PublicOnlyRoute>
+            <Register />
+          </PublicOnlyRoute>
+        } 
+      />
+
+      {/* Rutas protegidas (requieren autenticación) */}
+      <Route 
+        path="/dashboard" 
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Dashboard />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/expenses" 
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Expenses />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/incomes" 
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Incomes />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/categories" 
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Categories />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/reports" 
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Reports />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/settings" 
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Settings />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
+
+      {/* Ruta raíz - redirige según estado de autenticación */}
+      <Route 
+        path="/" 
+        element={<Navigate to="/dashboard" replace />} 
+      />
+
+      {/* Ruta 404 - página no encontrada */}
+      <Route 
+        path="*" 
+        element={
+          <div className="min-h-screen flex items-center justify-center bg-fr-gray-50">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-fr-gray-900 mb-4">404</h1>
+              <p className="text-fr-gray-600 mb-6">Página no encontrada</p>
+              <a 
+                href="/" 
+                className="btn-primary"
+              >
+                Volver al inicio
+              </a>
+            </div>
+          </div>
+        } 
+      />
+    </Routes>
+  );
+}
+
+// Componente principal de la aplicación
 function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const getPageTitle = (pathname) => {
-    const routes = {
-      '/': { title: 'Dashboard', subtitle: 'Resumen de tu actividad financiera' },
-      '/gastos': { title: 'Gastos', subtitle: 'Gestiona tus gastos y pagos pendientes' },
-      '/ingresos': { title: 'Ingresos', subtitle: 'Registra y controla tus ingresos' },
-      '/categorias': { title: 'Categorías', subtitle: 'Organiza tus transacciones' },
-      '/reportes': { title: 'Reportes', subtitle: 'Análisis detallado de tus finanzas' },
-      '/configuracion': { title: 'Configuración', subtitle: 'Ajustes de tu cuenta' },
-    };
-    return routes[pathname] || { title: 'FinanceApp', subtitle: '' };
-  };
-
+  console.log('🚀 App rendering...');
+  
   return (
     <Router>
-      <PeriodProvider>
-        <div className="flex h-screen bg-fr-gray-50">
-          {/* Sidebar */}
-          <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block fixed lg:relative z-30 lg:z-auto`}>
-            <Sidebar />
-          </div>
-
-          {/* Overlay para móvil */}
-          {sidebarOpen && (
-            <div 
-              className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
-          )}
-
-          {/* Main content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <Routes>
-              <Route path="*" element={
-                <>
-                  <Header 
-                    {...getPageTitle(window.location.pathname)}
-                    onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-                  />
-                  <main className="flex-1 overflow-y-auto p-6">
-                    <Routes>
-                      <Route path="/" element={<Dashboard />} />
-                      <Route path="/gastos" element={<Expenses />} />
-                      <Route path="/ingresos" element={<Incomes />} />
-                      <Route path="/categorias" element={<Categories />} />
-                      <Route path="/reportes" element={<Reports />} />
-                      <Route path="/configuracion" element={<Settings />} />
-                    </Routes>
-                  </main>
-                </>
-              } />
-            </Routes>
-          </div>
-
-          {/* Toast notifications */}
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: 'white',
-                color: '#374151',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.15)',
-              },
-              success: {
-                iconTheme: {
-                  primary: '#00a650',
-                  secondary: 'white',
-                },
-              },
-              error: {
-                iconTheme: {
-                  primary: '#e53e3e',
-                  secondary: 'white',
-                },
-              },
-            }}
-          />
-        </div>
-      </PeriodProvider>
+      <AuthProvider>
+        <PeriodProvider>
+          <AppContent />
+        </PeriodProvider>
+      </AuthProvider>
     </Router>
   );
 }

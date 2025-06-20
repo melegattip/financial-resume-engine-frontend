@@ -1,5 +1,3 @@
-import DOMPurify from 'dompurify';
-
 /**
  * Utilidades de validación y sanitización
  */
@@ -16,16 +14,45 @@ const PATTERNS = {
 };
 
 /**
+ * Función simple para sanitizar texto (reemplaza DOMPurify)
+ */
+const simpleSanitize = (input, allowBasicHTML = false) => {
+  if (typeof input !== 'string') return '';
+  
+  let sanitized = input;
+  
+  if (!allowBasicHTML) {
+    // Remover todas las etiquetas HTML
+    sanitized = sanitized.replace(/<[^>]*>/g, '');
+  } else {
+    // Solo permitir etiquetas básicas seguras
+    const allowedTags = ['b', 'i', 'em', 'strong', 'p', 'br'];
+    const tagPattern = /<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g;
+    
+    sanitized = sanitized.replace(tagPattern, (match, tagName) => {
+      return allowedTags.includes(tagName.toLowerCase()) ? match : '';
+    });
+  }
+  
+  // Decodificar entidades HTML básicas
+  sanitized = sanitized
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'");
+  
+  return sanitized;
+};
+
+/**
  * Sanitizar entrada de texto
  */
 export const sanitizeText = (input) => {
   if (typeof input !== 'string') return '';
   
-  // Eliminar HTML malicioso
-  const sanitized = DOMPurify.sanitize(input, { 
-    ALLOWED_TAGS: [],
-    ALLOWED_ATTR: []
-  });
+  // Eliminar HTML y normalizar espacios
+  const sanitized = simpleSanitize(input, false);
   
   // Trim y normalizar espacios
   return sanitized.trim().replace(/\s+/g, ' ');
@@ -37,10 +64,7 @@ export const sanitizeText = (input) => {
 export const sanitizeHTML = (input) => {
   if (typeof input !== 'string') return '';
   
-  return DOMPurify.sanitize(input, {
-    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br'],
-    ALLOWED_ATTR: []
-  });
+  return simpleSanitize(input, true);
 };
 
 /**

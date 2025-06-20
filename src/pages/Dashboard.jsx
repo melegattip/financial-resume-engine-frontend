@@ -8,7 +8,10 @@ import {
   ArrowDownRight,
   Calendar,
   CheckCircle,
-  XCircle
+  XCircle,
+  BarChart3,
+  Target,
+  AlertCircle
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -23,7 +26,6 @@ import {
   Cell
 } from 'recharts';
 import { expensesAPI, incomesAPI, categoriesAPI, dashboardAPI, analyticsAPI, formatCurrency, formatDate, formatPercentage as formatPercentageUtil } from '../services/api';
-import { mockDashboardData, simulateNetworkDelay, createMockResponse } from '../services/mockData';
 import { usePeriod } from '../contexts/PeriodContext';
 import toast from 'react-hot-toast';
 
@@ -156,8 +158,8 @@ const Dashboard = () => {
         ]);
 
         // Asegurar que siempre sean arrays
-        const expensesData = expensesResponse.data?.expenses || expensesResponse.data || [];
-        const incomesData = incomesResponse.data?.incomes || incomesResponse.data || [];
+        const expensesData = expensesResponse.data?.expenses || expensesResponse.expenses || [];
+        const incomesData = incomesResponse.data?.incomes || incomesResponse.incomes || [];
         const categoriesData = categoriesResponse.data?.data || categoriesResponse.data || [];
         
         const expenses = Array.isArray(expensesData) ? expensesData : [];
@@ -197,16 +199,27 @@ const Dashboard = () => {
         updateAvailableData(data.allExpenses || data.expenses, data.allIncomes || data.incomes);
       }
     } catch (error) {
-      console.warn('⚠️ Todos los endpoints fallaron, usando datos mock:', error.message);
+      console.warn('⚠️ Todos los endpoints fallaron, usando datos vacíos:', error.message);
       
-      // Último fallback: usar datos mock para desarrollo
-      await simulateNetworkDelay(300);
-      setData(mockDashboardData);
+      // Establecer datos vacíos en lugar de datos mock
+      setData({
+        totalIncome: 0,
+        totalExpenses: 0,
+        balance: 0,
+        expenses: [],
+        incomes: [],
+        categories: [],
+        dashboardMetrics: {},
+        expensesSummary: {},
+        categoriesAnalytics: [],
+      });
+      
       if (shouldUpdateAvailableData) {
-        updateAvailableData(mockDashboardData.expenses, mockDashboardData.incomes);
+        updateAvailableData([], []);
       }
       
-      toast.success('🚧 Usando datos de ejemplo (backend no disponible)', {
+      // Solo mostrar error si realmente hay un problema de conectividad
+      toast.error('Error al cargar los datos del dashboard', {
         duration: 3000,
       });
     } finally {
@@ -294,21 +307,60 @@ const Dashboard = () => {
     return colors[colorIndex];
   };
 
-  // Usar datos de categorías pre-calculados del backend
+  // Usar datos de categorías pre-calculados del backend o calcular client-side
   const calculateCategoryData = () => {
-    if (!data.categoriesAnalytics || !data.categoriesAnalytics.length) {
+    // Si tenemos datos del backend analytics, usarlos
+    if (data.categoriesAnalytics && data.categoriesAnalytics.length) {
+      const colors = ['#009ee3', '#00a650', '#ff6900', '#e53e3e', '#6b7280', '#8b5cf6', '#f59e0b'];
+      
+      console.log('🔍 Datos de categorías del backend:', data.categoriesAnalytics);
+      
+      const result = data.categoriesAnalytics.map((category, index) => ({
+        name: category.Name || category.CategoryName || category.category_name || 'Sin nombre',
+        value: category.Percentage || category.PercentageOfExpenses || category.percentage_of_expenses || 0,
+        amount: category.TotalAmount || category.total_amount || 0,
+        color: colors[index % colors.length]
+      })).filter(item => item.value > 0);
+      
+      console.log('📊 Datos procesados para el gráfico:', result);
+      return result;
+    }
+
+    // Fallback: calcular client-side si no hay datos del backend
+    if (!data.expenses || !data.expenses.length) {
       return [];
     }
 
-    // Los datos ya vienen del backend con cálculos completos
+    const categoryTotals = {};
+    const totalExpenses = data.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+
+    // Agrupar gastos por categoría
+    data.expenses.forEach(expense => {
+      const categoryId = expense.category_id || 'sin-categoria';
+      const category = data.categories.find(c => c.id === categoryId);
+      const categoryName = category ? category.name : 'Sin categoría';
+      
+      if (!categoryTotals[categoryId]) {
+        categoryTotals[categoryId] = {
+          name: categoryName,
+          amount: 0
+        };
+      }
+      categoryTotals[categoryId].amount += expense.amount;
+    });
+
+    // Convertir a formato del gráfico
     const colors = ['#009ee3', '#00a650', '#ff6900', '#e53e3e', '#6b7280', '#8b5cf6', '#f59e0b'];
     
-    return data.categoriesAnalytics.map((category, index) => ({
-      name: category.Name,
-      value: category.Percentage,
-      amount: category.TotalAmount,
-      color: colors[index % colors.length]
-    })).filter(item => item.value > 0); // Solo mostrar categorías con gastos
+    return Object.entries(categoryTotals)
+      .map(([categoryId, data], index) => ({
+        name: data.name,
+        value: totalExpenses > 0 ? (data.amount / totalExpenses) * 100 : 0,
+        amount: data.amount,
+        color: colors[index % colors.length]
+      }))
+      .filter(item => item.value > 0)
+      .sort((a, b) => b.amount - a.amount); // Ordenar por monto descendente
   };
 
   // Datos simplificados del gráfico usando métricas del backend
@@ -712,63 +764,102 @@ const Dashboard = () => {
 
       {/* Gráficos */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-        {/* Gráfico de tendencias */}
+        {/* Métricas clave */}
         <div className="card">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-lg font-semibold text-fr-gray-900">
-                {hasActiveFilters ? `Datos de ${getPeriodTitle()}` : 'Tendencia Mensual'}
+                {hasActiveFilters ? `Métricas de ${getPeriodTitle()}` : 'Métricas del Período'}
               </h3>
               <p className="text-sm text-fr-gray-500 mt-1">
-                {hasActiveFilters 
-                  ? 'Resumen del período seleccionado' 
-                  : 'Datos del mes actual (histórico próximamente)'
-                }
+                Estadísticas clave de tus finanzas
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-4 text-sm">
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-fr-secondary rounded-full mr-2"></div>
-                <span className="text-fr-gray-600">Ingresos</span>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            {/* Total de transacciones */}
+            <div className="bg-fr-gray-50 rounded-fr p-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 rounded-fr">
+                  <BarChart3 className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-fr-gray-600">Total Transacciones</p>
+                  <p className="text-xl font-bold text-fr-gray-900">
+                    {data.expenses.length + data.incomes.length}
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-fr-accent rounded-full mr-2"></div>
-                <span className="text-fr-gray-600">Gastos</span>
+            </div>
+
+            {/* Promedio diario */}
+            <div className="bg-fr-gray-50 rounded-fr p-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-purple-100 rounded-fr">
+                  <Calendar className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-fr-gray-600">Promedio Diario</p>
+                  <p className="text-xl font-bold text-fr-gray-900">
+                    {(() => {
+                      const totalExpenses = data.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+                      const daysInPeriod = hasActiveFilters ? 30 : 30; // Simplificado por ahora
+                      const dailyAvg = totalExpenses / daysInPeriod;
+                      return formatAmount(dailyAvg);
+                    })()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Categoría top */}
+            <div className="bg-fr-gray-50 rounded-fr p-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-orange-100 rounded-fr">
+                  <Target className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-fr-gray-600">Mayor Gasto</p>
+                  <p className="text-sm font-semibold text-fr-gray-900">
+                    {(() => {
+                      const categoryExpenses = {};
+                      data.expenses.forEach(expense => {
+                        if (!categoryExpenses[expense.category_id]) {
+                          categoryExpenses[expense.category_id] = 0;
+                        }
+                        categoryExpenses[expense.category_id] += expense.amount;
+                      });
+                      
+                      const topCategoryId = Object.keys(categoryExpenses).reduce((a, b) => 
+                        categoryExpenses[a] > categoryExpenses[b] ? a : b, null
+                      );
+                      
+                      if (!topCategoryId) return 'Sin datos';
+                      
+                      const topCategory = data.categories.find(c => c.id == topCategoryId);
+                      return topCategory ? topCategory.name : 'Sin categoría';
+                    })()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Gastos pendientes */}
+            <div className="bg-fr-gray-50 rounded-fr p-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-red-100 rounded-fr">
+                  <AlertCircle className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-fr-gray-600">Pendientes</p>
+                  <p className="text-xl font-bold text-red-600">
+                    {data.expenses.filter(exp => !exp.paid).length}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={250}>
-            <AreaChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="name" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
-              <Tooltip 
-                formatter={(value) => [formatCurrency(value)]}
-                contentStyle={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.15)',
-                }}
-              />
-              <Area
-                type="monotone"
-                dataKey="ingresos"
-                stackId="1"
-                stroke="#00a650"
-                fill="#00a650"
-                fillOpacity={0.6}
-              />
-              <Area
-                type="monotone"
-                dataKey="gastos"
-                stackId="2"
-                stroke="#ff6900"
-                fill="#ff6900"
-                fillOpacity={0.6}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
         </div>
 
         {/* Gráfico de categorías */}
@@ -777,27 +868,53 @@ const Dashboard = () => {
             Gastos por Categoría{hasActiveFilters && ` - ${getPeriodTitle()}`}
           </h3>
           {pieData.length > 0 ? (
-            <div className="flex items-center justify-center">
-              <ResponsiveContainer width="100%" height={250}>
+                        <div className="flex items-center justify-center">
+              <ResponsiveContainer width="100%" height={380}>
                 <RechartsPieChart>
                   <Pie
                     data={pieData}
                     cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={120}
-                    paddingAngle={5}
+                    cy="45%"
+                    innerRadius={50}
+                    outerRadius={110}
+                    paddingAngle={2}
                     dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}%`}
+                    label={({ name, value, percent, midAngle, innerRadius, outerRadius, cx, cy }) => {
+                      const RADIAN = Math.PI / 180;
+                      const radius = outerRadius + 40;
+                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                      
+                      return (
+                        <text 
+                          x={x} 
+                          y={y} 
+                          fill="#374151" 
+                          textAnchor={x > cx ? 'start' : 'end'} 
+                          dominantBaseline="central"
+                          fontSize="13"
+                          fontWeight="500"
+                        >
+                          {`${name}: ${value.toFixed(1)}%`}
+                        </text>
+                      );
+                    }}
                     labelLine={false}
+                    startAngle={90}
+                    endAngle={450}
                   >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
+                                          {pieData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.color} 
+                          stroke="#ffffff"
+                          strokeWidth={2}
+                        />
+                      ))}
                   </Pie>
                   <Tooltip 
                     formatter={(value, name, props) => [
-                      `${value}% (${formatCurrency(props.payload.amount)})`, 
+                      `${value.toFixed(1)}% (${formatCurrency(props.payload.amount)})`, 
                       'Porcentaje'
                     ]}
                     contentStyle={{

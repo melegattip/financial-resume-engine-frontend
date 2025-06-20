@@ -15,37 +15,37 @@ const Sidebar = () => {
     {
       title: 'Dashboard',
       icon: Home,
-      path: '/',
+      path: '/dashboard',
       description: 'Resumen general',
     },
     {
       title: 'Ingresos',
       icon: TrendingUp,
-      path: '/ingresos',
+      path: '/incomes',
       description: 'Gestionar ingresos',
     },
     {
       title: 'Gastos',
       icon: TrendingDown,
-      path: '/gastos',
+      path: '/expenses',
       description: 'Gestionar gastos',
     },
     {
       title: 'Categorías',
       icon: Tag,
-      path: '/categorias',
+      path: '/categories',
       description: 'Organizar transacciones',
     },
     {
       title: 'Reportes',
       icon: BarChart3,
-      path: '/reportes',
+      path: '/reports',
       description: 'Análisis financiero',
     },
     {
       title: 'Configuración',
       icon: Settings,
-      path: '/configuracion',
+      path: '/settings',
       description: 'Ajustes de cuenta',
     },
   ];
@@ -87,18 +87,7 @@ const Sidebar = () => {
         })}
       </nav>
 
-      {/* User Info */}
-      <div className="p-4 border-t border-fr-gray-200">
-        <div className="flex items-center space-x-3 p-3 rounded-fr bg-fr-gray-50">
-          <div className="w-10 h-10 bg-gradient-to-br from-fr-primary to-fr-secondary rounded-full flex items-center justify-center">
-            <span className="text-white font-semibold text-sm">U</span>
-          </div>
-          <div className="flex-1">
-            <div className="font-medium text-sm text-fr-gray-900">Usuario Demo</div>
-            <div className="text-xs text-fr-gray-500">user123@example.com</div>
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 };

@@ -11,7 +11,6 @@ import {
   XCircle
 } from 'lucide-react';
 import { expensesAPI, categoriesAPI, formatCurrency, formatPercentage } from '../services/api';
-import { mockExpenses, mockCategories, simulateNetworkDelay, createMockResponse } from '../services/mockData';
 import { usePeriod } from '../contexts/PeriodContext';
 import toast from 'react-hot-toast';
 
@@ -55,21 +54,20 @@ const Expenses = () => {
       ]);
       
       // Asegurar que siempre sean arrays
-      const expensesData = expensesResponse.data?.expenses || expensesResponse.data || [];
+      const expensesData = expensesResponse.data?.expenses || expensesResponse.expenses || [];
       const categoriesData = categoriesResponse.data?.data || categoriesResponse.data || [];
       
       setExpenses(Array.isArray(expensesData) ? expensesData : []);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
-      console.warn('⚠️ API no disponible, usando datos mock:', error.message);
+      console.warn('⚠️ Error al cargar gastos:', error.message);
       
-      // Fallback a datos mock
-      await simulateNetworkDelay(300);
-      setExpenses(mockExpenses);
-      setCategories(mockCategories);
+      // Establecer datos vacíos
+      setExpenses([]);
+      setCategories([]);
       
-      toast.success('🚧 Usando datos de ejemplo (backend no disponible)', {
-        duration: 2000,
+      toast.error('Error al cargar los gastos', {
+        duration: 3000,
       });
     } finally {
       setLoading(false);
