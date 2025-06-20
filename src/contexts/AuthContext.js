@@ -2,12 +2,13 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import authService from '../services/authService';
 
 // Crear el contexto
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 // Hook personalizado para usar el contexto
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
+    console.error('❌ useAuth llamado fuera del AuthProvider');
     throw new Error('useAuth debe ser usado dentro de un AuthProvider');
   }
   return context;
@@ -25,183 +26,123 @@ export const AUTH_STATES = {
  * Proveedor del contexto de autenticación
  */
 export const AuthProvider = ({ children }) => {
+  console.log('🔧 AuthProvider iniciando...');
+  
   const [authState, setAuthState] = useState(AUTH_STATES.LOADING);
   const [user, setUser] = useState(null);
-  const [sessionInfo, setSessionInfo] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  /**
-   * Actualiza el estado de autenticación basado en el servicio
-   */
-  const updateAuthState = useCallback(() => {
-    try {
-      const isAuth = authService.isAuthenticated();
-      const currentUser = authService.getCurrentUser();
-      const session = authService.getSessionInfo();
-
-      setUser(currentUser);
-      setSessionInfo(session);
-      setAuthState(isAuth ? AUTH_STATES.AUTHENTICATED : AUTH_STATES.UNAUTHENTICATED);
-    } catch (error) {
-      console.error('Error updating auth state:', error);
-      setAuthState(AUTH_STATES.ERROR);
-      setUser(null);
-      setSessionInfo(null);
-    }
-  }, []);
-
-  /**
-   * Inicializa el estado de autenticación al cargar la aplicación
-   */
+  // Verificar autenticación inicial
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Si hay un usuario logueado, intentar obtener su perfil actualizado
         if (authService.isAuthenticated()) {
-          try {
-            await authService.getProfile();
-          } catch (error) {
-            // Si falla obtener el perfil, limpiar datos
-            console.warn('Failed to get profile on init:', error);
-            authService.clearAuthData();
-          }
+          const currentUser = authService.getCurrentUser();
+          setUser(currentUser);
+          setAuthState(AUTH_STATES.AUTHENTICATED);
+          console.log('✅ Usuario ya autenticado:', currentUser?.email);
+        } else {
+          setAuthState(AUTH_STATES.UNAUTHENTICATED);
+          console.log('⚠️ Usuario no autenticado');
         }
-
-        updateAuthState();
       } catch (error) {
-        console.error('Error initializing auth:', error);
-        setAuthState(AUTH_STATES.ERROR);
+        console.error('❌ Error inicializando auth:', error);
+        setAuthState(AUTH_STATES.UNAUTHENTICATED);
       } finally {
         setIsInitialized(true);
       }
     };
 
     initializeAuth();
-  }, [updateAuthState]);
+  }, []);
 
-  /**
-   * Configurar un timer para verificar expiración del token
-   */
-  useEffect(() => {
-    if (authState !== AUTH_STATES.AUTHENTICATED) return;
-
-    const checkTokenExpiration = () => {
-      if (!authService.isTokenValid()) {
-        handleLogout();
-      }
-    };
-
-    // Verificar cada minuto
-    const interval = setInterval(checkTokenExpiration, 60000);
-
-    return () => clearInterval(interval);
-  }, [authState]);
-
-  /**
-   * Maneja el registro de usuario
-   */
-  const handleRegister = useCallback(async (userData) => {
+  // Funciones de autenticación
+  const login = useCallback(async (credentials) => {
     try {
       setAuthState(AUTH_STATES.LOADING);
-      
-      const result = await authService.register(userData);
-      updateAuthState();
-      
-      return result;
-    } catch (error) {
-      setAuthState(AUTH_STATES.UNAUTHENTICATED);
-      throw error;
-    }
-  }, [updateAuthState]);
-
-  /**
-   * Maneja el login de usuario
-   */
-  const handleLogin = useCallback(async (credentials) => {
-    try {
-      setAuthState(AUTH_STATES.LOADING);
+      console.log('🔧 Intentando login...');
       
       const result = await authService.login(credentials);
-      updateAuthState();
+      setUser(result.data.user);
+      setAuthState(AUTH_STATES.AUTHENTICATED);
       
+      console.log('✅ Login exitoso:', result.data.user?.email);
       return result;
     } catch (error) {
+      console.error('❌ Error en login:', error);
       setAuthState(AUTH_STATES.UNAUTHENTICATED);
       throw error;
     }
-  }, [updateAuthState]);
+  }, []);
 
-  /**
-   * Maneja el logout
-   */
-  const handleLogout = useCallback(async () => {
+  const register = useCallback(async (userData) => {
     try {
+      setAuthState(AUTH_STATES.LOADING);
+      console.log('🔧 Intentando registro...');
+      
+      const result = await authService.register(userData);
+      setUser(result.data.user);
+      setAuthState(AUTH_STATES.AUTHENTICATED);
+      
+      console.log('✅ Registro exitoso:', result.data.user?.email);
+      return result;
+    } catch (error) {
+      console.error('❌ Error en registro:', error);
+      setAuthState(AUTH_STATES.UNAUTHENTICATED);
+      throw error;
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      console.log('🔧 Cerrando sesión...');
       await authService.logout();
     } catch (error) {
-      console.warn('Error during logout:', error);
+      console.warn('⚠️ Error durante logout:', error);
     } finally {
-      updateAuthState();
-    }
-  }, [updateAuthState]);
-
-  /**
-   * Actualiza el perfil del usuario
-   */
-  const updateProfile = useCallback(async () => {
-    try {
-      const profile = await authService.getProfile();
-      setUser(profile);
-      return profile;
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      throw error;
+      setUser(null);
+      setAuthState(AUTH_STATES.UNAUTHENTICATED);
+      console.log('✅ Sesión cerrada');
     }
   }, []);
 
-  /**
-   * Cambia la contraseña del usuario
-   */
-  const changePassword = useCallback(async (passwordData) => {
-    try {
-      return await authService.changePassword(passwordData);
-    } catch (error) {
-      throw error;
-    }
-  }, []);
-
-  /**
-   * Verifica si el usuario tiene un rol específico
-   */
-  const hasRole = useCallback((role) => {
-    return authService.hasRole(role);
-  }, []);
-
-  /**
-   * Obtiene headers de autorización
-   */
-  const getAuthHeaders = useCallback(() => {
-    return authService.getAuthHeaders();
-  }, []);
-
-  /**
-   * Renueva el token manualmente
-   */
   const refreshToken = useCallback(async () => {
     try {
-      await authService.refreshToken();
-      updateAuthState();
+      const result = await authService.refreshToken();
+      return result;
     } catch (error) {
-      handleLogout();
+      console.error('❌ Error renovando token:', error);
+      await logout();
       throw error;
     }
-  }, [updateAuthState, handleLogout]);
+  }, [logout]);
 
-  // Valores del contexto
+  const changePassword = useCallback(async (passwordData) => {
+    try {
+      const result = await authService.changePassword(passwordData);
+      return result;
+    } catch (error) {
+      console.error('❌ Error cambiando contraseña:', error);
+      throw error;
+    }
+  }, []);
+
+  const updateProfile = useCallback(async (profileData) => {
+    try {
+      // Por ahora solo simulamos la actualización
+      setUser(prev => ({ ...prev, ...profileData }));
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Error actualizando perfil:', error);
+      throw error;
+    }
+  }, []);
+
+  // Valor del contexto
   const contextValue = {
     // Estado
     authState,
     user,
-    sessionInfo,
     isInitialized,
     
     // Estados derivados
@@ -210,21 +151,26 @@ export const AuthProvider = ({ children }) => {
     isError: authState === AUTH_STATES.ERROR,
     
     // Acciones
-    register: handleRegister,
-    login: handleLogin,
-    logout: handleLogout,
-    updateProfile,
-    changePassword,
+    login,
+    register,
+    logout,
     refreshToken,
+    changePassword,
+    updateProfile,
     
     // Utilidades
-    hasRole,
-    getAuthHeaders,
-    
-    // Info de la sesión
-    timeUntilExpiry: sessionInfo?.timeUntilExpiry || 0,
-    expiresAt: sessionInfo?.expiresAt,
+    hasRole: (role) => user?.roles?.includes(role) || false,
+    getAuthHeaders: () => authService.getAuthHeaders(),
+    timeUntilExpiry: authService.getSessionInfo().timeUntilExpiry,
+    expiresAt: authService.getSessionInfo().expiresAt,
   };
+
+  console.log('🔧 AuthProvider contexto:', {
+    authState,
+    isAuthenticated: contextValue.isAuthenticated,
+    userEmail: user?.email || 'no user',
+    isInitialized
+  });
 
   return (
     <AuthContext.Provider value={contextValue}>
@@ -234,7 +180,7 @@ export const AuthProvider = ({ children }) => {
 };
 
 /**
- * Hook para verificar autenticación con loading
+ * Hook para verificar autenticación
  */
 export const useAuthStatus = () => {
   const { isAuthenticated, isLoading, isInitialized } = useAuth();
@@ -252,11 +198,19 @@ export const useAuthStatus = () => {
 export const useUser = () => {
   const { user, updateProfile } = useAuth();
   
+  const fullName = user 
+    ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Usuario'
+    : 'Usuario';
+    
+  const initials = user 
+    ? `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}` 
+    : 'U';
+  
   return {
     user,
+    fullName,
+    initials,
     updateProfile,
-    fullName: user ? `${user.first_name} ${user.last_name}` : '',
-    initials: user ? `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}` : '',
   };
 };
 

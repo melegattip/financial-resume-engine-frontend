@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Download, BarChart3, TrendingUp, TrendingDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { reportsAPI, formatCurrency } from '../services/api';
-import { mockReportData, simulateNetworkDelay, createMockResponse } from '../services/mockData';
 import { usePeriod } from '../contexts/PeriodContext';
 import toast from 'react-hot-toast';
 
@@ -28,14 +27,18 @@ const Reports = () => {
       const response = await reportsAPI.generate(dateRange.start_date, dateRange.end_date);
       setReportData(response.data);
     } catch (error) {
-      console.warn('⚠️ API no disponible, usando datos mock:', error.message);
+      console.warn('⚠️ API no disponible:', error.message);
       
-      // Fallback a datos mock
-      await simulateNetworkDelay(300);
-      setReportData(mockReportData);
+      // Establecer datos vacíos
+      setReportData({
+        total_income: 0,
+        total_expenses: 0,
+        transactions: [],
+        category_summary: []
+      });
       
-      toast.success('🚧 Usando datos de ejemplo (backend no disponible)', {
-        duration: 2000,
+      toast.error('Error al generar el reporte', {
+        duration: 3000,
       });
     } finally {
       setLoading(false);

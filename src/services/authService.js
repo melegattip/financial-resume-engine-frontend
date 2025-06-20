@@ -73,18 +73,30 @@ class AuthService {
       async (error) => {
         const originalRequest = error.config;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Solo intentar refresh si es un 401 y no es una petición de login/register
+        const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
+                              originalRequest.url?.includes('/auth/register') ||
+                              originalRequest.url?.includes('/auth/refresh');
+
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
           originalRequest._retry = true;
 
-          // Intentar refresh token
-          try {
-            await this.refreshToken();
-            originalRequest.headers.Authorization = `Bearer ${this.token}`;
-            return authAPI(originalRequest);
-          } catch (refreshError) {
+          // Solo intentar refresh token si tenemos un token válido almacenado
+          if (this.token && this.isTokenValid()) {
+            try {
+              await this.refreshToken();
+              originalRequest.headers.Authorization = `Bearer ${this.token}`;
+              return authAPI(originalRequest);
+            } catch (refreshError) {
+              this.logout();
+              window.location.href = '/login';
+              return Promise.reject(refreshError);
+            }
+          } else {
+            // Si no tenemos token válido, ir directo al login
             this.logout();
             window.location.href = '/login';
-            return Promise.reject(refreshError);
+            return Promise.reject(error);
           }
         }
 
@@ -112,7 +124,17 @@ class AuthService {
    */
   async register(userData) {
     try {
-      const response = await authAPI.post('/auth/register', userData);
+      // Transformar datos del frontend al formato que espera el backend
+      const backendData = {
+        email: userData.email,
+        password: userData.password,
+        first_name: userData.firstName,
+        last_name: userData.lastName
+      };
+      
+      console.log('🔧 Enviando datos de registro:', backendData);
+      
+      const response = await authAPI.post('/auth/register', backendData);
       const { data } = response.data;
       
       this.saveAuthData(data);
@@ -120,7 +142,8 @@ class AuthService {
       toast.success('¡Registro exitoso! Bienvenido');
       return { success: true, data };
     } catch (error) {
-      const message = error.response?.data?.error || 'Error en el registro';
+      console.error('❌ Error en registro:', error.response?.data || error.message);
+      const message = error.response?.data?.error || error.response?.data?.message || 'Error en el registro';
       toast.error(message);
       throw new Error(message);
     }
@@ -270,9 +293,22 @@ class AuthService {
    */
   getAuthHeaders() {
     if (this.token && this.isTokenValid()) {
-      return {
+      const headers = {
         Authorization: `Bearer ${this.token}`,
       };
+      
+      // Agregar X-Caller-ID si tenemos usuario
+      // Intentar diferentes propiedades que podría tener el ID
+      let userId = null;
+      if (this.user) {
+        userId = this.user.id || this.user.ID || this.user.user_id || this.user.userId;
+      }
+      
+      if (userId) {
+        headers['X-Caller-ID'] = userId.toString();
+      }
+      
+      return headers;
     }
     return {};
   }
