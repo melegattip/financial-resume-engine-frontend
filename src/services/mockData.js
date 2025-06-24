@@ -127,6 +127,96 @@ export const simulateNetworkDelay = (ms = 500) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
+// Mock data para AI Insights que coincide con la UI
+export const mockAIInsights = {
+  ai_powered: false,
+  insights: [
+    {
+      id: 'insight-1',
+      title: 'Los gastos representan el 68% de los ingresos',
+      description: 'Es importante analizar y reducir los gastos para aumentar la rentabilidad.',
+      category: 'Gastos',
+      impact: 'high',
+      percentage: 68
+    },
+    {
+      id: 'insight-2', 
+      title: 'Los ingresos superan los gastos en $152,000.00',
+      description: 'Mantener un balance positivo es clave para la estabilidad financiera.',
+      category: 'Balance',
+      impact: 'high',
+      amount: 152000
+    },
+    {
+      id: 'insight-3',
+      title: 'El balance actual es sólido',
+      description: 'Contar con un balance positivo es positivo para futuras inversiones o imprevistos.',
+      category: 'Ahorro',
+      impact: 'medium'
+    }
+  ],
+  summary: {
+    total_insights: 3,
+    high_impact_count: 2, 
+    medium_impact_count: 1,
+    low_impact_count: 0,
+    potential_savings: 0,
+    top_categories: ['Gastos', 'Balance', 'Ahorro']
+  },
+  suggestions: [
+    {
+      id: 'suggestion-1',
+      title: 'Acción para Los gastos representan el 68% de los ingresos',
+      description: 'Basado en el insight: Es importante analizar y reducir los gastos para aumentar la rentabilidad.',
+      action_type: 'reduce',
+      priority: 'high',
+      estimated_impact: 0
+    },
+    {
+      id: 'suggestion-2',
+      title: 'Acción para Los ingresos superan los gastos en $152,000.00',
+      description: 'Basado en el insight: Mantener un balance positivo es clave para la estabilidad financiera.',
+      action_type: 'optimize',
+      priority: 'medium',
+      estimated_impact: 0
+    },
+    {
+      id: 'suggestion-3',
+      title: 'Acción para El balance actual es sólido',
+      description: 'Basado en el insight: Contar con un balance positivo es positivo para futuras inversiones o imprevistos.',
+      action_type: 'review',
+      priority: 'low',
+      estimated_impact: 0
+    }
+  ],
+  period: 'Enero 2025',
+  generated_at: new Date().toISOString()
+};
+
+// Mock data para AI Patterns
+export const mockAIPatterns = {
+  ai_powered: false,
+  patterns: [],
+  anomalies: [],
+  trends: [
+    {
+      category: 'Alimentación',
+      direction: 'stable',
+      percentage: 0,
+      description: 'Los gastos en alimentación se mantienen estables en comparación con los ingresos totales.'
+    },
+    {
+      category: 'Transporte',
+      direction: 'stable', 
+      percentage: 0,
+      description: 'Los gastos en transporte se mantienen estables en comparación con los ingresos totales.'
+    }
+  ],
+  predictions: [],
+  period: 'Enero 2025',
+  generated_at: new Date().toISOString()
+};
+
 // Mock API responses con estructura correcta
 export const createMockResponse = (data) => ({
   data: data,
