@@ -27,6 +27,7 @@ import {
 } from 'recharts';
 import { expensesAPI, incomesAPI, categoriesAPI, dashboardAPI, analyticsAPI, formatCurrency, formatDate, formatPercentage as formatPercentageUtil } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
+import AIInsights from '../components/AIInsights';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -530,6 +531,9 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* AI Insights Section */}
+      <AIInsights />
 
       {/* Transacciones por mes - Dos columnas */}
       {hasActiveFilters && (data.expenses.length > 0 || data.incomes.length > 0) && (

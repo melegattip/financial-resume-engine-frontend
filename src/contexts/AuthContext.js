@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import authService from '../services/authService';
+import { secureError, secureDebug, secureLog } from '../utils/secureLogger';
 
 // Crear el contexto
 const AuthContext = createContext(null);
@@ -8,7 +9,7 @@ const AuthContext = createContext(null);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    console.error('❌ useAuth llamado fuera del AuthProvider');
+    secureError('useAuth llamado fuera del AuthProvider');
     throw new Error('useAuth debe ser usado dentro de un AuthProvider');
   }
   return context;
@@ -26,7 +27,7 @@ export const AUTH_STATES = {
  * Proveedor del contexto de autenticación
  */
 export const AuthProvider = ({ children }) => {
-  console.log('🔧 AuthProvider iniciando...');
+  secureDebug('AuthProvider iniciando...');
   
   const [authState, setAuthState] = useState(AUTH_STATES.LOADING);
   const [user, setUser] = useState(null);
@@ -40,13 +41,13 @@ export const AuthProvider = ({ children }) => {
           const currentUser = authService.getCurrentUser();
           setUser(currentUser);
           setAuthState(AUTH_STATES.AUTHENTICATED);
-          console.log('✅ Usuario ya autenticado:', currentUser?.email);
+          secureLog('Usuario ya autenticado');
         } else {
           setAuthState(AUTH_STATES.UNAUTHENTICATED);
-          console.log('⚠️ Usuario no autenticado');
+          secureDebug('Usuario no autenticado');
         }
       } catch (error) {
-        console.error('❌ Error inicializando auth:', error);
+        secureError('Error inicializando auth:', error);
         setAuthState(AUTH_STATES.UNAUTHENTICATED);
       } finally {
         setIsInitialized(true);
@@ -60,16 +61,16 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (credentials) => {
     try {
       setAuthState(AUTH_STATES.LOADING);
-      console.log('🔧 Intentando login...');
+      secureDebug('Intentando login...');
       
       const result = await authService.login(credentials);
       setUser(result.data.user);
       setAuthState(AUTH_STATES.AUTHENTICATED);
       
-      console.log('✅ Login exitoso:', result.data.user?.email);
+      secureLog('Login exitoso');
       return result;
     } catch (error) {
-      console.error('❌ Error en login:', error);
+      secureError('Error en login:', error);
       setAuthState(AUTH_STATES.UNAUTHENTICATED);
       throw error;
     }
@@ -78,16 +79,16 @@ export const AuthProvider = ({ children }) => {
   const register = useCallback(async (userData) => {
     try {
       setAuthState(AUTH_STATES.LOADING);
-      console.log('🔧 Intentando registro...');
+      secureDebug('Intentando registro...');
       
       const result = await authService.register(userData);
       setUser(result.data.user);
       setAuthState(AUTH_STATES.AUTHENTICATED);
       
-      console.log('✅ Registro exitoso:', result.data.user?.email);
+      secureLog('Registro exitoso');
       return result;
     } catch (error) {
-      console.error('❌ Error en registro:', error);
+      secureError('Error en registro:', error);
       setAuthState(AUTH_STATES.UNAUTHENTICATED);
       throw error;
     }
@@ -95,14 +96,14 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(async () => {
     try {
-      console.log('🔧 Cerrando sesión...');
+      secureDebug('Cerrando sesión...');
       await authService.logout();
     } catch (error) {
-      console.warn('⚠️ Error durante logout:', error);
+      secureDebug('Error durante logout:', error);
     } finally {
       setUser(null);
       setAuthState(AUTH_STATES.UNAUTHENTICATED);
-      console.log('✅ Sesión cerrada');
+      secureLog('Sesión cerrada');
     }
   }, []);
 
@@ -111,7 +112,7 @@ export const AuthProvider = ({ children }) => {
       const result = await authService.refreshToken();
       return result;
     } catch (error) {
-      console.error('❌ Error renovando token:', error);
+      secureError('Error renovando token:', error);
       await logout();
       throw error;
     }
@@ -122,7 +123,7 @@ export const AuthProvider = ({ children }) => {
       const result = await authService.changePassword(passwordData);
       return result;
     } catch (error) {
-      console.error('❌ Error cambiando contraseña:', error);
+      secureError('Error cambiando contraseña:', error);
       throw error;
     }
   }, []);
@@ -133,7 +134,7 @@ export const AuthProvider = ({ children }) => {
       setUser(prev => ({ ...prev, ...profileData }));
       return { success: true };
     } catch (error) {
-      console.error('❌ Error actualizando perfil:', error);
+      secureError('Error actualizando perfil:', error);
       throw error;
     }
   }, []);
@@ -165,10 +166,10 @@ export const AuthProvider = ({ children }) => {
     expiresAt: authService.getSessionInfo().expiresAt,
   };
 
-  console.log('🔧 AuthProvider contexto:', {
+  secureDebug('AuthProvider contexto:', {
     authState,
     isAuthenticated: contextValue.isAuthenticated,
-    userEmail: user?.email || 'no user',
+    hasUser: !!user,
     isInitialized
   });
 

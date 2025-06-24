@@ -1,5 +1,8 @@
 import axios from 'axios';
 import toast from '../utils/notifications';
+import { logApiRequest, logApiResponse, logApiError, secureDebug } from '../utils/secureLogger';
+import { SecureTokenStorage, SecureUserStorage } from '../utils/secureStorage';
+import authService from './authService';
 
 // Configuración base de axios
 const api = axios.create({
@@ -10,89 +13,107 @@ const api = axios.create({
   },
 });
 
-// Función para obtener el token desde localStorage
+// Configuración especial para IA con timeout extendido
+const aiApi = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1',
+  timeout: 30000, // 30 segundos para IA
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Función para obtener el token desde authService o almacenamiento seguro
 const getAuthToken = () => {
-  return localStorage.getItem('auth_token');
+  // Intentar obtener el token del authService primero (en memoria)
+  let token = authService.getToken();
+  
+  // Si no está en memoria, intentar del almacenamiento seguro
+  if (!token) {
+    token = SecureTokenStorage.getToken();
+  }
+  
+  return token;
 };
 
-// Función para obtener el usuario actual desde localStorage
+// Función para obtener el usuario actual desde authService o almacenamiento seguro
 const getCurrentUser = () => {
   try {
-    const userData = localStorage.getItem('auth_user');
-    return userData ? JSON.parse(userData) : null;
+    // Intentar obtener el usuario del authService primero (en memoria)
+    let user = authService.getCurrentUser();
+    
+    // Si no está en memoria, intentar del almacenamiento seguro
+    if (!user) {
+      user = SecureUserStorage.getUser();
+    }
+    
+    return user;
   } catch (error) {
-    console.error('Error parsing user data:', error);
+    secureDebug('Error retrieving user data:', error);
     return null;
   }
 };
 
+// Función para configurar interceptors en ambas instancias
+const setupInterceptors = (apiInstance) => {
 // Interceptor para agregar el token JWT y X-Caller-ID
-api.interceptors.request.use(
+  apiInstance.interceptors.request.use(
   (config) => {
     const token = getAuthToken();
     const user = getCurrentUser();
     
+    // Logs de depuración
+    console.log('🔧 Interceptor Debug:', {
+      url: config.url,
+      token: token ? `${token.substring(0, 20)}...` : 'NO TOKEN',
+      user: user ? `ID: ${user.id}` : 'NO USER'
+    });
+    
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
+      console.log('✅ Token agregado al header Authorization');
+    } else {
+      console.log('❌ NO se agregó token - token no encontrado');
     }
     
-    // Debug: Ver qué estructura tiene el usuario
-    console.log('🔍 Debug user data:', user);
-    console.log('🔍 User ID specifically:', user?.id);
-    console.log('🔍 User ID type:', typeof user?.id);
-    
     // Agregar X-Caller-ID si tenemos usuario autenticado
-    // Intentar diferentes propiedades que podría tener el ID
     let userId = null;
     if (user) {
       userId = user.id || user.ID || user.user_id || user.userId;
-      console.log('🔍 Found userId:', userId, 'type:', typeof userId);
     }
     
     if (userId) {
       const callerIdValue = userId.toString();
       config.headers['X-Caller-ID'] = callerIdValue;
-      console.log('✅ Added X-Caller-ID:', callerIdValue);
-      console.log('✅ Final headers:', config.headers);
+      console.log('✅ X-Caller-ID agregado:', callerIdValue);
     } else {
-      console.warn('⚠️ No user ID found for X-Caller-ID. User object:', user);
+      console.log('❌ NO se agregó X-Caller-ID - usuario no encontrado');
     }
-    
-    console.log('🔧 API Request:', {
-      url: config.url,
-      method: config.method,
-      hasAuth: !!token,
-      hasCallerId: !!userId,
-      headers: config.headers,
-    });
+      
+      // Log seguro de la request
+      logApiRequest(config);
     
     return config;
   },
   (error) => {
-    console.error('🔧 Request interceptor error:', error);
+      secureDebug('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
 
 // Interceptor para manejar errores globalmente
-api.interceptors.response.use(
+  apiInstance.interceptors.response.use(
   (response) => {
-    console.log('✅ API Response:', {
-      url: response.config.url,
-      status: response.status,
-    });
+      logApiResponse(response);
     return response;
   },
   (error) => {
-    console.error('❌ API Error:', {
-      url: error.config?.url,
-      status: error.response?.status,
-      message: error.response?.data?.error || error.message,
-    });
+      logApiError(error);
     
     const message = error.response?.data?.error || error.message || 'Error desconocido';
     
-    if (error.response?.status === 401) {
+      if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
+        toast.error('La operación tomó demasiado tiempo. Intenta de nuevo.');
+      } else if (error.response?.status === 401) {
       toast.error('No autorizado - Inicia sesión');
       // Podrías redirigir al login aquí si es necesario
       // window.location.href = '/login';
@@ -107,6 +128,11 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+};
+
+// Configurar interceptors en ambas instancias
+setupInterceptors(api);
+setupInterceptors(aiApi);
 
 // Servicios de Categorías
 export const categoriesAPI = {
@@ -156,6 +182,18 @@ export const analyticsAPI = {
   expenses: (params) => api.get('/analytics/expenses', { params }),
   incomes: (params) => api.get('/analytics/incomes', { params }),
   categories: (params) => api.get('/analytics/categories', { params }),
+};
+
+// Servicios de IA (NUEVOS) - Usando aiApi con timeout extendido
+export const aiAPI = {
+  // Obtener insights financieros inteligentes
+  getInsights: (params) => aiApi.get('/ai/insights', { params }),
+  
+  // Analizar patrones de gastos
+  getPatterns: (params) => aiApi.get('/ai/patterns', { params }),
+  
+  // Sugerir categorización automática
+  suggestCategory: (description) => aiApi.post('/ai/categorize', { description }),
 };
 
 // Utilidades

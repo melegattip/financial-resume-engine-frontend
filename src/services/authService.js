@@ -1,5 +1,7 @@
 import axios from 'axios';
 import toast from '../utils/notifications';
+import { SecureTokenStorage, SecureUserStorage, setSecureItem, getSecureItem, removeSecureItem } from '../utils/secureStorage';
+import { secureDebug, secureError, secureLog } from '../utils/secureLogger';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1';
 
@@ -12,9 +14,7 @@ const authAPI = axios.create({
   },
 });
 
-// Claves para localStorage
-const TOKEN_KEY = 'auth_token';
-const USER_KEY = 'auth_user';
+// Claves para almacenamiento seguro
 const EXPIRES_AT_KEY = 'auth_expires_at';
 
 /**
@@ -22,11 +22,12 @@ const EXPIRES_AT_KEY = 'auth_expires_at';
  */
 class AuthService {
   constructor() {
-    this.token = localStorage.getItem(TOKEN_KEY);
+    // Inicializar propiedades
+    this.token = null;
     this.user = null;
-    this.expiresAt = localStorage.getItem(EXPIRES_AT_KEY);
+    this.expiresAt = null;
     
-    // Cargar usuario si existe token válido
+    // Cargar datos del almacenamiento seguro
     this.loadUserFromStorage();
     
     // Configurar interceptor de axios para agregar token automáticamente
@@ -34,20 +35,27 @@ class AuthService {
   }
 
   /**
-   * Carga el usuario del localStorage si hay un token válido
+   * Carga el usuario del almacenamiento seguro si hay un token válido
    */
   loadUserFromStorage() {
-    if (this.token && this.isTokenValid()) {
-      try {
-        const userData = localStorage.getItem(USER_KEY);
-        if (userData) {
-          this.user = JSON.parse(userData);
-        }
-      } catch (error) {
-        console.error('Error loading user from storage:', error);
+    try {
+      // Intentar cargar token y datos del almacenamiento seguro
+      this.token = SecureTokenStorage.getToken();
+      this.expiresAt = getSecureItem(EXPIRES_AT_KEY);
+      
+      if (this.token && this.isTokenValid()) {
+        this.user = SecureUserStorage.getUser();
+        console.log('✅ AuthService: Datos cargados correctamente del almacenamiento', {
+          tokenLength: this.token?.length,
+          userEmail: this.user?.email,
+          expiresAt: this.expiresAt
+        });
+      } else {
+        console.log('❌ AuthService: Token no válido o expirado, limpiando datos');
         this.clearAuthData();
       }
-    } else {
+    } catch (error) {
+      console.error('❌ AuthService: Error loading user from storage:', error);
       this.clearAuthData();
     }
   }
@@ -109,13 +117,25 @@ class AuthService {
    * Verifica si el token actual es válido (no expirado)
    */
   isTokenValid() {
-    if (!this.token || !this.expiresAt) return false;
+    if (!this.token || !this.expiresAt) {
+      console.log('❌ AuthService: Token o expiresAt no disponible');
+      return false;
+    }
     
     const now = Math.floor(Date.now() / 1000); // Tiempo actual en segundos
     const expirationTime = parseInt(this.expiresAt);
     
     // Considerar token inválido si expira en los próximos 5 minutos
-    return expirationTime > (now + 300);
+    const isValid = expirationTime > (now + 300);
+    
+    console.log('🔍 AuthService: Token validation:', {
+      now,
+      expirationTime,
+      timeLeft: expirationTime - now,
+      isValid
+    });
+    
+    return isValid;
   }
 
   /**
@@ -132,7 +152,7 @@ class AuthService {
         last_name: userData.lastName
       };
       
-      console.log('🔧 Enviando datos de registro:', backendData);
+      secureDebug('Enviando datos de registro (SECURE):', { email: backendData.email });
       
       const response = await authAPI.post('/auth/register', backendData);
       const { data } = response.data;
@@ -142,7 +162,7 @@ class AuthService {
       toast.success('¡Registro exitoso! Bienvenido');
       return { success: true, data };
     } catch (error) {
-      console.error('❌ Error en registro:', error.response?.data || error.message);
+      secureError('Error en registro:', error.response?.data || error.message);
       const message = error.response?.data?.error || error.response?.data?.message || 'Error en el registro';
       toast.error(message);
       throw new Error(message);
@@ -180,7 +200,7 @@ class AuthService {
       }
     } catch (error) {
       // No importa si falla, igual limpiaremos el local storage
-      console.warn('Error during logout:', error);
+      secureDebug('Error during logout:', error);
     } finally {
       this.clearAuthData();
       toast.success('Sesión cerrada correctamente');
@@ -211,9 +231,9 @@ class AuthService {
       const response = await authAPI.get('/auth/profile');
       const { data } = response.data;
       
-      // Actualizar datos del usuario en memoria y storage
+      // Actualizar datos del usuario en memoria y almacenamiento seguro
       this.user = data;
-      localStorage.setItem(USER_KEY, JSON.stringify(data));
+      SecureUserStorage.setUser(data);
       
       return data;
     } catch (error) {
@@ -239,7 +259,7 @@ class AuthService {
   }
 
   /**
-   * Guarda los datos de autenticación en localStorage
+   * Guarda los datos de autenticación en almacenamiento seguro
    * @param {Object} authData - Datos de autenticación del servidor
    */
   saveAuthData(authData) {
@@ -249,9 +269,10 @@ class AuthService {
     this.user = user;
     this.expiresAt = expires_at;
     
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-    localStorage.setItem(EXPIRES_AT_KEY, expires_at.toString());
+    // Almacenar de forma segura
+    SecureTokenStorage.setToken(token, expires_at ? (expires_at - Math.floor(Date.now() / 1000)) : null);
+    SecureUserStorage.setUser(user);
+    setSecureItem(EXPIRES_AT_KEY, expires_at.toString());
   }
 
   /**
@@ -262,9 +283,10 @@ class AuthService {
     this.user = null;
     this.expiresAt = null;
     
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(EXPIRES_AT_KEY);
+    // Limpiar almacenamiento seguro
+    SecureTokenStorage.removeToken();
+    SecureUserStorage.removeUser();
+    removeSecureItem(EXPIRES_AT_KEY);
   }
 
   /**

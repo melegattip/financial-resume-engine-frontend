@@ -8,11 +8,14 @@ import {
   Edit,
   Trash2,
   CheckCircle,
-  XCircle
+  XCircle,
+  CreditCard,
+  Banknote
 } from 'lucide-react';
 import { expensesAPI, categoriesAPI, formatCurrency, formatPercentage } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
 import toast from 'react-hot-toast';
+import SmartCategorization from '../components/SmartCategorization';
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([]);
@@ -454,6 +457,15 @@ const Expenses = () => {
                     </option>
                   ))}
                 </select>
+                
+                {/* Smart Categorization Component */}
+                <SmartCategorization
+                  description={formData.description}
+                  selectedCategoryId={formData.category_id}
+                  onCategorySelect={(categoryId) => setFormData({ ...formData, category_id: categoryId })}
+                  categories={categories}
+                  disabled={loading}
+                />
               </div>
 
               <div>
