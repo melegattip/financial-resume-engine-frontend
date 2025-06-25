@@ -133,19 +133,19 @@ export const categoriesAPI = {
 export const expensesAPI = {
   list: () => api.get('/expenses'),
   listUnpaid: () => api.get('/expenses/unpaid'),
-  get: (id) => api.get(`/expenses/${id}`),
+  get: (userId, id) => api.get(`/expenses/${userId}/${id}`),
   create: (data) => api.post('/expenses', data),
-  update: (id, data) => api.patch(`/expenses/${id}`, data),
-  delete: (id) => api.delete(`/expenses/${id}`),
+  update: (userId, id, data) => api.patch(`/expenses/${userId}/${id}`, data),
+  delete: (userId, id) => api.delete(`/expenses/${userId}/${id}`),
 };
 
 // Servicios de Ingresos
 export const incomesAPI = {
   list: () => api.get('/incomes'),
-  get: (id) => api.get(`/incomes/${id}`),
+  get: (userId, id) => api.get(`/incomes/${userId}/${id}`),
   create: (data) => api.post('/incomes', data),
-  update: (id, data) => api.patch(`/incomes/${id}`, data),
-  delete: (id) => api.delete(`/incomes/${id}`),
+  update: (userId, id, data) => api.patch(`/incomes/${userId}/${id}`, data),
+  delete: (userId, id) => api.delete(`/incomes/${userId}/${id}`),
 };
 
 // Servicios de Reportes
