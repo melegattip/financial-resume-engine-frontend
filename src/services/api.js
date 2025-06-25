@@ -84,11 +84,23 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.error('❌ API Error:', {
+    console.error('❌ API Error Details:', {
       url: error.config?.url,
       status: error.response?.status,
+      statusText: error.response?.statusText,
       message: error.response?.data?.error || error.message,
+      responseData: error.response?.data,
     });
+    
+    // Log adicional para debugging
+    if (error.response) {
+      console.error('🔍 Full response data:', error.response.data);
+      console.error('🔍 Response status:', error.response.status);
+    } else if (error.request) {
+      console.error('🔍 Request made but no response:', error.request);
+    } else {
+      console.error('🔍 Error setting up request:', error.message);
+    }
     
     const message = error.response?.data?.error || error.message || 'Error desconocido';
     
@@ -198,6 +210,41 @@ export const formatPercentage = (percentage) => {
   }
   
   return `${numericPercentage.toFixed(1)}%`;
+};
+
+// Servicios de IA
+export const aiAPI = {
+  // Obtener insights generados por IA
+  getInsights: async (year = null, month = null) => {
+    const params = new URLSearchParams();
+    if (year) params.append('year', year);
+    if (month) params.append('month', month);
+    
+    const queryString = params.toString();
+    const url = `/ai/insights${queryString ? '?' + queryString : ''}`;
+    
+    const response = await api.get(url);
+    return response.data;
+  },
+
+  // Analizar si puedes permitirte una compra
+  canIBuy: async (purchaseData) => {
+    const response = await api.post('/ai/can-i-buy', purchaseData);
+    return response.data;
+  },
+
+  // Obtener plan de mejora crediticia
+  getCreditImprovementPlan: async (year = null, month = null) => {
+    const params = new URLSearchParams();
+    if (year) params.append('year', year);
+    if (month) params.append('month', month);
+    
+    const queryString = params.toString();
+    const url = `/ai/credit-improvement-plan${queryString ? '?' + queryString : ''}`;
+    
+    const response = await api.get(url);
+    return response.data;
+  }
 };
 
 export default api; 

@@ -27,6 +27,7 @@ import {
 } from 'recharts';
 import { expensesAPI, incomesAPI, categoriesAPI, dashboardAPI, analyticsAPI, formatCurrency, formatDate, formatPercentage as formatPercentageUtil } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
+import AIInsights from '../components/AIInsights';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -1009,6 +1010,11 @@ const Dashboard = () => {
             });
           })()}
         </div>
+      </div>
+
+      {/* Widget de IA */}
+      <div className="card">
+        <AIInsights />
       </div>
     </div>
   );
