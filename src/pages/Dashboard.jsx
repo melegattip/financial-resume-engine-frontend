@@ -25,14 +25,15 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { expensesAPI, incomesAPI, categoriesAPI, dashboardAPI, analyticsAPI, formatCurrency, formatDate, formatPercentage as formatPercentageUtil } from '../services/api';
+import { formatCurrency, formatDate, formatPercentage as formatPercentageUtil } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
 import { useAuth } from '../contexts/AuthContext';
+import dataService from '../services/dataService';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState('fecha'); // nuevo estado para ordenamiento
+  const [sortBy, setSortBy] = useState('fecha');
   const [data, setData] = useState({
     totalIncome: 0,
     totalExpenses: 0,
@@ -61,61 +62,17 @@ const Dashboard = () => {
     console.log('🔍 Dashboard - Estado de autenticación:', {
       isAuthenticated,
       user,
-      token: localStorage.getItem('auth_token') ? 'EXISTS' : 'MISSING',
-      authHeaders: getAuthHeaders()
+      token: localStorage.getItem('auth_token') ? 'EXISTS' : 'MISSING'
     });
-  }, [isAuthenticated, user, getAuthHeaders]);
-
-  // Función de prueba para verificar endpoints
-  const testNewEndpoints = async () => {
-    if (!isAuthenticated) {
-      console.log('❌ Usuario no autenticado, no se pueden probar endpoints');
-      return;
-    }
-
-    console.log('🧪 Probando nuevos endpoints...');
-    
-    try {
-      // Probar dashboard endpoint
-      console.log('📊 Probando /api/v1/dashboard...');
-      const dashboardResponse = await dashboardAPI.overview({ year: 2024 });
-      console.log('✅ Dashboard endpoint funciona:', dashboardResponse.data);
-      
-      // Probar analytics endpoints
-      console.log('📈 Probando /api/v1/analytics/expenses...');
-      const expensesResponse = await analyticsAPI.expenses({ year: 2024, limit: 5 });
-      console.log('✅ Expenses analytics funciona:', expensesResponse.data);
-      
-      console.log('📊 Probando /api/v1/analytics/categories...');
-      const categoriesResponse = await analyticsAPI.categories({ year: 2024 });
-      console.log('✅ Categories analytics funciona:', categoriesResponse.data);
-      
-      console.log('💰 Probando /api/v1/analytics/incomes...');
-      const incomesResponse = await analyticsAPI.incomes({ year: 2024 });
-      console.log('✅ Incomes analytics funciona:', incomesResponse.data);
-      
-      toast.success('¡Todos los endpoints nuevos funcionan correctamente!');
-    } catch (error) {
-      console.error('❌ Error probando endpoints:', error);
-      toast.error('Error probando endpoints: ' + error.message);
-    }
-  };
-
-  // Ejecutar prueba cuando el usuario esté autenticado
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      // Esperar un poco para que se cargue todo
-      setTimeout(testNewEndpoints, 2000);
-    }
   }, [isAuthenticated, user]);
 
-  // Cargar datos iniciales (incluyendo calcular meses disponibles)
+  // Cargar datos iniciales
   useEffect(() => {
     loadDashboardData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Recargar datos cuando cambien los filtros del contexto global (sin recalcular meses)
+  // Recargar datos cuando cambien los filtros
   useEffect(() => {
     if (selectedMonth !== null || selectedYear !== null) {
       loadDashboardData(false); // false = no recalcular meses disponibles
@@ -129,132 +86,31 @@ const Dashboard = () => {
       
       // Obtener parámetros de filtro del contexto global
       const filterParams = getFilterParams();
+      
+      console.log('📊 Cargando dashboard con parámetros:', filterParams);
 
-      let data = {};
+      // Usar el servicio optimizado de datos
+      const dashboardData = await dataService.loadDashboardData(
+        filterParams, 
+        isAuthenticated && user // Solo usar endpoints optimizados si está autenticado
+      );
 
-      try {
-        // Intentar usar los nuevos endpoints del backend
-        const [dashboardResponse, expensesResponse, incomesResponse, categoriesResponse, oldCategoriesResponse] = await Promise.all([
-          dashboardAPI.overview(filterParams),
-          analyticsAPI.expenses({ ...filterParams, sort: 'date', order: 'desc', limit: 50 }),
-          analyticsAPI.incomes({ ...filterParams, sort: 'date', order: 'desc', limit: 50 }),
-          analyticsAPI.categories(filterParams),
-          categoriesAPI.list(), // Mantener para dropdown de filtros
-        ]);
-
-        // Extraer datos de las respuestas del backend
-        const dashboard = dashboardResponse.data || {};
-        const expensesData = expensesResponse.data || {};
-        const incomesData = incomesResponse.data || {};
-        const categoriesData = categoriesResponse.data || {};
-        const categoriesForDropdown = oldCategoriesResponse.data?.data || oldCategoriesResponse.data || [];
-
-        // Normalizar datos del backend (convertir PascalCase a camelCase)
-        const normalizedExpenses = (expensesData.Expenses || []).map(expense => ({
-          id: expense.ID || expense.id,
-          user_id: expense.UserID || expense.user_id,
-          amount: expense.Amount || expense.amount,
-          amount_paid: expense.AmountPaid || expense.amount_paid,
-          pending_amount: expense.PendingAmount || expense.pending_amount,
-          description: expense.Description || expense.description,
-          category_id: expense.CategoryID || expense.category_id,
-          paid: expense.Paid !== undefined ? expense.Paid : expense.paid,
-          due_date: expense.DueDate || expense.due_date,
-          percentage: expense.PercentageOfIncome || expense.percentage,
-          created_at: expense.CreatedAt || expense.created_at,
-          updated_at: expense.UpdatedAt || expense.updated_at
-        }));
-
-        const normalizedIncomes = (incomesData.Incomes || []).map(income => ({
-          id: income.ID || income.id,
-          user_id: income.UserID || income.user_id,
-          amount: income.Amount || income.amount,
-          description: income.Description || income.description,
-          category_id: income.CategoryID || income.category_id,
-          created_at: income.CreatedAt || income.created_at,
-          updated_at: income.UpdatedAt || income.updated_at
-        }));
-
-        // Usar datos pre-calculados del backend
-        data = {
-          // Métricas del dashboard (pre-calculadas por backend)
-          totalIncome: dashboard.Metrics?.TotalIncome || 0,
-          totalExpenses: dashboard.Metrics?.TotalExpenses || 0,
-          balance: dashboard.Metrics?.Balance || 0,
-          
-          // Transacciones normalizadas con porcentajes calculados por backend
-          expenses: normalizedExpenses,
-          incomes: normalizedIncomes,
-          
-          // Categorías para dropdown de filtros
-          categories: Array.isArray(categoriesForDropdown) ? categoriesForDropdown : [],
-          
-          // Datos adicionales del backend
-          dashboardMetrics: dashboard.Metrics || {},
-          expensesSummary: expensesData.Summary || {},
-          categoriesAnalytics: categoriesData.Categories || [],
-          
-          // Datos sin filtrar para calcular meses disponibles
-          allExpenses: normalizedExpenses,
-          allIncomes: normalizedIncomes,
-        };
-
-        console.log('✅ Usando nuevos endpoints del backend');
-      } catch (newEndpointsError) {
-        console.warn('⚠️ Nuevos endpoints no disponibles, usando endpoints legacy:', newEndpointsError.message);
-        
-        // Fallback a endpoints viejos con cálculos client-side
-        const [expensesResponse, incomesResponse, categoriesResponse] = await Promise.all([
-          expensesAPI.list(),
-          incomesAPI.list(),
-          categoriesAPI.list(),
-        ]);
-
-        // Asegurar que siempre sean arrays
-        const expensesData = expensesResponse.data?.expenses || expensesResponse.expenses || [];
-        const incomesData = incomesResponse.data?.incomes || incomesResponse.incomes || [];
-        const categoriesData = categoriesResponse.data?.data || categoriesResponse.data || [];
-        
-        const expenses = Array.isArray(expensesData) ? expensesData : [];
-        const incomes = Array.isArray(incomesData) ? incomesData : [];
-        const categories = Array.isArray(categoriesData) ? categoriesData : [];
-
-        // Filtrar datos client-side si hay filtros activos
-        const filteredExpenses = filterDataByMonthAndYear(expenses, selectedMonth, selectedYear);
-        const filteredIncomes = filterDataByMonthAndYear(incomes, selectedMonth, selectedYear);
-
-        const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-        const totalIncome = filteredIncomes.reduce((sum, income) => sum + income.amount, 0);
-
-        data = {
-          totalIncome,
-          totalExpenses,
-          balance: totalIncome - totalExpenses,
-          expenses: filteredExpenses,
-          incomes: filteredIncomes,
-          categories,
-          dashboardMetrics: {},
-          expensesSummary: {},
-          categoriesAnalytics: [],
-          
-          // Datos sin filtrar para calcular meses disponibles
-          allExpenses: expenses,
-          allIncomes: incomes,
-        };
-
-        console.log('✅ Usando endpoints legacy con cálculos client-side');
-      }
-
-      setData(data);
+      setData(dashboardData);
       
       // Actualizar datos disponibles en el contexto global solo la primera vez
       if (shouldUpdateAvailableData) {
-        updateAvailableData(data.allExpenses || data.expenses, data.allIncomes || data.incomes);
+        updateAvailableData(
+          dashboardData.allExpenses || dashboardData.expenses, 
+          dashboardData.allIncomes || dashboardData.incomes
+        );
       }
-    } catch (error) {
-      console.warn('⚠️ Todos los endpoints fallaron, usando datos vacíos:', error.message);
+
+      console.log(`✅ Dashboard cargado exitosamente (${dashboardData.source})`);
       
-      // Establecer datos vacíos en lugar de datos mock
+    } catch (error) {
+      console.error('❌ Error cargando dashboard:', error);
+      
+      // Último recurso: datos vacíos
       setData({
         totalIncome: 0,
         totalExpenses: 0,
@@ -267,14 +123,7 @@ const Dashboard = () => {
         categoriesAnalytics: [],
       });
       
-      if (shouldUpdateAvailableData) {
-        updateAvailableData([], []);
-      }
-      
-      // Solo mostrar error si realmente hay un problema de conectividad
-      toast.error('Error al cargar los datos del dashboard', {
-        duration: 3000,
-      });
+      toast.error('Error cargando datos del dashboard');
     } finally {
       setLoading(false);
     }
