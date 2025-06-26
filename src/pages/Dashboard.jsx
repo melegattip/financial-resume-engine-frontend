@@ -29,6 +29,7 @@ import { formatCurrency, formatDate, formatPercentage as formatPercentageUtil } 
 import { usePeriod } from '../contexts/PeriodContext';
 import { useAuth } from '../contexts/AuthContext';
 import dataService from '../services/dataService';
+import AIInsights from '../components/AIInsights';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -905,6 +906,11 @@ const Dashboard = () => {
             });
           })()}
         </div>
+      </div>
+
+      {/* Widget de IA */}
+      <div className="card">
+        <AIInsights />
       </div>
     </div>
   );
