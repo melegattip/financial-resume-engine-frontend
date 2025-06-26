@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Search, TrendingUp, Edit, Trash2 } from 'lucide-react';
-import { incomesAPI, categoriesAPI, formatCurrency } from '../services/api';
+import { formatCurrency } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
+import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
 import toast from 'react-hot-toast';
 
 const Incomes = () => {
@@ -25,6 +26,12 @@ const Incomes = () => {
     balancesHidden,
   } = usePeriod();
 
+  // Usar el hook optimizado para operaciones API
+  const { 
+    incomes: incomesAPI, 
+    categories: categoriesAPI
+  } = useOptimizedAPI();
+
   const formatAmount = (amount) => {
     if (balancesHidden) return '••••••';
     return formatCurrency(amount);
@@ -33,17 +40,25 @@ const Incomes = () => {
   const loadData = React.useCallback(async () => {
     try {
       setLoading(true);
+      console.log('🔄 Cargando datos de ingresos con API optimizada...');
+      
       const [incomesResponse, categoriesResponse] = await Promise.all([
         incomesAPI.list(),
         categoriesAPI.list(),
       ]);
       
-      // Asegurar que siempre sean arrays
-      const incomesData = incomesResponse.data?.incomes || incomesResponse.incomes || [];
-      const categoriesData = categoriesResponse.data?.data || categoriesResponse.data || [];
+      // Normalizar datos de respuesta
+      const incomesData = incomesResponse.data?.incomes || incomesResponse.incomes || incomesResponse || [];
+      const categoriesData = categoriesResponse.data?.data || categoriesResponse.data || categoriesResponse || [];
       
       setIncomes(Array.isArray(incomesData) ? incomesData : []);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+      
+      console.log('✅ Datos de ingresos cargados exitosamente:', {
+        incomes: incomesData.length,
+        categories: categoriesData.length
+      });
+      
     } catch (error) {
       console.warn('⚠️ Error al cargar ingresos:', error.message);
       
@@ -51,13 +66,11 @@ const Incomes = () => {
       setIncomes([]);
       setCategories([]);
       
-      toast.error('Error al cargar los ingresos', {
-        duration: 3000,
-      });
+      // No mostrar toast aquí porque useOptimizedAPI ya lo maneja
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [incomesAPI, categoriesAPI]);
 
   useEffect(() => {
     loadData();
@@ -73,18 +86,20 @@ const Incomes = () => {
       };
 
       if (editingIncome) {
-        await incomesAPI.update(editingIncome.user_id, editingIncome.id, dataToSend);
-        toast.success('Ingreso actualizado correctamente');
+        await incomesAPI.update(editingIncome.id, dataToSend);
+        // useOptimizedAPI ya muestra el toast de éxito
       } else {
         await incomesAPI.create(dataToSend);
-        toast.success('Ingreso creado correctamente');
+        // useOptimizedAPI ya muestra el toast de éxito
       }
+      
       setShowModal(false);
       setEditingIncome(null);
       setFormData({ description: '', amount: '', category_id: '' });
-      loadData();
+      await loadData();
     } catch (error) {
-      toast.error('Error al guardar el ingreso');
+      // useOptimizedAPI ya maneja el error
+      console.error('Error en handleSubmit:', error);
     }
   };
 
@@ -101,11 +116,12 @@ const Incomes = () => {
   const handleDelete = async (income) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este ingreso?')) {
       try {
-        await incomesAPI.delete(income.user_id, income.id);
-        toast.success('Ingreso eliminado correctamente');
-        loadData();
+        await incomesAPI.delete(income.id);
+        // useOptimizedAPI ya muestra el toast de éxito
+        await loadData();
       } catch (error) {
-        toast.error('Error al eliminar el ingreso');
+        // useOptimizedAPI ya maneja el error
+        console.error('Error en handleDelete:', error);
       }
     }
   };

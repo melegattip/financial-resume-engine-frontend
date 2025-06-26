@@ -10,8 +10,9 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
-import { expensesAPI, categoriesAPI, formatCurrency, formatPercentage } from '../services/api';
+import { formatCurrency, formatPercentage } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
+import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
 import toast from 'react-hot-toast';
 
 const Expenses = () => {
@@ -40,6 +41,12 @@ const Expenses = () => {
     balancesHidden,
   } = usePeriod();
 
+  // Usar el hook optimizado para operaciones API
+  const { 
+    expenses: expensesAPI, 
+    categories: categoriesAPI
+  } = useOptimizedAPI();
+
   const formatAmount = (amount) => {
     if (balancesHidden) return '••••••';
     return formatCurrency(amount);
@@ -48,17 +55,25 @@ const Expenses = () => {
   const loadData = React.useCallback(async () => {
     try {
       setLoading(true);
+      console.log('🔄 Cargando datos de gastos con API optimizada...');
+      
       const [expensesResponse, categoriesResponse] = await Promise.all([
         expensesAPI.list(),
         categoriesAPI.list(),
       ]);
       
-      // Asegurar que siempre sean arrays
-      const expensesData = expensesResponse.data?.expenses || expensesResponse.expenses || [];
-      const categoriesData = categoriesResponse.data?.data || categoriesResponse.data || [];
+      // Normalizar datos de respuesta
+      const expensesData = expensesResponse.data?.expenses || expensesResponse.expenses || expensesResponse || [];
+      const categoriesData = categoriesResponse.data?.data || categoriesResponse.data || categoriesResponse || [];
       
       setExpenses(Array.isArray(expensesData) ? expensesData : []);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+      
+      console.log('✅ Datos de gastos cargados exitosamente:', {
+        expenses: expensesData.length,
+        categories: categoriesData.length
+      });
+      
     } catch (error) {
       console.warn('⚠️ Error al cargar gastos:', error.message);
       
@@ -66,13 +81,11 @@ const Expenses = () => {
       setExpenses([]);
       setCategories([]);
       
-      toast.error('Error al cargar los gastos', {
-        duration: 3000,
-      });
+      // No mostrar toast aquí porque useOptimizedAPI ya lo maneja
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [expensesAPI, categoriesAPI]);
 
   useEffect(() => {
     loadData();
@@ -88,12 +101,13 @@ const Expenses = () => {
       };
 
       if (editingExpense) {
-        await expensesAPI.update(editingExpense.user_id, editingExpense.id, dataToSend);
-        toast.success('Gasto actualizado correctamente');
+        await expensesAPI.update(editingExpense.id, dataToSend);
+        // useOptimizedAPI ya muestra el toast de éxito
       } else {
         await expensesAPI.create(dataToSend);
-        toast.success('Gasto creado correctamente');
+        // useOptimizedAPI ya muestra el toast de éxito
       }
+      
       setShowModal(false);
       setEditingExpense(null);
       setFormData({
@@ -103,9 +117,12 @@ const Expenses = () => {
         due_date: '',
         paid: false,
       });
-      loadData();
+      
+      // Recargar datos para mostrar cambios
+      await loadData();
     } catch (error) {
-      toast.error('Error al guardar el gasto');
+      // useOptimizedAPI ya maneja el error y muestra el toast
+      console.error('Error en handleSubmit:', error);
     }
   };
 
@@ -124,11 +141,14 @@ const Expenses = () => {
   const handleDelete = async (expense) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este gasto?')) {
       try {
-        await expensesAPI.delete(expense.user_id, expense.id);
-        toast.success('Gasto eliminado correctamente');
-        loadData();
+        await expensesAPI.delete(expense.id);
+        // useOptimizedAPI ya muestra el toast de éxito
+        
+        // Recargar datos para mostrar cambios
+        await loadData();
       } catch (error) {
-        toast.error('Error al eliminar el gasto');
+        // useOptimizedAPI ya maneja el error
+        console.error('Error en handleDelete:', error);
       }
     }
   };
@@ -138,11 +158,14 @@ const Expenses = () => {
       // Si ya está pagado, permitir marcarlo como no pagado
       try {
         const updateData = { paid: false };
-        await expensesAPI.update(expense.user_id, expense.id, updateData);
-        toast.success('Gasto marcado como pendiente');
-        loadData();
+        await expensesAPI.update(expense.id, updateData);
+        // useOptimizedAPI ya muestra el toast de éxito
+        
+        // Recargar datos para mostrar cambios
+        await loadData();
       } catch (error) {
-        toast.error('Error al actualizar el estado del gasto');
+        // useOptimizedAPI ya maneja el error
+        console.error('Error en togglePaid:', error);
       }
     } else {
       // Si no está pagado, abrir modal de pago
@@ -158,7 +181,7 @@ const Expenses = () => {
       if (paymentType === 'total') {
         // Pago total - marcar como pagado
         const updateData = { paid: true };
-        await expensesAPI.update(payingExpense.user_id, payingExpense.id, updateData);
+        await expensesAPI.update(payingExpense.id, updateData);
         toast.success('Gasto pagado completamente');
       } else if (paymentType === 'partial') {
         // Pago parcial - enviar payment_amount
@@ -169,7 +192,7 @@ const Expenses = () => {
         }
         
         const updateData = { payment_amount: paymentAmt };
-        await expensesAPI.update(payingExpense.user_id, payingExpense.id, updateData);
+        await expensesAPI.update(payingExpense.id, updateData);
         
         // Verificar si el pago cubre el total
         const remaining = payingExpense.amount - (payingExpense.amount_paid || 0) - paymentAmt;
@@ -183,9 +206,12 @@ const Expenses = () => {
       setShowPaymentModal(false);
       setPayingExpense(null);
       setPaymentAmount('');
-      loadData();
+      
+      // Recargar datos para mostrar cambios
+      await loadData();
     } catch (error) {
-      toast.error('Error al procesar el pago');
+      // useOptimizedAPI ya maneja el error base, pero estos son casos especiales
+      console.error('Error en handlePayment:', error);
     }
   };
 

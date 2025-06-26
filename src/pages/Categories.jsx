@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Tag, Edit, Trash2 } from 'lucide-react';
-import { categoriesAPI } from '../services/api';
-import toast from 'react-hot-toast';
+import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
@@ -14,19 +13,28 @@ const Categories = () => {
     description: '',
   });
 
+  // Usar el hook optimizado para operaciones API
+  const { 
+    categories: categoriesAPI
+  } = useOptimizedAPI();
+
   useEffect(() => {
     loadCategories();
-  }, []);
+  }, [loadCategories]);
 
   const loadCategories = async () => {
     try {
       setLoading(true);
+      console.log('🔄 Cargando categorías con API optimizada...');
+      
       const response = await categoriesAPI.list();
-      const categoriesData = response.data?.data || response.data || [];
+      const categoriesData = response.data?.data || response.data || response || [];
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+      
+      console.log('✅ Categorías cargadas exitosamente:', categoriesData.length);
     } catch (error) {
       console.error('Error loading categories:', error);
-      toast.error('Error al cargar las categorías');
+      // No mostrar toast aquí porque useOptimizedAPI ya lo maneja
       setCategories([]);
     } finally {
       setLoading(false);
@@ -38,17 +46,19 @@ const Categories = () => {
     try {
       if (editingCategory) {
         await categoriesAPI.update(editingCategory.id, formData);
-        toast.success('Categoría actualizada correctamente');
+        // useOptimizedAPI ya muestra el toast de éxito
       } else {
         await categoriesAPI.create(formData);
-        toast.success('Categoría creada correctamente');
+        // useOptimizedAPI ya muestra el toast de éxito
       }
+      
       setShowModal(false);
       setEditingCategory(null);
       setFormData({ name: '', description: '' });
-      loadCategories();
+      await loadCategories();
     } catch (error) {
-      toast.error('Error al guardar la categoría');
+      // useOptimizedAPI ya maneja el error
+      console.error('Error en handleSubmit:', error);
     }
   };
 
@@ -65,10 +75,11 @@ const Categories = () => {
     if (window.confirm('¿Estás seguro de que quieres eliminar esta categoría?')) {
       try {
         await categoriesAPI.delete(category.id);
-        toast.success('Categoría eliminada correctamente');
-        loadCategories();
+        // useOptimizedAPI ya muestra el toast de éxito
+        await loadCategories();
       } catch (error) {
-        toast.error('Error al eliminar la categoría');
+        // useOptimizedAPI ya maneja el error
+        console.error('Error en handleDelete:', error);
       }
     }
   };
