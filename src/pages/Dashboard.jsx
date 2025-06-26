@@ -27,6 +27,7 @@ import {
 } from 'recharts';
 import { expensesAPI, incomesAPI, categoriesAPI, dashboardAPI, analyticsAPI, formatCurrency, formatDate, formatPercentage as formatPercentageUtil } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
+import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -52,6 +53,19 @@ const Dashboard = () => {
     updateAvailableData,
   } = usePeriod();
 
+  // Usar el contexto de autenticación
+  const { user, isAuthenticated, getAuthHeaders } = useAuth();
+
+  // Debug de autenticación
+  useEffect(() => {
+    console.log('🔍 Dashboard - Estado de autenticación:', {
+      isAuthenticated,
+      user,
+      token: localStorage.getItem('auth_token') ? 'EXISTS' : 'MISSING',
+      authHeaders: getAuthHeaders()
+    });
+  }, [isAuthenticated, user, getAuthHeaders]);
+
   // Cargar datos iniciales (incluyendo calcular meses disponibles)
   useEffect(() => {
     loadDashboardData();
@@ -65,8 +79,6 @@ const Dashboard = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMonth, selectedYear]);
-
-
 
   const loadDashboardData = async (shouldUpdateAvailableData = true) => {
     try {
@@ -93,8 +105,6 @@ const Dashboard = () => {
         const incomesData = incomesResponse.data || {};
         const categoriesData = categoriesResponse.data || {};
         const categoriesForDropdown = oldCategoriesResponse.data?.data || oldCategoriesResponse.data || [];
-
-
 
         // Normalizar datos del backend (convertir PascalCase a camelCase)
         const normalizedExpenses = (expensesData.Expenses || []).map(expense => ({
@@ -264,8 +274,6 @@ const Dashboard = () => {
     });
   };
   
-
-
   const formatMonthLabel = (monthString) => {
     // Evitar problemas de zona horaria usando constructor numérico
     const [year, month] = monthString.split('-');
@@ -278,8 +286,6 @@ const Dashboard = () => {
     const capitalized = formatted.charAt(0).toUpperCase() + formatted.slice(1);
     return capitalized;
   };
-
-
 
   // Función para obtener colores por categoría
   const getCategoryColor = (categoryId) => {
@@ -431,8 +437,6 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-
-
       {/* Métricas principales */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {/* Balance total */}

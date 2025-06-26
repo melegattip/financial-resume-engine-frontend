@@ -26,44 +26,28 @@ const getCurrentUser = () => {
   }
 };
 
-// Interceptor para agregar el token JWT y X-Caller-ID
+// Interceptor para agregar el token JWT
 api.interceptors.request.use(
   (config) => {
     const token = getAuthToken();
     const user = getCurrentUser();
     
+    // Agregar Authorization header si tenemos token
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     
-    // Debug: Ver qué estructura tiene el usuario
-    console.log('🔍 Debug user data:', user);
-    console.log('🔍 User ID specifically:', user?.id);
-    console.log('🔍 User ID type:', typeof user?.id);
-    
-    // Agregar X-Caller-ID si tenemos usuario autenticado
-    // Intentar diferentes propiedades que podría tener el ID
-    let userId = null;
-    if (user) {
-      userId = user.id || user.ID || user.user_id || user.userId;
-      console.log('🔍 Found userId:', userId, 'type:', typeof userId);
-    }
-    
-    if (userId) {
-      const callerIdValue = userId.toString();
-      config.headers['X-Caller-ID'] = callerIdValue;
-      console.log('✅ Added X-Caller-ID:', callerIdValue);
-      console.log('✅ Final headers:', config.headers);
-    } else {
-      console.warn('⚠️ No user ID found for X-Caller-ID. User object:', user);
+    // Agregar X-Caller-ID si tenemos usuario autenticado (para compatibilidad con backend)
+    if (user && user.id) {
+      config.headers['X-Caller-ID'] = user.id.toString();
     }
     
     console.log('🔧 API Request:', {
       url: config.url,
       method: config.method,
       hasAuth: !!token,
-      hasCallerId: !!userId,
-      headers: config.headers,
+      hasCallerId: !!(user && user.id),
+      userId: user?.id
     });
     
     return config;
@@ -93,9 +77,15 @@ api.interceptors.response.use(
     const message = error.response?.data?.error || error.message || 'Error desconocido';
     
     if (error.response?.status === 401) {
-      toast.error('No autorizado - Inicia sesión');
-      // Podrías redirigir al login aquí si es necesario
-      // window.location.href = '/login';
+      toast.error('Sesión expirada - Por favor inicia sesión nuevamente');
+      // Limpiar datos de autenticación
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      localStorage.removeItem('auth_expires_at');
+      // Redirigir al login
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1000);
     } else if (error.response?.status === 404) {
       toast.error('Recurso no encontrado');
     } else if (error.response?.status >= 500) {
