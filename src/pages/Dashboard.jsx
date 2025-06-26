@@ -66,6 +66,49 @@ const Dashboard = () => {
     });
   }, [isAuthenticated, user, getAuthHeaders]);
 
+  // Función de prueba para verificar endpoints
+  const testNewEndpoints = async () => {
+    if (!isAuthenticated) {
+      console.log('❌ Usuario no autenticado, no se pueden probar endpoints');
+      return;
+    }
+
+    console.log('🧪 Probando nuevos endpoints...');
+    
+    try {
+      // Probar dashboard endpoint
+      console.log('📊 Probando /api/v1/dashboard...');
+      const dashboardResponse = await dashboardAPI.overview({ year: 2024 });
+      console.log('✅ Dashboard endpoint funciona:', dashboardResponse.data);
+      
+      // Probar analytics endpoints
+      console.log('📈 Probando /api/v1/analytics/expenses...');
+      const expensesResponse = await analyticsAPI.expenses({ year: 2024, limit: 5 });
+      console.log('✅ Expenses analytics funciona:', expensesResponse.data);
+      
+      console.log('📊 Probando /api/v1/analytics/categories...');
+      const categoriesResponse = await analyticsAPI.categories({ year: 2024 });
+      console.log('✅ Categories analytics funciona:', categoriesResponse.data);
+      
+      console.log('💰 Probando /api/v1/analytics/incomes...');
+      const incomesResponse = await analyticsAPI.incomes({ year: 2024 });
+      console.log('✅ Incomes analytics funciona:', incomesResponse.data);
+      
+      toast.success('¡Todos los endpoints nuevos funcionan correctamente!');
+    } catch (error) {
+      console.error('❌ Error probando endpoints:', error);
+      toast.error('Error probando endpoints: ' + error.message);
+    }
+  };
+
+  // Ejecutar prueba cuando el usuario esté autenticado
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      // Esperar un poco para que se cargue todo
+      setTimeout(testNewEndpoints, 2000);
+    }
+  }, [isAuthenticated, user]);
+
   // Cargar datos iniciales (incluyendo calcular meses disponibles)
   useEffect(() => {
     loadDashboardData();
