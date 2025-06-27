@@ -12,7 +12,10 @@ import {
   MinusCircle,
   FolderOpen,
   FileText,
-  Settings
+  Settings,
+  PieChart,
+  Target,
+  RefreshCw
 } from 'lucide-react';
 
 const Header = () => {
@@ -51,6 +54,21 @@ const Header = () => {
         title: 'Reportes', 
         subtitle: 'Análisis detallado de tus finanzas',
         icon: FileText
+      },
+      '/budgets': { 
+        title: 'Presupuestos', 
+        subtitle: 'Controla tus límites de gasto',
+        icon: PieChart
+      },
+      '/savings-goals': { 
+        title: 'Metas de Ahorro', 
+        subtitle: 'Alcanza tus objetivos financieros',
+        icon: Target
+      },
+      '/recurring-transactions': { 
+        title: 'Gastos Recurrentes', 
+        subtitle: 'Automatiza tus transacciones',
+        icon: RefreshCw
       },
       '/settings': { 
         title: 'Configuración', 

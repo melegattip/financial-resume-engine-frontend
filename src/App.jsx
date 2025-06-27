@@ -13,6 +13,11 @@ import Categories from './pages/Categories';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 
+// Nuevas páginas de funcionalidades avanzadas
+import Budgets from './pages/Budgets';
+import SavingsGoals from './pages/SavingsGoals';
+import RecurringTransactions from './pages/RecurringTransactions';
+
 // Páginas de autenticación
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -62,6 +67,9 @@ function AppContent() {
         <Route path="incomes" element={<Incomes />} />
         <Route path="categories" element={<Categories />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="budgets" element={<Budgets />} />
+        <Route path="savings-goals" element={<SavingsGoals />} />
+        <Route path="recurring-transactions" element={<RecurringTransactions />} />
         <Route path="settings" element={<Settings />} />
         <Route index element={<Navigate to="/dashboard" replace />} />
       </Route>
