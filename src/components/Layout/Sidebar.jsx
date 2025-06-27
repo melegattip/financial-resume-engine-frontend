@@ -8,6 +8,7 @@ import {
   CreditCard,
   BarChart3,
   Tag,
+  Brain,
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -17,6 +18,12 @@ const Sidebar = () => {
       icon: Home,
       path: '/dashboard',
       description: 'Resumen general',
+    },
+    {
+      title: 'Insights Financieros',
+      icon: Brain,
+      path: '/insights',
+      description: 'Análisis con IA',
     },
     {
       title: 'Ingresos',

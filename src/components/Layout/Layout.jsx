@@ -14,6 +14,10 @@ const Layout = ({ children }) => {
         title: 'Dashboard', 
         subtitle: 'Resumen de tu actividad financiera' 
       },
+      '/insights': { 
+        title: 'Insights Financieros', 
+        subtitle: 'Análisis inteligente de tus finanzas con IA' 
+      },
       '/expenses': { 
         title: 'Gastos', 
         subtitle: 'Gestiona tus gastos y pagos pendientes' 

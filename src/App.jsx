@@ -6,6 +6,7 @@ import ProtectedRoute, { PublicOnlyRoute } from './components/ProtectedRoute';
 
 // Páginas principales
 import Dashboard from './pages/Dashboard';
+import FinancialInsights from './pages/FinancialInsights';
 import Expenses from './pages/Expenses';
 import Incomes from './pages/Incomes';
 import Categories from './pages/Categories';
@@ -53,6 +54,16 @@ function AppContent() {
           <ProtectedRoute>
             <Layout>
               <Dashboard />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/insights" 
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <FinancialInsights />
             </Layout>
           </ProtectedRoute>
         } 

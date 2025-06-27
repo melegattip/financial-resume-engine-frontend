@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { aiAPI, formatCurrency } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import gamificationService from '../services/gamificationServiceSimple';
 
 const AIInsights = () => {
   const { user, isAuthenticated } = useAuth();
@@ -42,7 +43,7 @@ const AIInsights = () => {
     savingsGoal: 50000
   });
 
-  // Estados para gamificación (simplificados)
+  // Estados para gamificación
   const [viewedInsights, setViewedInsights] = useState(new Set());
   const [understoodInsights, setUnderstoodInsights] = useState(new Set());
 
@@ -190,6 +191,13 @@ const AIInsights = () => {
         savings_goal: purchaseForm.savingsGoal
       });
       setPurchaseAnalysis(response);
+      
+      // 🎮 Registrar acción de gamificación
+      await gamificationService.recordPurchaseAnalysisUsed(
+        purchaseForm.itemName, 
+        purchaseForm.amount
+      );
+      
     } catch (err) {
       console.error('Error analyzing purchase:', err.message);
       setPurchaseError('Error conectando con GPT-4. Usando análisis básico.');
@@ -212,13 +220,23 @@ const AIInsights = () => {
     }
   };
 
-  // Funciones de gamificación simplificadas
-  const handleViewInsight = (insightId) => {
-    setViewedInsights(prev => new Set([...prev, insightId]));
+  // 🎮 Funciones de gamificación mejoradas
+  const handleViewInsight = async (insightId, insightTitle) => {
+    if (!viewedInsights.has(insightId)) {
+      setViewedInsights(prev => new Set([...prev, insightId]));
+      
+      // Registrar en gamificación
+      await gamificationService.recordInsightViewed(insightId, insightTitle);
+    }
   };
 
-  const handleUnderstandInsight = (insightId) => {
-    setUnderstoodInsights(prev => new Set([...prev, insightId]));
+  const handleUnderstandInsight = async (insightId, insightTitle) => {
+    if (!understoodInsights.has(insightId)) {
+      setUnderstoodInsights(prev => new Set([...prev, insightId]));
+      
+      // Registrar en gamificación
+      await gamificationService.recordInsightUnderstood(insightId, insightTitle);
+    }
   };
 
   const getScoreColor = (score) => {
@@ -361,7 +379,7 @@ const AIInsights = () => {
                   <div
                     key={index}
                     className="bg-gray-50 border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-all cursor-pointer"
-                    onMouseEnter={() => handleViewInsight(index)}
+                    onMouseEnter={() => handleViewInsight(index, insight.title)}
                   >
                     <div className="flex items-start space-x-3">
                       <div className="text-2xl">{getImpactIcon(insight.impact)}</div>
@@ -382,7 +400,7 @@ const AIInsights = () => {
                         </div>
                         {!understoodInsights.has(index) && (
                           <button
-                            onClick={() => handleUnderstandInsight(index)}
+                            onClick={() => handleUnderstandInsight(index, insight.title)}
                             className="mt-2 inline-flex items-center px-3 py-1 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 transition-colors"
                           >
                             <Check className="w-3 h-3 mr-1" />

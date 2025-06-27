@@ -14,22 +14,17 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
   ResponsiveContainer,
   PieChart as RechartsPieChart,
   Pie,
-  Cell
+  Cell,
+  Tooltip
 } from 'recharts';
 import { formatCurrency, formatDate, formatPercentage as formatPercentageUtil } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
 import { useAuth } from '../contexts/AuthContext';
 import dataService from '../services/dataService';
-import AIInsights from '../components/AIInsights';
+
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -56,7 +51,7 @@ const Dashboard = () => {
   } = usePeriod();
 
   // Usar el contexto de autenticación
-  const { user, isAuthenticated, getAuthHeaders } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   // Debug de autenticación
   useEffect(() => {
@@ -734,7 +729,7 @@ const Dashboard = () => {
                       
                       if (!topCategoryId) return 'Sin datos';
                       
-                      const topCategory = data.categories.find(c => c.id == topCategoryId);
+                      const topCategory = data.categories.find(c => c.id === topCategoryId);
                       return topCategory ? topCategory.name : 'Sin categoría';
                     })()}
                   </p>
@@ -908,10 +903,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Widget de IA */}
-      <div className="card">
-        <AIInsights />
-      </div>
     </div>
   );
 };
