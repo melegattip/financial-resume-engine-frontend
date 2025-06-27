@@ -325,7 +325,7 @@ const AIInsights = () => {
               <p className="text-blue-100">
                 <span className="flex items-center space-x-1">
                   <Sparkles className="w-4 h-4" />
-                  <span>Recomendaciones personalizadas</span>
+                  <span>Powered by GPT-4</span>
                 </span>
               </p>
             </div>
