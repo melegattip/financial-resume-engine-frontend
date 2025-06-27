@@ -10,7 +10,7 @@ class GamificationService {
   }
   
   /**
-   * Registra que el usuario vio un insight
+   * Registra que el usuario vio una recomendación
    */
   async recordInsightViewed(insightId, insightTitle) {
     try {
@@ -18,10 +18,10 @@ class GamificationService {
         'view_insight',
         'insight', 
         insightId,
-        `Viewed insight: ${insightTitle}`
+        `Vio recomendación: ${insightTitle}`
       );
       
-      console.log('✅ Insight viewed recorded:', result);
+      console.log('✅ Recomendación vista registrada:', result);
       return result;
     } catch (error) {
       console.warn('⚠️ Error recording insight view:', error);
@@ -31,7 +31,7 @@ class GamificationService {
   }
 
   /**
-   * Registra que el usuario entendió/revisó un insight
+   * Registra que el usuario entendió/revisó una recomendación
    */
   async recordInsightUnderstood(insightId, insightTitle) {
     try {

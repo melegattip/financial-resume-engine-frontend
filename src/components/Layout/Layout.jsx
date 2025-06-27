@@ -15,8 +15,8 @@ const Layout = ({ children }) => {
         subtitle: 'Resumen de tu actividad financiera' 
       },
       '/insights': { 
-        title: 'Insights Financieros', 
-        subtitle: 'Análisis inteligente de tus finanzas con IA' 
+        title: 'Análisis Inteligente', 
+        subtitle: 'Recomendaciones personalizadas con inteligencia artificial' 
       },
       '/expenses': { 
         title: 'Gastos', 

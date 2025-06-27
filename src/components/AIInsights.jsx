@@ -111,7 +111,7 @@ const AIInsights = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log('🔍 Loading AI insights for user:', user?.email);
+      console.log('🔍 Cargando análisis inteligente para usuario:', user?.email);
       const response = await aiAPI.getInsights();
       const newInsights = response.insights || [];
       setInsights(newInsights);
@@ -124,7 +124,7 @@ const AIInsights = () => {
         timestamp: Date.now(),
         evaluationDate: evaluationDate.toISOString()
       }));
-      console.log('💾 Insights guardados en cache');
+      console.log('💾 Análisis guardado en cache');
     } catch (err) {
       console.error('Error loading AI insights:', err.message);
       setError('Error conectando con GPT-4. Usando datos de ejemplo.');
@@ -321,18 +321,18 @@ const AIInsights = () => {
               <Brain className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Insights Financieros</h2>
+              <h2 className="text-xl font-bold text-white">Análisis Inteligente</h2>
               <p className="text-blue-100">
                 <span className="flex items-center space-x-1">
                   <Sparkles className="w-4 h-4" />
-                  <span>Powered by GPT-4</span>
+                  <span>Recomendaciones personalizadas</span>
                 </span>
               </p>
             </div>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-white">{healthScore}</div>
-            <div className="text-blue-100 text-sm">Score promedio</div>
+            <div className="text-blue-100 text-sm">Puntuación financiera</div>
           </div>
         </div>
       </div>
@@ -353,7 +353,7 @@ const AIInsights = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
               <Lightbulb className="w-5 h-5 text-blue-500" />
-              <h3 className="text-lg font-semibold text-gray-900">Recomendaciones</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Recomendaciones Inteligentes</h3>
             </div>
             
             {loading ? (
@@ -598,10 +598,10 @@ const AIInsights = () => {
             <div className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
               <Brain className="w-4 h-4 mr-2" />
               <span>
-                Evaluamos tu perfil financiero una vez por día
+                Analizamos tu situación financiera una vez por día
                 {lastEvaluationDate && (
                   <span className="ml-1">
-                    • Última evaluación: {lastEvaluationDate.toLocaleDateString('es-ES', { 
+                    • Último análisis: {lastEvaluationDate.toLocaleDateString('es-ES', { 
                       day: 'numeric', 
                       month: 'short',
                       hour: '2-digit',

@@ -20,10 +20,10 @@ const Sidebar = () => {
       description: 'Resumen general',
     },
     {
-      title: 'Insights Financieros',
+      title: 'Análisis Inteligente',
       icon: Brain,
       path: '/insights',
-      description: 'Análisis con IA',
+      description: 'IA y recomendaciones',
     },
     {
       title: 'Ingresos',
