@@ -52,6 +52,11 @@ const Expenses = () => {
     return formatCurrency(amount);
   };
 
+  const formatPercentageAmount = (percentage) => {
+    if (balancesHidden) return '••••';
+    return formatPercentage(percentage);
+  };
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -401,7 +406,7 @@ const Expenses = () => {
                       )}
                       {expense.percentage && (
                         <p className="text-sm text-fr-gray-500">
-                          {formatPercentage(expense.percentage)} del total
+                          {formatPercentageAmount(expense.percentage)} del total
                         </p>
                       )}
                     </div>

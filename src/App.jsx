@@ -49,81 +49,24 @@ function AppContent() {
 
       {/* Rutas protegidas (requieren autenticación) */}
       <Route 
-        path="/dashboard" 
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Dashboard />
-            </Layout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/insights" 
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <FinancialInsights />
-            </Layout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/expenses" 
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Expenses />
-            </Layout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/incomes" 
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Incomes />
-            </Layout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/categories" 
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Categories />
-            </Layout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/reports" 
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Reports />
-            </Layout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/settings" 
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Settings />
-            </Layout>
-          </ProtectedRoute>
-        } 
-      />
-
-      {/* Ruta raíz - redirige según estado de autenticación */}
-      <Route 
         path="/" 
-        element={<Navigate to="/dashboard" replace />} 
-      />
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="insights" element={<FinancialInsights />} />
+        <Route path="expenses" element={<Expenses />} />
+        <Route path="incomes" element={<Incomes />} />
+        <Route path="categories" element={<Categories />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="settings" element={<Settings />} />
+        <Route index element={<Navigate to="/dashboard" replace />} />
+      </Route>
+
+
 
       {/* Ruta 404 - página no encontrada */}
       <Route 

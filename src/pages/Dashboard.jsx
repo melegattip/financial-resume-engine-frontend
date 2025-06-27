@@ -131,6 +131,9 @@ const Dashboard = () => {
   };
 
   const formatPercentage = (percentage) => {
+    if (balancesHidden) {
+      return '••••';
+    }
     return formatPercentageUtil(percentage);
   };
 
