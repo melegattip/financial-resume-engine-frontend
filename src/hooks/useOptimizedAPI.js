@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { expensesAPI, incomesAPI, categoriesAPI } from '../services/api';
 import dataService from '../services/dataService';
 import toast from 'react-hot-toast';
@@ -11,7 +11,7 @@ export const useOptimizedAPI = () => {
   const [error, setError] = useState(null);
 
   // Función genérica para manejar operaciones con invalidación de cache
-  const executeWithCacheInvalidation = async (operation, cacheType, successMessage) => {
+  const executeWithCacheInvalidation = useCallback(async (operation, cacheType, successMessage) => {
     try {
       setLoading(true);
       setError(null);
@@ -34,10 +34,10 @@ export const useOptimizedAPI = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // === OPERACIONES DE GASTOS ===
-  const expenses = {
+  const expenses = useMemo(() => ({
     create: async (data) => {
       return executeWithCacheInvalidation(
         () => expensesAPI.create(data),
@@ -69,10 +69,10 @@ export const useOptimizedAPI = () => {
         () => expensesAPI.list()
       );
     }
-  };
+  }), [executeWithCacheInvalidation]);
 
   // === OPERACIONES DE INGRESOS ===
-  const incomes = {
+  const incomes = useMemo(() => ({
     create: async (data) => {
       return executeWithCacheInvalidation(
         () => incomesAPI.create(data),
@@ -103,10 +103,10 @@ export const useOptimizedAPI = () => {
         () => incomesAPI.list()
       );
     }
-  };
+  }), [executeWithCacheInvalidation]);
 
   // === OPERACIONES DE CATEGORÍAS ===
-  const categories = {
+  const categories = useMemo(() => ({
     create: async (data) => {
       return executeWithCacheInvalidation(
         () => categoriesAPI.create(data),
@@ -137,10 +137,10 @@ export const useOptimizedAPI = () => {
         () => categoriesAPI.list()
       );
     }
-  };
+  }), [executeWithCacheInvalidation]);
 
   // === UTILIDADES ===
-  const utils = {
+  const utils = useMemo(() => ({
     clearAllCache: () => {
       dataService.clearCache();
       toast.success('Cache limpiado exitosamente');
@@ -170,9 +170,9 @@ export const useOptimizedAPI = () => {
         setLoading(false);
       }
     }
-  };
+  }), []);
 
-  return {
+  return useMemo(() => ({
     // Estados
     loading,
     error,
@@ -187,7 +187,7 @@ export const useOptimizedAPI = () => {
     
     // Acceso directo al dataService para casos especiales
     dataService
-  };
+  }), [loading, error, expenses, incomes, categories, utils]);
 };
 
 export default useOptimizedAPI; 

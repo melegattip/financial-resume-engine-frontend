@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   Plus, 
@@ -52,7 +52,7 @@ const Expenses = () => {
     return formatCurrency(amount);
   };
 
-  const loadData = React.useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       console.log('🔄 Cargando datos de gastos con API optimizada...');

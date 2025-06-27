@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Search, TrendingUp, Edit, Trash2 } from 'lucide-react';
 import { formatCurrency } from '../services/api';
@@ -37,7 +37,7 @@ const Incomes = () => {
     return formatCurrency(amount);
   };
 
-  const loadData = React.useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       console.log('🔄 Cargando datos de ingresos con API optimizada...');

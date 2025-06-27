@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Tag, Edit, Trash2 } from 'lucide-react';
 import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
 
@@ -18,11 +18,7 @@ const Categories = () => {
     categories: categoriesAPI
   } = useOptimizedAPI();
 
-  useEffect(() => {
-    loadCategories();
-  }, [loadCategories]);
-
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
       setLoading(true);
       console.log('🔄 Cargando categorías con API optimizada...');
@@ -39,7 +35,11 @@ const Categories = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [categoriesAPI]);
+
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
