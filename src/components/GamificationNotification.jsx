@@ -9,139 +9,129 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Star, Trophy, Zap, TrendingUp } from 'lucide-react';
+import { Trophy, Star, Target, Zap, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 const GamificationNotification = ({ 
-  notification, 
+  isVisible, 
   onClose, 
-  autoCloseDelay = 5000 
+  type = 'xp', 
+  points = 0, 
+  title = '', 
+  description = '',
+  achievement = null 
 }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
+  const [shouldShow, setShouldShow] = useState(false);
 
   useEffect(() => {
-    if (notification) {
-      setIsVisible(true);
-      
-      // Auto close after delay
-      if (autoCloseDelay > 0) {
-        const timer = setTimeout(() => {
-          handleClose();
-        }, autoCloseDelay);
-        
-        return () => clearTimeout(timer);
-      }
+    if (isVisible) {
+      setShouldShow(true);
+      // Auto-cerrar después de 4 segundos
+      const timer = setTimeout(() => {
+        handleClose();
+      }, 4000);
+      return () => clearTimeout(timer);
     }
-  }, [notification, autoCloseDelay]);
+  }, [isVisible]);
 
   const handleClose = () => {
-    setIsClosing(true);
+    setShouldShow(false);
     setTimeout(() => {
-      setIsVisible(false);
-      setIsClosing(false);
-      onClose?.();
+      onClose();
     }, 300);
   };
 
-  if (!notification || !isVisible) return null;
+  if (!isVisible) return null;
 
   const getNotificationConfig = () => {
-    switch (notification.type) {
-      case 'xp_gained':
+    switch (type) {
+      case 'achievement':
         return {
-          icon: <Zap className="w-6 h-6 text-yellow-400" />,
-          bgColor: 'bg-gradient-to-r from-yellow-500 to-orange-500',
-          title: `+${notification.xp} XP Ganado!`,
-          message: notification.message || 'Has ganado experiencia'
+          icon: Trophy,
+          bgColor: 'bg-gradient-to-r from-yellow-400 to-orange-500',
+          iconColor: 'text-white',
+          title: achievement?.name || 'Logro Desbloqueado',
+          description: achievement?.description || 'Has completado un nuevo logro'
         };
-      
       case 'level_up':
         return {
-          icon: <TrendingUp className="w-6 h-6 text-blue-400" />,
-          bgColor: 'bg-gradient-to-r from-blue-500 to-purple-500',
-          title: `¡Nivel ${notification.newLevel}!`,
-          message: notification.levelName || 'Has subido de nivel'
+          icon: Star,
+          bgColor: 'bg-gradient-to-r from-purple-500 to-pink-500',
+          iconColor: 'text-white',
+          title: title || 'Nivel Subido',
+          description: description || `Felicidades, has alcanzado un nuevo nivel`
         };
-      
-      case 'achievement_unlocked':
-        return {
-          icon: <Trophy className="w-6 h-6 text-gold-400" />,
-          bgColor: 'bg-gradient-to-r from-amber-500 to-yellow-500',
-          title: '¡Logro Desbloqueado!',
-          message: notification.achievementName || 'Nuevo achievement'
-        };
-      
+      case 'xp':
       default:
         return {
-          icon: <Star className="w-6 h-6 text-green-400" />,
-          bgColor: 'bg-gradient-to-r from-green-500 to-emerald-500',
-          title: 'Gamificación',
-          message: notification.message || 'Acción completada'
+          icon: Zap,
+          bgColor: 'bg-gradient-to-r from-blue-500 to-green-500',
+          iconColor: 'text-white',
+          title: title || 'XP Ganado',
+          description: description || `Has ganado ${points} puntos de experiencia`
         };
     }
   };
 
   const config = getNotificationConfig();
+  const Icon = config.icon;
 
-  return (
-    <div className="fixed top-4 right-4 z-50">
-      <div
-        className={`
-          ${config.bgColor} text-white rounded-lg shadow-lg p-4 min-w-80 max-w-sm
-          transform transition-all duration-300 ease-out
-          ${isClosing ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'}
-          animate-bounce-in
-        `}
-      >
+  const notificationContent = (
+    <div className={`fixed top-4 right-4 z-50 transform transition-all duration-300 ${
+      shouldShow ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
+    }`}>
+      <div className={`${config.bgColor} rounded-lg shadow-lg p-4 max-w-sm min-w-[300px] text-white`}>
         <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0 mt-1">
-            {config.icon}
+          <div className="flex-shrink-0">
+            <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm">
+              <Icon className={`w-6 h-6 ${config.iconColor}`} />
+            </div>
           </div>
           
           <div className="flex-1 min-w-0">
-            <h4 className="font-bold text-sm mb-1">
-              {config.title}
-            </h4>
-            <p className="text-sm opacity-90 leading-relaxed">
-              {config.message}
-            </p>
-            
-            {/* Información adicional */}
-            {notification.details && (
-              <div className="mt-2 text-xs opacity-75">
-                {notification.details}
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-semibold text-white">
+                  {config.title}
+                </p>
+                <p className="text-xs text-white/90 mt-1">
+                  {config.description}
+                </p>
+                {points > 0 && (
+                  <div className="flex items-center space-x-1 mt-2">
+                    <Zap className="w-4 h-4 text-yellow-200" />
+                    <span className="text-sm font-medium text-yellow-200">
+                      +{points} XP
+                    </span>
+                  </div>
+                )}
               </div>
-            )}
-            
-            {/* Progreso de XP si es level up */}
-            {notification.type === 'level_up' && notification.xpProgress && (
-              <div className="mt-2">
-                <div className="flex justify-between text-xs opacity-75 mb-1">
-                  <span>XP: {notification.xpProgress.current}</span>
-                  <span>Siguiente: {notification.xpProgress.next}</span>
-                </div>
-                <div className="w-full bg-white bg-opacity-20 rounded-full h-1.5">
-                  <div 
-                    className="bg-white h-1.5 rounded-full transition-all duration-500"
-                    style={{ width: `${notification.xpProgress.percentage}%` }}
-                  />
-                </div>
-              </div>
-            )}
+              
+              <button
+                onClick={handleClose}
+                className="flex-shrink-0 p-1 hover:bg-white/20 rounded-full transition-colors"
+              >
+                <X className="w-4 h-4 text-white/80" />
+              </button>
+            </div>
           </div>
-          
-          <button
-            onClick={handleClose}
-            className="flex-shrink-0 text-white hover:text-gray-200 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+        </div>
+        
+        {/* Barra de progreso animada */}
+        <div className="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-white/40 rounded-full transition-all duration-4000 ease-out"
+            style={{ 
+              width: shouldShow ? '100%' : '0%',
+              transitionDuration: '4000ms'
+            }}
+          />
         </div>
       </div>
     </div>
   );
+
+  return createPortal(notificationContent, document.body);
 };
 
 // Hook para manejar notificaciones de gamificación
@@ -159,27 +149,28 @@ export const useGamificationNotifications = () => {
   // Métodos de conveniencia
   const showXPGained = (xp, message = '') => {
     showNotification({
-      type: 'xp_gained',
-      xp,
-      message: message || `Has ganado ${xp} puntos de experiencia`
+      type: 'xp',
+      points: xp,
+      title: message || `XP Ganado`,
+      description: message || `Has ganado ${xp} puntos de experiencia`
     });
   };
 
   const showLevelUp = (newLevel, levelName, xpProgress = null) => {
     showNotification({
       type: 'level_up',
-      newLevel,
-      levelName,
-      xpProgress,
-      message: `¡Felicidades! Ahora eres ${levelName}`
+      title: levelName,
+      description: `Felicidades, has alcanzado un nuevo nivel`
     });
   };
 
   const showAchievementUnlocked = (achievementName, description = '') => {
     showNotification({
-      type: 'achievement_unlocked',
-      achievementName,
-      message: description || `Has desbloqueado: ${achievementName}`
+      type: 'achievement',
+      achievement: {
+        name: achievementName,
+        description: description || `Has desbloqueado: ${achievementName}`
+      }
     });
   };
 
@@ -192,7 +183,7 @@ export const useGamificationNotifications = () => {
     showAchievementUnlocked,
     GamificationNotification: (props) => (
       <GamificationNotification
-        notification={notification}
+        isVisible={notification}
         onClose={hideNotification}
         {...props}
       />
