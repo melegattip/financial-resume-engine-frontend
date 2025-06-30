@@ -66,7 +66,7 @@ const Header = () => {
         icon: Target
       },
       '/recurring-transactions': { 
-        title: 'Gastos Recurrentes', 
+        title: 'Transacciones Recurrentes', 
         subtitle: 'Automatiza tus transacciones',
         icon: RefreshCw
       },

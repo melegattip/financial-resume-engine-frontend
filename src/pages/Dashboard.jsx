@@ -517,13 +517,13 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Widget de Gastos Recurrentes */}
+        {/* Widget de Transacciones Recurrentes */}
         {recurringTransactionsSummary && (
           <div className="card">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-fr-gray-600">
-                  Gastos Recurrentes
+                  Transacciones Recurrentes
                 </p>
                 <p className="text-xl lg:text-2xl font-bold text-fr-gray-900 break-words">
                   {recurringTransactionsSummary.summary?.active_count || 0}

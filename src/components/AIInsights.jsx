@@ -28,7 +28,8 @@ const AIInsights = () => {
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [error, setError] = useState(null);
   const [purchaseError, setPurchaseError] = useState(null);
-  const [healthScore] = useState(773);
+  const [healthScore, setHealthScore] = useState(0);
+  const [healthScoreLoading, setHealthScoreLoading] = useState(false);
   const [lastEvaluationDate, setLastEvaluationDate] = useState(null);
   
   // Estados para Progressive Disclosure
@@ -71,6 +72,26 @@ const AIInsights = () => {
       return true;
     }
   }, []);
+
+  // Función para cargar el health score
+  const loadHealthScore = useCallback(async () => {
+    if (!isAuthenticated) return;
+
+    setHealthScoreLoading(true);
+    try {
+      console.log('🏥 Cargando health score para usuario:', user?.email);
+      const response = await aiAPI.getHealthScore();
+      console.log('📊 Health score response completa:', response);
+      console.log('📊 Health score valor:', response.health_score);
+      setHealthScore(response.health_score || 0);
+    } catch (err) {
+      console.error('Error loading health score:', err.message);
+      // Mantener el valor por defecto de 0 en caso de error
+      setHealthScore(0);
+    } finally {
+      setHealthScoreLoading(false);
+    }
+  }, [isAuthenticated, user?.email]);
 
   const loadAIInsights = useCallback(async () => {
     if (!isAuthenticated) {
@@ -187,8 +208,14 @@ const AIInsights = () => {
       setError('Debes iniciar sesión para ver el análisis inteligente');
       return;
     }
+    // Limpiar localStorage en desarrollo para evitar cache viejo
+    if (process.env.NODE_ENV === 'development') {
+      localStorage.removeItem('ai_insights_cache');
+      console.log('🧹 Cache limpiado para desarrollo');
+    }
     loadAIInsightsWithCache();
-     }, [isAuthenticated, loadAIInsightsWithCache]);
+    loadHealthScore();
+     }, [isAuthenticated, loadAIInsightsWithCache, loadHealthScore]);
 
   const analyzePurchase = async () => {
     if (!purchaseForm.itemName || !purchaseForm.amount) {
@@ -281,7 +308,7 @@ const AIInsights = () => {
   const displayedInsights = showAllInsights ? insights : insights.slice(0, 3);
 
   // Componente de salud financiera optimizado
-  const HealthScoreDisplay = ({ score, maxScore = 1000 }) => {
+  const HealthScoreDisplay = ({ score, maxScore = 1000, loading = false }) => {
     const percentage = (score / maxScore) * 100;
     
     const getScoreLevel = (score) => {
@@ -292,6 +319,27 @@ const AIInsights = () => {
     };
 
     const { level, message, color, bgColor, borderColor } = getScoreLevel(score);
+
+    if (loading) {
+      return (
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+          <div className="text-center mb-4">
+            <div className="w-16 h-16 bg-gray-300 rounded-full animate-pulse mx-auto mb-2"></div>
+            <div className="w-12 h-4 bg-gray-300 rounded animate-pulse mx-auto mb-2"></div>
+            <div className="w-20 h-6 bg-gray-300 rounded-full animate-pulse mx-auto"></div>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+            <div className="h-full bg-gray-300 rounded-full animate-pulse w-1/2"></div>
+          </div>
+          <div className="flex justify-between text-xs text-gray-300 mb-4">
+            <span>0</span><span>250</span><span>500</span><span>750</span><span>1000</span>
+          </div>
+          <div className="text-center">
+            <div className="w-48 h-4 bg-gray-300 rounded animate-pulse mx-auto"></div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className={`${bgColor} ${borderColor} border rounded-xl p-6`}>
@@ -365,7 +413,13 @@ const AIInsights = () => {
             </div>
           </div>
           <div className="text-center">
-            <div className="text-4xl md:text-5xl font-bold">{healthScore}</div>
+            {healthScoreLoading ? (
+              <div className="text-4xl md:text-5xl font-bold animate-pulse">
+                <Loader2 className="w-12 h-12 mx-auto animate-spin" />
+              </div>
+            ) : (
+              <div className="text-4xl md:text-5xl font-bold">{healthScore}</div>
+            )}
             <div className="text-blue-100 text-sm">Puntuación financiera</div>
           </div>
         </div>
@@ -377,7 +431,7 @@ const AIInsights = () => {
           <h2 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2">Tu salud financiera</h2>
           <p className="text-gray-600">Basada en tus hábitos y análisis</p>
         </div>
-        <HealthScoreDisplay score={healthScore} />
+        <HealthScoreDisplay score={healthScore} loading={healthScoreLoading} />
       </div>
 
       {/* Tabs Navigation */}

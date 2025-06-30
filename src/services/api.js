@@ -234,6 +234,12 @@ export const aiAPI = {
     
     const response = await api.get(url);
     return response.data;
+  },
+
+  // Obtener puntuación de salud financiera
+  getHealthScore: async () => {
+    const response = await api.get('/insights/financial-health');
+    return response.data;
   }
 };
 

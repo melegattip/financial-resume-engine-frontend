@@ -55,9 +55,10 @@ const Budgets = () => {
     e.preventDefault();
     try {
       const data = {
-        ...formData,
+        category_id: formData.category_id,
         amount: parseFloat(formData.amount),
-        alert_threshold: parseInt(formData.alert_threshold)
+        period: formData.period,
+        alert_at: parseInt(formData.alert_threshold) / 100 // Convertir de porcentaje (0-100) a decimal (0-1)
       };
 
       if (editingBudget) {
@@ -81,13 +82,13 @@ const Budgets = () => {
   const handleEdit = (budget) => {
     setEditingBudget(budget);
     setFormData({
-      name: budget.name,
+      name: budget.category_name || '',
       amount: budget.amount.toString(),
       category_id: budget.category_id || '',
       period: budget.period,
-      alert_threshold: budget.alert_threshold,
-      start_date: budget.start_date,
-      end_date: budget.end_date || ''
+      alert_threshold: Math.round((budget.alert_at || 0.8) * 100),
+      start_date: budget.period_start ? budget.period_start.split('T')[0] : '',
+      end_date: budget.period_end ? budget.period_end.split('T')[0] : ''
     });
     setShowModal(true);
   };
@@ -309,12 +310,17 @@ const Budgets = () => {
                       <div>
                         <div className="text-sm font-medium text-fr-gray-900">{budget.name}</div>
                         <div className="text-sm text-fr-gray-500">
-                          {budget.start_date} - {budget.end_date || 'Sin fin'}
+                          {budget.period_start ? new Date(budget.period_start).toLocaleDateString() : ''} - {budget.period_end ? new Date(budget.period_end).toLocaleDateString() : 'Sin fin'}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-fr-gray-900">
-                      {getCategoryName(budget.category_id)}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-fr-gray-900">{budget.category_name}</div>
+                        <div className="text-sm text-fr-gray-500">
+                          {budget.period_start ? new Date(budget.period_start).toLocaleDateString() : ''} - {budget.period_end ? new Date(budget.period_end).toLocaleDateString() : 'Sin fin'}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-fr-gray-900">
                       {getPeriodText(budget.period)}
@@ -324,20 +330,20 @@ const Budgets = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-fr-gray-900">
-                        {formatCurrency(budget.current_amount)}
+                        {formatCurrency(budget.spent_amount)}
                       </div>
                       <div className="w-full bg-fr-gray-200 rounded-full h-2 mt-1">
                         <div
                           className={`h-2 rounded-full ${
-                            budget.usage_percentage >= 100 ? 'bg-red-500' :
-                            budget.usage_percentage >= budget.alert_threshold ? 'bg-yellow-500' :
+                            budget.spent_percentage >= 1 ? 'bg-red-500' :
+                            budget.spent_percentage >= budget.alert_at ? 'bg-yellow-500' :
                             'bg-green-500'
                           }`}
-                          style={{ width: `${Math.min(budget.usage_percentage, 100)}%` }}
+                          style={{ width: `${Math.min((budget.spent_percentage || 0) * 100, 100)}%` }}
                         ></div>
                       </div>
                       <div className="text-xs text-fr-gray-500 mt-1">
-                        {budget.usage_percentage.toFixed(1)}% usado
+                        {((budget.spent_percentage || 0) * 100).toFixed(1)}% usado
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

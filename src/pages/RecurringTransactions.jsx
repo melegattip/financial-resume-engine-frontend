@@ -10,7 +10,9 @@ const RecurringTransactions = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showProjectionModal, setShowProjectionModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [deletingTransaction, setDeletingTransaction] = useState(null);
   const [projectionMonths, setProjectionMonths] = useState(6);
   const [filters, setFilters] = useState({
     type: '',
@@ -21,14 +23,20 @@ const RecurringTransactions = () => {
     sort_order: 'asc'
   });
 
+  const getDefaultDate = () => {
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    nextMonth.setDate(1);
+    return nextMonth.toISOString().split('T')[0];
+  };
+
   const [formData, setFormData] = useState({
-    name: '',
     description: '',
     amount: '',
     type: 'expense',
     frequency: 'monthly',
     category_id: '',
-    start_date: '',
+    next_date: getDefaultDate(),
     end_date: '',
     day_of_month: '',
     day_of_week: '',
@@ -59,9 +67,9 @@ const RecurringTransactions = () => {
     }
   };
 
-  const loadProjection = async () => {
+  const loadProjection = async (months = projectionMonths) => {
     try {
-      const projectionRes = await recurringTransactionsAPI.getProjection(projectionMonths);
+      const projectionRes = await recurringTransactionsAPI.getProjection(months);
       setProjection(projectionRes.data.data);
       setShowProjectionModal(true);
     } catch (error) {
@@ -72,12 +80,52 @@ const RecurringTransactions = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validación del frontend
+    if (!formData.description || formData.description.trim() === '') {
+      toast.error('La descripción es requerida');
+      return;
+    }
+    
+    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+      toast.error('El monto debe ser mayor a 0');
+      return;
+    }
+    
+    if (!formData.next_date) {
+      toast.error('La fecha de próxima ejecución es requerida');
+      return;
+    }
+    
+    // Validar que la fecha de próxima ejecución no sea en el pasado
+    const nextDateString = formData.next_date;
+    const todayString = new Date().toISOString().split('T')[0];
+    
+    if (nextDateString < todayString) {
+      toast.error('La fecha de próxima ejecución no puede ser anterior a hoy');
+      return;
+    }
+    
+    // Validar fecha de fin si se proporciona
+    if (formData.end_date) {
+      if (formData.end_date <= nextDateString) {
+        toast.error('La fecha de fin debe ser posterior a la fecha de próxima ejecución');
+        return;
+      }
+    }
+    
     try {
       const data = {
-        ...formData,
+        description: formData.description.trim(),
         amount: parseFloat(formData.amount),
-        day_of_month: formData.day_of_month ? parseInt(formData.day_of_month) : null,
-        day_of_week: formData.day_of_week ? parseInt(formData.day_of_week) : null
+        type: formData.type,
+        frequency: formData.frequency,
+        category_id: formData.category_id || undefined,
+        next_date: formData.next_date,
+        auto_create: true, // Por defecto habilitado
+        notify_before: 1, // Notificar 1 día antes por defecto
+        end_date: formData.end_date || undefined,
+        max_executions: undefined // No implementado en el frontend aún
       };
 
       if (editingTransaction) {
@@ -94,20 +142,20 @@ const RecurringTransactions = () => {
       loadData();
     } catch (error) {
       console.error('Error saving recurring transaction:', error);
-      toast.error('Error guardando transacción recurrente');
+      const errorMessage = error.response?.data?.error || error.message || 'Error guardando transacción recurrente';
+      toast.error(errorMessage);
     }
   };
 
   const handleEdit = (transaction) => {
     setEditingTransaction(transaction);
     setFormData({
-      name: transaction.name,
       description: transaction.description || '',
       amount: transaction.amount.toString(),
       type: transaction.type,
       frequency: transaction.frequency,
       category_id: transaction.category_id || '',
-      start_date: transaction.start_date,
+      next_date: transaction.next_date,
       end_date: transaction.end_date || '',
       day_of_month: transaction.day_of_month?.toString() || '',
       day_of_week: transaction.day_of_week?.toString() || '',
@@ -116,17 +164,30 @@ const RecurringTransactions = () => {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar esta transacción recurrente?')) {
+  const handleDelete = (transaction) => {
+    setDeletingTransaction(transaction);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (deletingTransaction) {
       try {
-        await recurringTransactionsAPI.delete(id);
+        await recurringTransactionsAPI.delete(deletingTransaction.id);
         toast.success('Transacción recurrente eliminada exitosamente');
         loadData();
       } catch (error) {
         console.error('Error deleting recurring transaction:', error);
         toast.error('Error eliminando transacción recurrente');
+      } finally {
+        setShowDeleteModal(false);
+        setDeletingTransaction(null);
       }
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeletingTransaction(null);
   };
 
   const handlePause = async (id) => {
@@ -151,39 +212,24 @@ const RecurringTransactions = () => {
     }
   };
 
-  const handleExecute = async (id) => {
-    if (window.confirm('¿Estás seguro de que quieres ejecutar esta transacción ahora?')) {
-      try {
-        await recurringTransactionsAPI.execute(id);
-        toast.success('Transacción ejecutada exitosamente');
-        loadData();
-      } catch (error) {
-        console.error('Error executing transaction:', error);
-        toast.error('Error ejecutando transacción');
-      }
-    }
-  };
 
-  const handleProcessPending = async () => {
-    try {
-      await recurringTransactionsAPI.processPending();
-      toast.success('Transacciones pendientes procesadas exitosamente');
-      loadData();
-    } catch (error) {
-      console.error('Error processing pending transactions:', error);
-      toast.error('Error procesando transacciones pendientes');
-    }
-  };
+
+
 
   const resetForm = () => {
+    // Calcular fecha por defecto (próximo mes)
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    nextMonth.setDate(1); // Primer día del próximo mes
+    const defaultDate = nextMonth.toISOString().split('T')[0];
+    
     setFormData({
-      name: '',
       description: '',
       amount: '',
       type: 'expense',
       frequency: 'monthly',
       category_id: '',
-      start_date: '',
+      next_date: defaultDate,
       end_date: '',
       day_of_month: '',
       day_of_week: '',
@@ -240,6 +286,8 @@ const RecurringTransactions = () => {
     return `${diffDays} días`;
   };
 
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -254,7 +302,6 @@ const RecurringTransactions = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-fr-gray-900">Gastos Recurrentes</h1>
           <p className="text-fr-gray-600">Gestiona tus ingresos y gastos automáticos</p>
         </div>
         <div className="flex space-x-3">
@@ -263,12 +310,6 @@ const RecurringTransactions = () => {
             className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
           >
             Ver Proyección
-          </button>
-          <button
-            onClick={handleProcessPending}
-            className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors"
-          >
-            Procesar Pendientes
           </button>
           <button
             onClick={() => setShowModal(true)}
@@ -283,23 +324,23 @@ const RecurringTransactions = () => {
       {dashboard && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-fr-gray-500">Total Transacciones</h3>
-            <p className="text-2xl font-bold text-fr-gray-900">{dashboard.summary?.total_transactions || 0}</p>
+            <h3 className="text-sm font-medium text-fr-gray-500">Total Activas</h3>
+            <p className="text-2xl font-bold text-fr-gray-900">{dashboard.summary?.total_active || 0}</p>
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-fr-gray-500">Activas</h3>
-            <p className="text-2xl font-bold text-green-600">{dashboard.summary?.active_count || 0}</p>
+            <h3 className="text-sm font-medium text-fr-gray-500">Inactivas</h3>
+            <p className="text-2xl font-bold text-yellow-600">{dashboard.summary?.total_inactive || 0}</p>
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-sm font-medium text-fr-gray-500">Ingresos Mensuales</h3>
             <p className="text-2xl font-bold text-green-600">
-              {formatCurrency(dashboard.summary?.monthly_income || 0)}
+              {formatCurrency(dashboard.summary?.monthly_income_total || 0)}
             </p>
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-sm font-medium text-fr-gray-500">Gastos Mensuales</h3>
             <p className="text-2xl font-bold text-red-600">
-              {formatCurrency(dashboard.summary?.monthly_expenses || 0)}
+              {formatCurrency(dashboard.summary?.monthly_expense_total || 0)}
             </p>
           </div>
         </div>
@@ -357,7 +398,7 @@ const RecurringTransactions = () => {
             className="border border-fr-gray-300 rounded-lg px-3 py-2"
           >
             <option value="next_execution_date">Próxima ejecución</option>
-            <option value="name">Nombre</option>
+            <option value="description">Descripción</option>
             <option value="amount">Monto</option>
             <option value="created_at">Fecha de creación</option>
           </select>
@@ -427,10 +468,7 @@ const RecurringTransactions = () => {
                   <tr key={transaction.id} className="hover:bg-fr-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-fr-gray-900">{transaction.name}</div>
-                        {transaction.description && (
-                          <div className="text-sm text-fr-gray-500">{transaction.description}</div>
-                        )}
+                        <div className="text-sm font-medium text-fr-gray-900">{transaction.description}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -449,10 +487,10 @@ const RecurringTransactions = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-fr-gray-900">
-                        {formatDate(transaction.next_execution_date)}
+                        {formatDate(transaction.next_date)}
                       </div>
                       <div className="text-xs text-fr-gray-500">
-                        {getDaysUntilNext(transaction.next_execution_date)}
+                        {getDaysUntilNext(transaction.next_date)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -465,22 +503,13 @@ const RecurringTransactions = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
                         {transaction.is_active ? (
-                          <>
-                            <button
-                              onClick={() => handleExecute(transaction.id)}
-                              className="text-blue-600 hover:text-blue-900"
-                              title="Ejecutar ahora"
-                            >
-                              ▶️
-                            </button>
-                            <button
-                              onClick={() => handlePause(transaction.id)}
-                              className="text-yellow-600 hover:text-yellow-900"
-                              title="Pausar"
-                            >
-                              ⏸️
-                            </button>
-                          </>
+                          <button
+                            onClick={() => handlePause(transaction.id)}
+                            className="text-yellow-600 hover:text-yellow-900"
+                            title="Pausar"
+                          >
+                            ⏸️
+                          </button>
                         ) : (
                           <button
                             onClick={() => handleResume(transaction.id)}
@@ -493,14 +522,16 @@ const RecurringTransactions = () => {
                         <button
                           onClick={() => handleEdit(transaction)}
                           className="text-fr-primary hover:text-fr-primary-dark"
+                          title="Editar"
                         >
-                          Editar
+                          ⚙️
                         </button>
                         <button
-                          onClick={() => handleDelete(transaction.id)}
+                          onClick={() => handleDelete(transaction)}
                           className="text-red-600 hover:text-red-900"
+                          title="Eliminar"
                         >
-                          Eliminar
+                          🗑️
                         </button>
                       </div>
                     </td>
@@ -521,19 +552,6 @@ const RecurringTransactions = () => {
             </h2>
             
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-1">
-                  Nombre
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
-                  required
-                />
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-fr-gray-700 mb-1">
                   Descripción
@@ -610,15 +628,19 @@ const RecurringTransactions = () => {
 
               <div>
                 <label className="block text-sm font-medium text-fr-gray-700 mb-1">
-                  Fecha de inicio
+                  Próxima ejecución
                 </label>
                 <input
                   type="date"
-                  value={formData.start_date}
-                  onChange={(e) => setFormData({...formData, start_date: e.target.value})}
+                  value={formData.next_date}
+                  onChange={(e) => setFormData({...formData, next_date: e.target.value})}
                   className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  min={new Date().toISOString().split('T')[0]}
                   required
                 />
+                <p className="text-xs text-fr-gray-500 mt-1">
+                  Puede ser hoy o cualquier fecha futura
+                </p>
               </div>
 
               <div>
@@ -630,7 +652,11 @@ const RecurringTransactions = () => {
                   value={formData.end_date}
                   onChange={(e) => setFormData({...formData, end_date: e.target.value})}
                   className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  min={formData.next_date || new Date().toISOString().split('T')[0]}
                 />
+                <p className="text-xs text-fr-gray-500 mt-1">
+                  Debe ser posterior a la fecha de próxima ejecución
+                </p>
               </div>
 
               {formData.frequency === 'monthly' && (
@@ -719,7 +745,12 @@ const RecurringTransactions = () => {
               <div className="flex items-center space-x-2">
                 <select
                   value={projectionMonths}
-                  onChange={(e) => setProjectionMonths(parseInt(e.target.value))}
+                  onChange={(e) => {
+                    const newMonths = parseInt(e.target.value);
+                    setProjectionMonths(newMonths);
+                    // Trigger automatic update with the new value
+                    loadProjection(newMonths);
+                  }}
                   className="border border-fr-gray-300 rounded px-2 py-1"
                 >
                   <option value="3">3 meses</option>
@@ -727,12 +758,6 @@ const RecurringTransactions = () => {
                   <option value="12">12 meses</option>
                   <option value="24">24 meses</option>
                 </select>
-                <button
-                  onClick={loadProjection}
-                  className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                >
-                  Actualizar
-                </button>
                 <button
                   onClick={() => setShowProjectionModal(false)}
                   className="text-fr-gray-500 hover:text-fr-gray-700"
@@ -746,21 +771,21 @@ const RecurringTransactions = () => {
               <div className="bg-green-50 p-4 rounded-lg">
                 <h3 className="text-sm font-medium text-green-800">Total Ingresos</h3>
                 <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(projection.summary?.total_income || 0)}
+                  {formatCurrency(projection.summary?.total_projected_income || 0)}
                 </p>
               </div>
               <div className="bg-red-50 p-4 rounded-lg">
                 <h3 className="text-sm font-medium text-red-800">Total Gastos</h3>
                 <p className="text-2xl font-bold text-red-600">
-                  {formatCurrency(projection.summary?.total_expenses || 0)}
+                  {formatCurrency(projection.summary?.total_projected_expenses || 0)}
                 </p>
               </div>
               <div className="bg-blue-50 p-4 rounded-lg">
                 <h3 className="text-sm font-medium text-blue-800">Flujo Neto</h3>
                 <p className={`text-2xl font-bold ${
-                  (projection.summary?.net_flow || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                  (projection.summary?.net_projected_amount || 0) >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  {formatCurrency(projection.summary?.net_flow || 0)}
+                  {formatCurrency(projection.summary?.net_projected_amount || 0)}
                 </p>
               </div>
             </div>
@@ -784,10 +809,10 @@ const RecurringTransactions = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-fr-gray-200">
-                  {projection.monthly_breakdown?.map((month, index) => (
+                  {projection.monthly_projections?.map((month, index) => (
                     <tr key={index} className="hover:bg-fr-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-fr-gray-900">
-                        {month.month}
+                        {month.month_display}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
                         {formatCurrency(month.income)}
@@ -796,14 +821,56 @@ const RecurringTransactions = () => {
                         {formatCurrency(month.expenses)}
                       </td>
                       <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                        month.net_flow >= 0 ? 'text-green-600' : 'text-red-600'
+                        month.net_amount >= 0 ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {formatCurrency(month.net_flow)}
+                        {formatCurrency(month.net_amount)}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && deletingTransaction && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0 w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Eliminar Transacción Recurrente
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                ¿Estás seguro de que quieres eliminar la transacción "{deletingTransaction.description}"? 
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+
+            <div className="flex justify-center space-x-3">
+              <button
+                type="button"
+                onClick={cancelDelete}
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Eliminar
+              </button>
             </div>
           </div>
         </div>
