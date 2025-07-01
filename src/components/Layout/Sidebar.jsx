@@ -11,7 +11,10 @@ import {
   X,
   Home,
   TrendingUp,
-  Sparkles
+  Sparkles,
+  PieChart,
+  Target,
+  RefreshCw
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -23,9 +26,12 @@ const Sidebar = () => {
     { path: '/insights', icon: Brain, label: 'IA Financiero', priority: 2 },
     { path: '/incomes', icon: PlusCircle, label: 'Ingresos', priority: 3 },
     { path: '/expenses', icon: MinusCircle, label: 'Gastos', priority: 4 },
-    { path: '/categories', icon: FolderOpen, label: 'Categorías', priority: 5 },
-    { path: '/reports', icon: FileText, label: 'Reportes', priority: 6 },
-    { path: '/settings', icon: Settings, label: 'Configuración', priority: 7 }
+    { path: '/budgets', icon: PieChart, label: 'Presupuestos', priority: 5, subtitle: 'Controla tus límites' },
+    { path: '/savings-goals', icon: Target, label: 'Metas de Ahorro', priority: 6, subtitle: 'Objetivos financieros' },
+    { path: '/recurring-transactions', icon: RefreshCw, label: 'Recurrentes', priority: 7 },
+    { path: '/categories', icon: FolderOpen, label: 'Categorías', priority: 8 },
+    { path: '/reports', icon: FileText, label: 'Reportes', priority: 9 },
+    { path: '/settings', icon: Settings, label: 'Configuración', priority: 10 }
   ];
 
   const toggleSidebar = () => {

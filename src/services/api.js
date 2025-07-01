@@ -234,7 +234,56 @@ export const aiAPI = {
     
     const response = await api.get(url);
     return response.data;
+  },
+
+  // Obtener puntuación de salud financiera
+  getHealthScore: async () => {
+    const response = await api.get('/insights/financial-health');
+    return response.data;
   }
+};
+
+// Servicios de Presupuestos
+export const budgetsAPI = {
+  list: (params) => api.get('/budgets', { params }),
+  get: (id) => api.get(`/budgets/${id}`),
+  create: (data) => api.post('/budgets', data),
+  update: (id, data) => api.put(`/budgets/${id}`, data),
+  delete: (id) => api.delete(`/budgets/${id}`),
+  getStatus: (id) => api.get(`/budgets/${id}/status`),
+  getDashboard: () => api.get('/budgets/dashboard'),
+};
+
+// Servicios de Metas de Ahorro
+export const savingsGoalsAPI = {
+  list: (params) => api.get('/savings-goals', { params }),
+  get: (id) => api.get(`/savings-goals/${id}`),
+  create: (data) => api.post('/savings-goals', data),
+  update: (id, data) => api.put(`/savings-goals/${id}`, data),
+  delete: (id) => api.delete(`/savings-goals/${id}`),
+  deposit: (id, data) => api.post(`/savings-goals/${id}/deposit`, data),
+  withdraw: (id, data) => api.post(`/savings-goals/${id}/withdraw`, data),
+  pause: (id) => api.post(`/savings-goals/${id}/pause`),
+  resume: (id) => api.post(`/savings-goals/${id}/resume`),
+  getDashboard: () => api.get('/savings-goals/dashboard'),
+};
+
+// Servicios de Transacciones Recurrentes
+export const recurringTransactionsAPI = {
+  list: (params) => api.get('/recurring-transactions', { params }),
+  get: (id) => api.get(`/recurring-transactions/${id}`),
+  create: (data) => api.post('/recurring-transactions', data),
+  update: (id, data) => api.put(`/recurring-transactions/${id}`, data),
+  delete: (id) => api.delete(`/recurring-transactions/${id}`),
+  pause: (id) => api.post(`/recurring-transactions/${id}/pause`),
+  resume: (id) => api.post(`/recurring-transactions/${id}/resume`),
+  execute: (id) => api.post(`/recurring-transactions/${id}/execute`),
+  getDashboard: () => api.get('/recurring-transactions/dashboard'),
+  getProjection: (months = 6) => api.get('/recurring-transactions/projection', { 
+    params: { months } 
+  }),
+  processPending: () => api.post('/recurring-transactions/batch/process'),
+  sendNotifications: () => api.post('/recurring-transactions/batch/notify'),
 };
 
 export default api; 

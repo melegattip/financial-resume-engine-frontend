@@ -9,7 +9,7 @@ import apiClient from './apiClient';
 
 class GamificationAPI {
   constructor() {
-    this.baseURL = '/api/v1/gamification';
+    this.baseURL = '/gamification'; // apiClient ya incluye /api/v1
   }
 
   // 📊 ENDPOINTS PÚBLICOS (no requieren autenticación)
@@ -92,7 +92,21 @@ class GamificationAPI {
    */
   async recordAction(actionType, entityType, entityId, description = '') {
     try {
+      // Obtener user_id del localStorage para incluirlo en el request body
+      const userData = localStorage.getItem('auth_user');
+      let userId = '';
+      
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          userId = user?.id?.toString() || '';
+        } catch (error) {
+          console.warn('Error parsing user data:', error);
+        }
+      }
+
       const response = await apiClient.post(`${this.baseURL}/actions`, {
+        user_id: userId,
         action_type: actionType,
         entity_type: entityType,
         entity_id: entityId,

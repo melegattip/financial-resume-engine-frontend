@@ -24,8 +24,12 @@ class GamificationService {
       console.log('✅ Recomendación vista registrada:', result);
       return result;
     } catch (error) {
-      console.warn('⚠️ Error recording insight view:', error);
-      // No lanzar error para no interrumpir la experiencia del usuario
+      // Silenciar errores de gamificación para no interferir con la UX principal
+      if (error.response?.status === 400 || error.response?.status === 404) {
+        console.debug('⚠️ Gamification service not available:', error.response?.status);
+      } else {
+        console.warn('⚠️ Error recording insight view:', error.message);
+      }
       return null;
     }
   }
@@ -45,7 +49,11 @@ class GamificationService {
       console.log('✅ Insight understood recorded:', result);
       return result;
     } catch (error) {
-      console.warn('⚠️ Error recording insight understanding:', error);
+      if (error.response?.status === 400 || error.response?.status === 404) {
+        console.debug('⚠️ Gamification service not available:', error.response?.status);
+      } else {
+        console.warn('⚠️ Error recording insight understanding:', error.message);
+      }
       return null;
     }
   }

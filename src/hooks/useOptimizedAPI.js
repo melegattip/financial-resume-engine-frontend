@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { expensesAPI, incomesAPI, categoriesAPI } from '../services/api';
 import dataService from '../services/dataService';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Hook personalizado para operaciones CRUD optimizadas con invalidación de cache
@@ -9,6 +10,7 @@ import toast from 'react-hot-toast';
 export const useOptimizedAPI = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { user } = useAuth();
 
   // Función genérica para manejar operaciones con invalidación de cache
   const executeWithCacheInvalidation = useCallback(async (operation, cacheType, successMessage) => {
@@ -47,16 +49,18 @@ export const useOptimizedAPI = () => {
     },
 
     update: async (id, data) => {
+      if (!user?.id) throw new Error('Usuario no autenticado');
       return executeWithCacheInvalidation(
-        () => expensesAPI.update(id, data),
+        () => expensesAPI.update(user.id, id, data),
         'expense',
         'Gasto actualizado exitosamente'
       );
     },
 
     delete: async (id) => {
+      if (!user?.id) throw new Error('Usuario no autenticado');
       return executeWithCacheInvalidation(
-        () => expensesAPI.delete(id),
+        () => expensesAPI.delete(user.id, id),
         'expense',
         'Gasto eliminado exitosamente'
       );
@@ -82,16 +86,18 @@ export const useOptimizedAPI = () => {
     },
 
     update: async (id, data) => {
+      if (!user?.id) throw new Error('Usuario no autenticado');
       return executeWithCacheInvalidation(
-        () => incomesAPI.update(id, data),
+        () => incomesAPI.update(user.id, id, data),
         'income',
         'Ingreso actualizado exitosamente'
       );
     },
 
     delete: async (id) => {
+      if (!user?.id) throw new Error('Usuario no autenticado');
       return executeWithCacheInvalidation(
-        () => incomesAPI.delete(id),
+        () => incomesAPI.delete(user.id, id),
         'income',
         'Ingreso eliminado exitosamente'
       );

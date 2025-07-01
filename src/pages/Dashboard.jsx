@@ -11,7 +11,8 @@ import {
   XCircle,
   BarChart3,
   Target,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import { 
   ResponsiveContainer,
@@ -20,7 +21,7 @@ import {
   Cell,
   Tooltip
 } from 'recharts';
-import { formatCurrency, formatDate, formatPercentage as formatPercentageUtil } from '../services/api';
+import { formatCurrency, formatDate, formatPercentage as formatPercentageUtil, budgetsAPI, savingsGoalsAPI, recurringTransactionsAPI } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
 import { useAuth } from '../contexts/AuthContext';
 import dataService from '../services/dataService';
@@ -38,6 +39,11 @@ const Dashboard = () => {
     incomes: [],
     categories: [],
   });
+
+  // Estados para las nuevas funcionalidades
+  const [budgetsSummary, setBudgetsSummary] = useState(null);
+  const [savingsGoalsSummary, setSavingsGoalsSummary] = useState(null);
+  const [recurringTransactionsSummary, setRecurringTransactionsSummary] = useState(null);
 
   // Usar el contexto global de período
   const {
@@ -65,6 +71,7 @@ const Dashboard = () => {
   // Cargar datos iniciales
   useEffect(() => {
     loadDashboardData();
+    loadNewFeaturesSummary();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -122,6 +129,49 @@ const Dashboard = () => {
       toast.error('Error cargando datos del dashboard');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Cargar resúmenes de las nuevas funcionalidades
+  const loadNewFeaturesSummary = async () => {
+    try {
+      console.log('🔄 Cargando resúmenes de nuevas funcionalidades...');
+      
+      const [budgetsRes, savingsRes, recurringRes] = await Promise.all([
+        budgetsAPI.getDashboard().catch((err) => {
+          console.warn('❌ Error cargando budgets dashboard:', err);
+          return null;
+        }),
+        savingsGoalsAPI.getDashboard().catch((err) => {
+          console.warn('❌ Error cargando savings goals dashboard:', err);
+          return null;
+        }),
+        recurringTransactionsAPI.getDashboard().catch((err) => {
+          console.warn('❌ Error cargando recurring transactions dashboard:', err);
+          return null;
+        })
+      ]);
+
+      console.log('📊 Respuestas recibidas:', {
+        budgets: budgetsRes,
+        savings: savingsRes,
+        recurring: recurringRes
+      });
+
+      if (budgetsRes?.data?.data) {
+        console.log('✅ Configurando budgets summary:', budgetsRes.data.data);
+        setBudgetsSummary(budgetsRes.data.data);
+      }
+      if (savingsRes?.data?.data) {
+        console.log('✅ Configurando savings goals summary:', savingsRes.data.data);
+        setSavingsGoalsSummary(savingsRes.data.data);
+      }
+      if (recurringRes?.data?.data) {
+        console.log('✅ Configurando recurring transactions summary:', recurringRes.data.data);
+        setRecurringTransactionsSummary(recurringRes.data.data);
+      }
+    } catch (error) {
+      console.error('❌ Error cargando resúmenes de nuevas funcionalidades:', error);
     }
   };
 
@@ -424,6 +474,95 @@ const Dashboard = () => {
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Widgets de nuevas funcionalidades */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+        {/* Widget de Presupuestos */}
+        {budgetsSummary && (
+          <div className="card">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-fr-gray-600">
+                  Presupuestos
+                </p>
+                <p className="text-xl lg:text-2xl font-bold text-fr-gray-900 break-words">
+                  {budgetsSummary.summary?.total_budgets || 0}
+                </p>
+              </div>
+              <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-blue-100 ml-2">
+                <PieChart className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <div className="flex items-center space-x-4 text-xs">
+                <span className="text-green-600">
+                  {budgetsSummary.summary?.on_track_count || 0} en meta
+                </span>
+                <span className="text-yellow-600">
+                  {budgetsSummary.summary?.warning_count || 0} alerta
+                </span>
+                <span className="text-red-600">
+                  {budgetsSummary.summary?.exceeded_count || 0} excedidos
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Widget de Metas de Ahorro */}
+        {savingsGoalsSummary && (
+          <div className="card">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-fr-gray-600">
+                  Metas de Ahorro
+                </p>
+                <p className="text-xl lg:text-2xl font-bold text-green-600 break-words">
+                  {formatAmount(savingsGoalsSummary.summary?.total_saved || 0)}
+                </p>
+              </div>
+              <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-green-100 ml-2">
+                <Target className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-sm text-fr-gray-500">
+                {savingsGoalsSummary.summary?.active_goals || 0} metas activas
+              </span>
+              <span className="text-sm text-fr-gray-500">
+                Meta: {formatAmount(savingsGoalsSummary.summary?.total_target || 0)}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Widget de Transacciones Recurrentes */}
+        {recurringTransactionsSummary && (
+          <div className="card">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-fr-gray-600">
+                  Transacciones Recurrentes
+                </p>
+                <p className="text-xl lg:text-2xl font-bold text-fr-gray-900 break-words">
+                  {recurringTransactionsSummary.summary?.total_active || 0}
+                </p>
+              </div>
+              <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-purple-100 ml-2">
+                <RefreshCw className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-sm text-green-600">
+                +{formatAmount(recurringTransactionsSummary.summary?.monthly_income_total || 0)}/mes
+              </span>
+              <span className="text-sm text-red-600">
+                -{formatAmount(recurringTransactionsSummary.summary?.monthly_expense_total || 0)}/mes
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Transacciones por mes - Dos columnas */}

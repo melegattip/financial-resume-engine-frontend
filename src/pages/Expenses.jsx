@@ -14,6 +14,7 @@ import { formatCurrency, formatPercentage } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
 import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
 import toast from 'react-hot-toast';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([]);
@@ -26,6 +27,9 @@ const Expenses = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPaid, setFilterPaid] = useState('all');
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingExpense, setDeletingExpense] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -143,19 +147,34 @@ const Expenses = () => {
     setShowModal(true);
   };
 
-  const handleDelete = async (expense) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este gasto?')) {
-      try {
-        await expensesAPI.delete(expense.id);
-        // useOptimizedAPI ya muestra el toast de éxito
-        
-        // Recargar datos para mostrar cambios
-        await loadData();
-      } catch (error) {
-        // useOptimizedAPI ya maneja el error
-        console.error('Error en handleDelete:', error);
-      }
+  const handleDelete = (expense) => {
+    setDeletingExpense(expense);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingExpense) return;
+    
+    try {
+      setDeleteLoading(true);
+      await expensesAPI.delete(deletingExpense.id);
+      // useOptimizedAPI ya muestra el toast de éxito
+      
+      // Recargar datos para mostrar cambios
+      await loadData();
+      setShowDeleteModal(false);
+      setDeletingExpense(null);
+    } catch (error) {
+      // useOptimizedAPI ya maneja el error
+      console.error('Error en confirmDelete:', error);
+    } finally {
+      setDeleteLoading(false);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeletingExpense(null);
   };
 
   const togglePaid = async (expense) => {
@@ -643,6 +662,19 @@ const Expenses = () => {
         </div>,
         document.body
       )}
+
+      {/* Modal de Confirmación de Eliminación */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        title="Eliminar Gasto"
+        message={`¿Estás seguro de que quieres eliminar el gasto "${deletingExpense?.description}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        type="danger"
+        loading={deleteLoading}
+      />
     </div>
   );
 };

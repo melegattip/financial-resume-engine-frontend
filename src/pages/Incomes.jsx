@@ -5,6 +5,7 @@ import { formatCurrency } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
 import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
 import toast from 'react-hot-toast';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const Incomes = () => {
   const [incomes, setIncomes] = useState([]);
@@ -13,6 +14,9 @@ const Incomes = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingIncome, setEditingIncome] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingIncome, setDeletingIncome] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -113,17 +117,32 @@ const Incomes = () => {
     setShowModal(true);
   };
 
-  const handleDelete = async (income) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este ingreso?')) {
-      try {
-        await incomesAPI.delete(income.id);
-        // useOptimizedAPI ya muestra el toast de éxito
-        await loadData();
-      } catch (error) {
-        // useOptimizedAPI ya maneja el error
-        console.error('Error en handleDelete:', error);
-      }
+  const handleDelete = (income) => {
+    setDeletingIncome(income);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingIncome) return;
+    
+    try {
+      setDeleteLoading(true);
+      await incomesAPI.delete(deletingIncome.id);
+      // useOptimizedAPI ya muestra el toast de éxito
+      await loadData();
+      setShowDeleteModal(false);
+      setDeletingIncome(null);
+    } catch (error) {
+      // useOptimizedAPI ya maneja el error
+      console.error('Error en confirmDelete:', error);
+    } finally {
+      setDeleteLoading(false);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeletingIncome(null);
   };
 
   const filteredIncomes = Array.isArray(incomes) 
@@ -346,6 +365,19 @@ const Incomes = () => {
           document.body
         )
       )}
+
+      {/* Modal de Confirmación de Eliminación */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        title="Eliminar Ingreso"
+        message={`¿Estás seguro de que quieres eliminar el ingreso "${deletingIncome?.description}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        type="danger"
+        loading={deleteLoading}
+      />
     </div>
   );
 };
