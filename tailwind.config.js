@@ -76,6 +76,18 @@ module.exports = {
       fontFamily: {
         'sans': ['Inter', 'Proxima Nova', 'system-ui', 'sans-serif'],
       },
+      fontSize: {
+        'xs': ['0.65rem', { lineHeight: '0.95rem' }],
+        'sm': ['0.8rem', { lineHeight: '1.1rem' }],
+        'base': ['0.9rem', { lineHeight: '1.35rem' }],
+        'lg': ['1rem', { lineHeight: '1.5rem' }],
+        'xl': ['1.125rem', { lineHeight: '1.65rem' }],
+        '2xl': ['1.35rem', { lineHeight: '1.9rem' }],
+        '3xl': ['1.7rem', { lineHeight: '2.25rem' }],
+        '4xl': ['2rem', { lineHeight: '2.5rem' }],
+        '5xl': ['2.5rem', { lineHeight: '3rem' }],
+        '6xl': ['3rem', { lineHeight: '3.5rem' }],
+      },
       borderRadius: {
         'fr': '8px',
         'fr-lg': '12px',

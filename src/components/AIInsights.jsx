@@ -16,7 +16,7 @@ import {
   ChevronUp,
   Target
 } from 'lucide-react';
-import { aiAPI } from '../services/api';
+import { aiAPI, dashboardAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import gamificationService from '../services/gamificationServiceSimple';
 
@@ -31,22 +31,23 @@ const AIInsights = () => {
   const [healthScore, setHealthScore] = useState(0);
   const [healthScoreLoading, setHealthScoreLoading] = useState(false);
   const [lastEvaluationDate, setLastEvaluationDate] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
   
   // Estados para Progressive Disclosure
   const [showAllInsights, setShowAllInsights] = useState(false);
   const [activeTab, setActiveTab] = useState('insights'); // 'insights' | 'purchase'
   
-  // Estados para el análisis de compra
+  // Estados para el análisis de compra - ahora se inicializan dinámicamente
   const [purchaseForm, setPurchaseForm] = useState({
     itemName: '',
     amount: '',
     description: '',
     paymentType: 'contado',
     isNecessary: false,
-    currentBalance: 152000,
-    monthlyIncome: 475000,
-    monthlyExpenses: 323000,
-    savingsGoal: 50000
+    currentBalance: 0,
+    monthlyIncome: 0,
+    monthlyExpenses: 0,
+    savingsGoal: 0
   });
 
   // Estados para gamificación
@@ -59,19 +60,33 @@ const AIInsights = () => {
     { value: 'ahorro', label: 'Necesito ahorrar para esto' }
   ];
 
-  // Función para verificar si necesita nueva evaluación (TTL de 20 horas)
-  const needsNewEvaluation = useCallback(() => {
-    const cachedData = localStorage.getItem('ai_insights_cache');
-    if (!cachedData) return true;
-    
+  // Cargar datos del dashboard para obtener información financiera real
+  const loadDashboardData = useCallback(async () => {
     try {
-      const { timestamp } = JSON.parse(cachedData);
-      const twentyHours = 20 * 60 * 60 * 1000; // 20 horas en milisegundos
-      return Date.now() - timestamp > twentyHours;
+      const response = await dashboardAPI.overview();
+      const data = response.data || response;
+      setDashboardData(data);
+      
+      // Actualizar el formulario de compra con datos reales
+      const metrics = data?.Metrics || data?.metrics;
+      const newFormData = {
+        currentBalance: metrics?.Balance || metrics?.balance || 0,
+        monthlyIncome: metrics?.TotalIncome || metrics?.total_income || 0,
+        monthlyExpenses: metrics?.TotalExpenses || metrics?.total_expenses || 0,
+        savingsGoal: data?.savings_goal || 50000
+      };
+      
+      setPurchaseForm(prev => ({
+        ...prev,
+        ...newFormData
+      }));
     } catch (error) {
-      return true;
+      console.error('Error loading dashboard data:', error);
+      // Mantener valores por defecto en caso de error
     }
   }, []);
+
+  // Cache removido - el backend maneja su propio cache de 20 horas
 
   // Función para cargar el health score
   const loadHealthScore = useCallback(async () => {
@@ -79,10 +94,7 @@ const AIInsights = () => {
 
     setHealthScoreLoading(true);
     try {
-      console.log('🏥 Cargando health score para usuario:', user?.email);
       const response = await aiAPI.getHealthScore();
-      console.log('📊 Health score response completa:', response);
-      console.log('📊 Health score valor:', response.health_score);
       setHealthScore(response.health_score || 0);
     } catch (err) {
       console.error('Error loading health score:', err.message);
@@ -107,15 +119,10 @@ const AIInsights = () => {
       const newInsights = response.insights || [];
       setInsights(newInsights);
       
-      // Guardar en cache con timestamp
-      const evaluationDate = new Date();
-      setLastEvaluationDate(evaluationDate);
-      localStorage.setItem('ai_insights_cache', JSON.stringify({
-        insights: newInsights,
-        timestamp: Date.now(),
-        evaluationDate: evaluationDate.toISOString()
-      }));
-      console.log('💾 Análisis guardado en cache');
+      // Usar el timestamp del backend (generated_at)
+      const backendTimestamp = response.generated_at ? new Date(response.generated_at) : new Date();
+      setLastEvaluationDate(backendTimestamp);
+      console.log('💾 Análisis cargado desde backend - Timestamp:', backendTimestamp.toISOString());
     } catch (err) {
       console.error('Error loading AI insights:', err.message);
       setError('Error conectando con GPT-4. Usando datos de ejemplo.');
@@ -164,43 +171,25 @@ const AIInsights = () => {
       ];
       setInsights(fallbackInsights);
       
-      // Guardar datos de ejemplo en cache también
-      const evaluationDate = new Date();
-      setLastEvaluationDate(evaluationDate);
-      localStorage.setItem('ai_insights_cache', JSON.stringify({
-        insights: fallbackInsights,
-        timestamp: Date.now(),
-        evaluationDate: evaluationDate.toISOString()
-      }));
+      // Usar timestamp actual para datos de fallback
+      const fallbackTimestamp = new Date();
+      setLastEvaluationDate(fallbackTimestamp);
+      console.log('💾 Usando datos de fallback - Timestamp:', fallbackTimestamp.toISOString());
     } finally {
       setLoading(false);
     }
   }, [isAuthenticated, user?.email]);
 
-  // Función para cargar insights con cache
-  const loadAIInsightsWithCache = useCallback(async () => {
+  // Función simplificada - siempre llama al backend (que tiene su propio cache de 20h)
+  const loadAIInsightsSimple = useCallback(async () => {
     if (!isAuthenticated) {
       setError('Debes iniciar sesión para ver el análisis inteligente');
       return;
     }
 
-    // Intentar cargar desde cache primero
-    const cachedData = localStorage.getItem('ai_insights_cache');
-    if (cachedData && !needsNewEvaluation()) {
-      try {
-        const { insights: cachedInsights, evaluationDate } = JSON.parse(cachedData);
-        setInsights(cachedInsights);
-        setLastEvaluationDate(new Date(evaluationDate));
-        console.log('🗄️ Cargando insights desde cache');
-        return;
-      } catch (error) {
-        console.warn('Error al cargar cache, evaluando nuevamente');
-      }
-    }
-
-    // Si no hay cache válido, hacer nueva evaluación
+    // Siempre llamar al backend - él maneja su propio cache de 20 horas
     await loadAIInsights();
-  }, [isAuthenticated, needsNewEvaluation, loadAIInsights]);
+  }, [isAuthenticated, loadAIInsights]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -208,14 +197,16 @@ const AIInsights = () => {
       setError('Debes iniciar sesión para ver el análisis inteligente');
       return;
     }
-    // Limpiar localStorage en desarrollo para evitar cache viejo
-    if (process.env.NODE_ENV === 'development') {
-      localStorage.removeItem('ai_insights_cache');
-      console.log('🧹 Cache limpiado para desarrollo');
-    }
-    loadAIInsightsWithCache();
+    // Cache del frontend deshabilitado - confiamos en el cache del backend (20 horas)
+    // if (process.env.NODE_ENV === 'development') {
+    //   localStorage.removeItem('ai_insights_cache');
+    //   localStorage.removeItem('health_score_cache');
+    //   console.log('🧹 Cache limpiado para desarrollo');
+    // }
+    loadAIInsightsSimple();
     loadHealthScore();
-     }, [isAuthenticated, loadAIInsightsWithCache, loadHealthScore]);
+    loadDashboardData();
+  }, [isAuthenticated, loadAIInsightsSimple, loadHealthScore, loadDashboardData]);
 
   const analyzePurchase = async () => {
     if (!purchaseForm.itemName || !purchaseForm.amount) {
@@ -421,6 +412,17 @@ const AIInsights = () => {
               <div className="text-4xl md:text-5xl font-bold">{healthScore}</div>
             )}
             <div className="text-blue-100 text-sm">Puntuación financiera</div>
+            <button
+              onClick={() => {
+                loadAIInsights();
+                loadHealthScore();
+              }}
+              className="mt-2 text-xs text-blue-100 hover:text-white underline flex items-center justify-center space-x-1"
+              title="Actualizar análisis con datos más recientes"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Actualizar</span>
+            </button>
           </div>
         </div>
       </div>
@@ -588,6 +590,52 @@ const AIInsights = () => {
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Análisis de Compra Inteligente</h3>
                 <p className="text-gray-600">Te ayudamos a tomar decisiones financieras informadas</p>
               </div>
+
+              {/* Información financiera automática */}
+              {dashboardData ? (
+                <div className="bg-blue-50 rounded-xl p-4 mb-4">
+                  <h4 className="font-medium text-blue-900 mb-3 flex items-center">
+                    <Calculator className="w-4 h-4 mr-2" />
+                    Datos financieros actuales (automáticos)
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-blue-700">Balance actual:</span>
+                      <p className="font-semibold text-blue-900">${(dashboardData?.Metrics?.Balance || dashboardData?.metrics?.balance || 0).toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <span className="text-blue-700">Ingresos mensuales:</span>
+                      <p className="font-semibold text-blue-900">${(dashboardData?.Metrics?.TotalIncome || dashboardData?.metrics?.total_income || 0).toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <span className="text-blue-700">Gastos mensuales:</span>
+                      <p className="font-semibold text-blue-900">${(dashboardData?.Metrics?.TotalExpenses || dashboardData?.metrics?.total_expenses || 0).toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <span className="text-blue-700">Disponible/mes:</span>
+                      <p className="font-semibold text-green-700">${((dashboardData?.Metrics?.TotalIncome || dashboardData?.metrics?.total_income || 0) - (dashboardData?.Metrics?.TotalExpenses || dashboardData?.metrics?.total_expenses || 0)).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-xs text-blue-600">
+                      💡 Estos datos se calculan automáticamente basándose en tus transacciones
+                    </p>
+                    <button
+                      onClick={loadDashboardData}
+                      className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
+                    >
+                      🔄 Actualizar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                  <div className="flex items-center justify-center space-x-2 text-gray-600">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-sm">Cargando datos financieros...</span>
+                  </div>
+                </div>
+              )}
 
               {/* Formulario optimizado para móvil */}
               <div className="bg-gray-50 rounded-xl p-4 md:p-6 space-y-4">

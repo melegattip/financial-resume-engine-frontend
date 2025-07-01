@@ -11,6 +11,7 @@
   body {
     @apply bg-fr-gray-50 font-sans text-fr-gray-900;
     font-family: 'Inter', 'Proxima Nova', system-ui, sans-serif;
+    font-size: 0.9rem;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -21,24 +22,24 @@
 @layer components {
   /* Botones principales */
   .btn-primary {
-    @apply bg-fr-primary hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-fr transition-all duration-200 shadow-fr hover:shadow-fr-lg focus:outline-none focus:ring-2 focus:ring-fr-primary focus:ring-opacity-50;
+    @apply bg-fr-primary hover:bg-blue-600 text-white font-medium py-2.5 px-5 rounded-fr transition-all duration-200 shadow-fr hover:shadow-fr-lg focus:outline-none focus:ring-2 focus:ring-fr-primary focus:ring-opacity-50 text-sm;
   }
 
   .btn-secondary {
-    @apply bg-fr-secondary hover:bg-green-600 text-white font-medium py-3 px-6 rounded-fr transition-all duration-200 shadow-fr hover:shadow-fr-lg focus:outline-none focus:ring-2 focus:ring-fr-secondary focus:ring-opacity-50;
+    @apply bg-fr-secondary hover:bg-green-600 text-white font-medium py-2.5 px-5 rounded-fr transition-all duration-200 shadow-fr hover:shadow-fr-lg focus:outline-none focus:ring-2 focus:ring-fr-secondary focus:ring-opacity-50 text-sm;
   }
 
   .btn-outline {
-    @apply border-2 border-fr-primary text-fr-primary hover:bg-fr-primary hover:text-white font-medium py-3 px-6 rounded-fr transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-fr-primary focus:ring-opacity-50;
+    @apply border-2 border-fr-primary text-fr-primary hover:bg-fr-primary hover:text-white font-medium py-2.5 px-5 rounded-fr transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-fr-primary focus:ring-opacity-50 text-sm;
   }
 
   .btn-ghost {
-    @apply text-fr-gray-600 hover:text-fr-primary hover:bg-fr-gray-100 font-medium py-2 px-4 rounded-fr transition-all duration-200;
+    @apply text-fr-gray-600 hover:text-fr-primary hover:bg-fr-gray-100 font-medium py-2 px-4 rounded-fr transition-all duration-200 text-sm;
   }
 
   /* Cards principales */
   .card {
-    @apply bg-white rounded-fr-lg shadow-fr border border-fr-gray-200 p-6;
+    @apply bg-white rounded-fr-lg shadow-fr border border-fr-gray-200 p-5;
   }
 
   .card-hover {
@@ -47,11 +48,11 @@
 
   /* Inputs principales */
   .input {
-    @apply w-full px-4 py-3 border border-fr-gray-300 rounded-fr focus:outline-none focus:ring-2 focus:ring-fr-primary focus:border-transparent transition-all duration-200 bg-white;
+    @apply w-full px-3.5 py-2.5 border border-fr-gray-300 rounded-fr focus:outline-none focus:ring-2 focus:ring-fr-primary focus:border-transparent transition-all duration-200 bg-white text-sm;
   }
 
   .input-sm {
-    @apply px-3 py-2 border border-fr-gray-300 rounded-fr focus:outline-none focus:ring-2 focus:ring-fr-primary focus:border-transparent transition-all duration-200 bg-white text-sm;
+    @apply px-3 py-2 border border-fr-gray-300 rounded-fr focus:outline-none focus:ring-2 focus:ring-fr-primary focus:border-transparent transition-all duration-200 bg-white text-xs;
   }
 
   .input-error {
@@ -60,7 +61,7 @@
 
   /* Badges y estados */
   .badge {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
 
   .badge-success {
@@ -81,7 +82,7 @@
 
   /* Navegación */
   .nav-link {
-    @apply flex items-center px-4 py-3 text-fr-gray-600 hover:text-fr-primary hover:bg-fr-gray-100 rounded-fr transition-all duration-200 font-medium;
+    @apply flex items-center px-3.5 py-2.5 text-fr-gray-600 hover:text-fr-primary hover:bg-fr-gray-100 rounded-fr transition-all duration-200 font-medium text-sm;
   }
 
   .nav-link-active {

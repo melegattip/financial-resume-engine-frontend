@@ -135,23 +135,43 @@ const Dashboard = () => {
   // Cargar resúmenes de las nuevas funcionalidades
   const loadNewFeaturesSummary = async () => {
     try {
+      console.log('🔄 Cargando resúmenes de nuevas funcionalidades...');
+      
       const [budgetsRes, savingsRes, recurringRes] = await Promise.all([
-        budgetsAPI.getDashboard().catch(() => null),
-        savingsGoalsAPI.getDashboard().catch(() => null),
-        recurringTransactionsAPI.getDashboard().catch(() => null)
+        budgetsAPI.getDashboard().catch((err) => {
+          console.warn('❌ Error cargando budgets dashboard:', err);
+          return null;
+        }),
+        savingsGoalsAPI.getDashboard().catch((err) => {
+          console.warn('❌ Error cargando savings goals dashboard:', err);
+          return null;
+        }),
+        recurringTransactionsAPI.getDashboard().catch((err) => {
+          console.warn('❌ Error cargando recurring transactions dashboard:', err);
+          return null;
+        })
       ]);
 
+      console.log('📊 Respuestas recibidas:', {
+        budgets: budgetsRes,
+        savings: savingsRes,
+        recurring: recurringRes
+      });
+
       if (budgetsRes?.data?.data) {
+        console.log('✅ Configurando budgets summary:', budgetsRes.data.data);
         setBudgetsSummary(budgetsRes.data.data);
       }
       if (savingsRes?.data?.data) {
+        console.log('✅ Configurando savings goals summary:', savingsRes.data.data);
         setSavingsGoalsSummary(savingsRes.data.data);
       }
       if (recurringRes?.data?.data) {
+        console.log('✅ Configurando recurring transactions summary:', recurringRes.data.data);
         setRecurringTransactionsSummary(recurringRes.data.data);
       }
     } catch (error) {
-      console.error('Error cargando resúmenes de nuevas funcionalidades:', error);
+      console.error('❌ Error cargando resúmenes de nuevas funcionalidades:', error);
     }
   };
 
@@ -526,7 +546,7 @@ const Dashboard = () => {
                   Transacciones Recurrentes
                 </p>
                 <p className="text-xl lg:text-2xl font-bold text-fr-gray-900 break-words">
-                  {recurringTransactionsSummary.summary?.active_count || 0}
+                  {recurringTransactionsSummary.summary?.total_active || 0}
                 </p>
               </div>
               <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-purple-100 ml-2">
@@ -535,10 +555,10 @@ const Dashboard = () => {
             </div>
             <div className="mt-3 flex items-center justify-between">
               <span className="text-sm text-green-600">
-                +{formatAmount(recurringTransactionsSummary.summary?.monthly_income || 0)}/mes
+                +{formatAmount(recurringTransactionsSummary.summary?.monthly_income_total || 0)}/mes
               </span>
               <span className="text-sm text-red-600">
-                -{formatAmount(recurringTransactionsSummary.summary?.monthly_expenses || 0)}/mes
+                -{formatAmount(recurringTransactionsSummary.summary?.monthly_expense_total || 0)}/mes
               </span>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { savingsGoalsAPI, formatCurrency } from '../services/api';
 import toast from '../utils/notifications';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const SavingsGoals = () => {
   const [goals, setGoals] = useState([]);
@@ -36,6 +37,11 @@ const SavingsGoals = () => {
     amount: '',
     description: ''
   });
+
+  // Estados para modal de confirmación de eliminación
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingGoal, setDeletingGoal] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -129,17 +135,33 @@ const SavingsGoals = () => {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar esta meta de ahorro?')) {
-      try {
-        await savingsGoalsAPI.delete(id);
-        toast.success('Meta de ahorro eliminada exitosamente');
-        loadData();
-      } catch (error) {
-        console.error('Error deleting goal:', error);
-        toast.error('Error eliminando meta de ahorro');
-      }
+  const handleDelete = (goal) => {
+    setDeletingGoal(goal);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingGoal) return;
+    
+    try {
+      setDeleteLoading(true);
+      await savingsGoalsAPI.delete(deletingGoal.id);
+      toast.success('Meta de ahorro eliminada exitosamente');
+      loadData();
+      setShowDeleteModal(false);
+      setDeletingGoal(null);
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+      toast.error('Error eliminando meta de ahorro');
+    } finally {
+      setDeleteLoading(false);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeletingGoal(null);
+    setDeleteLoading(false);
   };
 
   const handlePause = async (id) => {
@@ -296,35 +318,53 @@ const SavingsGoals = () => {
               <div className="flex justify-center space-x-8 mb-8">
                 <button 
                   onClick={() => openTransactionModal(selectedGoal, 'deposit')}
-                  className="flex flex-col items-center"
+                  className="flex flex-col items-center relative group"
+                  title="Depositar dinero en esta meta"
                 >
-                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-2">
+                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-105">
                     <span className="text-2xl">💰</span>
                   </div>
                   <span className="text-gray-700 font-medium">Ahorrar</span>
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                    Depositar dinero en esta meta
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                  </div>
                 </button>
                 
                 <button 
                   onClick={() => openTransactionModal(selectedGoal, 'withdraw')}
-                  className="flex flex-col items-center"
+                  className="flex flex-col items-center relative group"
+                  title="Retirar dinero de esta meta"
                 >
-                  <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mb-2">
+                  <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-105">
                     <span className="text-2xl">💸</span>
                   </div>
                   <span className="text-gray-700 font-medium">Retirar</span>
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                    Retirar dinero de esta meta
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                  </div>
                 </button>
                 
                 <button 
                   onClick={() => handleEdit(selectedGoal)}
-                  className="flex flex-col items-center"
+                  className="flex flex-col items-center relative group"
+                  title="Editar configuración de la meta"
                 >
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-2">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-105">
                     <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
                   <span className="text-gray-700 font-medium">Configurar</span>
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                    Editar configuración de la meta
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                  </div>
                 </button>
               </div>
             </div>
@@ -571,10 +611,16 @@ const SavingsGoals = () => {
                           e.stopPropagation();
                           openTransactionModal(goal, 'deposit');
                         }}
-                        className="flex flex-col items-center"
+                        className="flex flex-col items-center relative group"
+                        title="Depositar dinero"
                       >
-                        <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                        <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center transition-transform group-hover:scale-110">
                           <span className="text-lg">💰</span>
+                        </div>
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                          Depositar dinero
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
                         </div>
                       </button>
                       
@@ -583,10 +629,16 @@ const SavingsGoals = () => {
                           e.stopPropagation();
                           openTransactionModal(goal, 'withdraw');
                         }}
-                        className="flex flex-col items-center"
+                        className="flex flex-col items-center relative group"
+                        title="Retirar dinero"
                       >
-                        <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                        <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center transition-transform group-hover:scale-110">
                           <span className="text-lg">💸</span>
+                        </div>
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                          Retirar dinero
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
                         </div>
                       </button>
                       
@@ -595,13 +647,39 @@ const SavingsGoals = () => {
                           e.stopPropagation();
                           setSelectedGoal(goal);
                         }}
-                        className="flex flex-col items-center"
+                        className="flex flex-col items-center relative group"
+                        title="Ver detalles"
                       >
-                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center transition-transform group-hover:scale-110">
                           <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
+                        </div>
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                          Ver detalles
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                        </div>
+                      </button>
+                      
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(goal);
+                        }}
+                        className="flex flex-col items-center relative group"
+                        title="Eliminar meta"
+                      >
+                        <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center transition-transform group-hover:scale-110">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </div>
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                          Eliminar meta
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
                         </div>
                       </button>
                     </div>
@@ -784,6 +862,19 @@ const SavingsGoals = () => {
           </div>
         </div>
       )}
+
+      {/* Modal de Confirmación de Eliminación */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        title="Eliminar Meta de Ahorro"
+        message={`¿Estás seguro de que quieres eliminar la meta "${deletingGoal?.name}"? Esta acción no se puede deshacer y se perderá todo el historial asociado.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        type="danger"
+        loading={deleteLoading}
+      />
     </>
   );
 };
