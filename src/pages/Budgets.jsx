@@ -120,10 +120,10 @@ const Budgets = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'on_track': return 'text-green-600 bg-green-100';
-      case 'warning': return 'text-yellow-600 bg-yellow-100';
-      case 'exceeded': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'on_track': return 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30';
+      case 'warning': return 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/30';
+      case 'exceeded': return 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/30';
+      default: return 'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-800/50';
     }
   };
 
@@ -155,7 +155,7 @@ const Budgets = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="spinner"></div>
-        <span className="ml-2 text-fr-gray-600">Cargando presupuestos...</span>
+        <span className="ml-2 text-gray-600 dark:text-gray-400">Cargando presupuestos...</span>
       </div>
     );
   }
@@ -165,12 +165,12 @@ const Budgets = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-fr-gray-900">Presupuestos</h1>
-          <p className="text-fr-gray-600">Gestiona tus límites de gasto por categoría</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Presupuestos</h1>
+          <p className="text-gray-600 dark:text-gray-400">Gestiona tus límites de gasto por categoría</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="bg-fr-primary text-white px-4 py-2 rounded-lg hover:bg-fr-primary-dark transition-colors"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors"
         >
           Nuevo Presupuesto
         </button>
@@ -179,32 +179,32 @@ const Budgets = () => {
       {/* Dashboard Summary */}
       {dashboard && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-fr-gray-500">Total Presupuestos</h3>
-            <p className="text-2xl font-bold text-fr-gray-900">{dashboard.summary?.total_budgets || 0}</p>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border dark:border-gray-700">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Presupuestos</h3>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{dashboard.summary?.total_budgets || 0}</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-fr-gray-500">En Meta</h3>
-            <p className="text-2xl font-bold text-green-600">{dashboard.summary?.on_track_count || 0}</p>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border dark:border-gray-700">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">En Meta</h3>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{dashboard.summary?.on_track_count || 0}</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-fr-gray-500">Con Alerta</h3>
-            <p className="text-2xl font-bold text-yellow-600">{dashboard.summary?.warning_count || 0}</p>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border dark:border-gray-700">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Con Alerta</h3>
+            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{dashboard.summary?.warning_count || 0}</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-fr-gray-500">Excedidos</h3>
-            <p className="text-2xl font-bold text-red-600">{dashboard.summary?.exceeded_count || 0}</p>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border dark:border-gray-700">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Excedidos</h3>
+            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{dashboard.summary?.exceeded_count || 0}</p>
           </div>
         </div>
       )}
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border dark:border-gray-700">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <select
             value={filters.category_id}
             onChange={(e) => setFilters({...filters, category_id: e.target.value})}
-            className="border border-fr-gray-300 rounded-lg px-3 py-2"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           >
             <option value="">Todas las categorías</option>
             {categories.map(category => (
@@ -215,7 +215,7 @@ const Budgets = () => {
           <select
             value={filters.period}
             onChange={(e) => setFilters({...filters, period: e.target.value})}
-            className="border border-fr-gray-300 rounded-lg px-3 py-2"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           >
             <option value="">Todos los períodos</option>
             <option value="weekly">Semanal</option>
@@ -227,7 +227,7 @@ const Budgets = () => {
           <select
             value={filters.status}
             onChange={(e) => setFilters({...filters, status: e.target.value})}
-            className="border border-fr-gray-300 rounded-lg px-3 py-2"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           >
             <option value="">Todos los estados</option>
             <option value="on_track">En Meta</option>
@@ -238,7 +238,7 @@ const Budgets = () => {
           <select
             value={filters.sort_by}
             onChange={(e) => setFilters({...filters, sort_by: e.target.value})}
-            className="border border-fr-gray-300 rounded-lg px-3 py-2"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           >
             <option value="created_at">Fecha de creación</option>
             <option value="name">Nombre</option>
@@ -249,7 +249,7 @@ const Budgets = () => {
           <select
             value={filters.sort_order}
             onChange={(e) => setFilters({...filters, sort_order: e.target.value})}
-            className="border border-fr-gray-300 rounded-lg px-3 py-2"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           >
             <option value="desc">Descendente</option>
             <option value="asc">Ascendente</option>
@@ -258,81 +258,81 @@ const Budgets = () => {
       </div>
 
       {/* Budgets List */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border dark:border-gray-700">
         {budgets.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-fr-gray-400 mb-4">
+            <div className="text-gray-400 dark:text-gray-500 mb-4">
               <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-fr-gray-900 mb-2">No hay presupuestos</h3>
-            <p className="text-fr-gray-600 mb-4">Crea tu primer presupuesto para controlar tus gastos</p>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No hay presupuestos</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">Crea tu primer presupuesto para controlar tus gastos</p>
             <button
               onClick={() => setShowModal(true)}
-              className="bg-fr-primary text-white px-4 py-2 rounded-lg hover:bg-fr-primary-dark transition-colors"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors"
             >
               Crear Presupuesto
             </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-fr-gray-200">
-              <thead className="bg-fr-gray-50">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Presupuesto
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Categoría
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Período
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Presupuesto
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Gastado
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Estado
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-fr-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Acciones
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-fr-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {budgets.map((budget) => (
-                  <tr key={budget.id} className="hover:bg-fr-gray-50">
+                  <tr key={budget.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-fr-gray-900">{budget.name}</div>
-                        <div className="text-sm text-fr-gray-500">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{budget.name}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
                           {budget.period_start ? new Date(budget.period_start).toLocaleDateString() : ''} - {budget.period_end ? new Date(budget.period_end).toLocaleDateString() : 'Sin fin'}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-fr-gray-900">{budget.category_name}</div>
-                        <div className="text-sm text-fr-gray-500">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{budget.category_name}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
                           {budget.period_start ? new Date(budget.period_start).toLocaleDateString() : ''} - {budget.period_end ? new Date(budget.period_end).toLocaleDateString() : 'Sin fin'}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-fr-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                       {getPeriodText(budget.period)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-fr-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                       {formatCurrency(budget.amount)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-fr-gray-900">
+                      <div className="text-sm text-gray-900 dark:text-gray-100">
                         {formatCurrency(budget.spent_amount)}
                       </div>
-                      <div className="w-full bg-fr-gray-200 rounded-full h-2 mt-1">
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
                         <div
                           className={`h-2 rounded-full ${
                             budget.spent_percentage >= 1 ? 'bg-red-500' :
@@ -342,7 +342,7 @@ const Budgets = () => {
                           style={{ width: `${Math.min((budget.spent_percentage || 0) * 100, 100)}%` }}
                         ></div>
                       </div>
-                      <div className="text-xs text-fr-gray-500 mt-1">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         {((budget.spent_percentage || 0) * 100).toFixed(1)}% usado
                       </div>
                     </td>
@@ -354,13 +354,13 @@ const Budgets = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => handleEdit(budget)}
-                        className="text-fr-primary hover:text-fr-primary-dark mr-3"
+                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => handleDelete(budget.id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                       >
                         Eliminar
                       </button>
@@ -376,27 +376,27 @@ const Budgets = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-lg font-bold text-fr-gray-900 mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md border dark:border-gray-700">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
               {editingBudget ? 'Editar Presupuesto' : 'Nuevo Presupuesto'}
             </h2>
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Nombre
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Monto
                 </label>
                 <input
@@ -404,19 +404,19 @@ const Budgets = () => {
                   step="0.01"
                   value={formData.amount}
                   onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                  className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Categoría
                 </label>
                 <select
                   value={formData.category_id}
                   onChange={(e) => setFormData({...formData, category_id: e.target.value})}
-                  className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 >
                   <option value="">Seleccionar categoría</option>
                   {categories.map(category => (
@@ -426,13 +426,13 @@ const Budgets = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Período
                 </label>
                 <select
                   value={formData.period}
                   onChange={(e) => setFormData({...formData, period: e.target.value})}
-                  className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   required
                 >
                   <option value="weekly">Semanal</option>
@@ -443,7 +443,7 @@ const Budgets = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Alerta al (%)
                 </label>
                 <input
@@ -452,33 +452,33 @@ const Budgets = () => {
                   max="100"
                   value={formData.alert_threshold}
                   onChange={(e) => setFormData({...formData, alert_threshold: e.target.value})}
-                  className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Fecha de inicio
                 </label>
                 <input
                   type="date"
                   value={formData.start_date}
                   onChange={(e) => setFormData({...formData, start_date: e.target.value})}
-                  className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Fecha de fin (opcional)
                 </label>
                 <input
                   type="date"
                   value={formData.end_date}
                   onChange={(e) => setFormData({...formData, end_date: e.target.value})}
-                  className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
 
@@ -490,13 +490,13 @@ const Budgets = () => {
                     setEditingBudget(null);
                     resetForm();
                   }}
-                  className="px-4 py-2 text-fr-gray-700 border border-fr-gray-300 rounded-lg hover:bg-fr-gray-50"
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-fr-primary text-white rounded-lg hover:bg-fr-primary-dark"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                 >
                   {editingBudget ? 'Actualizar' : 'Crear'}
                 </button>

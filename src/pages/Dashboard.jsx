@@ -231,18 +231,18 @@ const Dashboard = () => {
   // Función para obtener colores por categoría
   const getCategoryColor = (categoryId) => {
     const colors = [
-      { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-700' },
-      { bg: 'bg-green-100', border: 'border-green-400', text: 'text-green-700' },
-      { bg: 'bg-yellow-100', border: 'border-yellow-400', text: 'text-yellow-700' },
-      { bg: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-700' },
-      { bg: 'bg-pink-100', border: 'border-pink-400', text: 'text-pink-700' },
-      { bg: 'bg-indigo-100', border: 'border-indigo-400', text: 'text-indigo-700' },
-      { bg: 'bg-cyan-100', border: 'border-cyan-400', text: 'text-cyan-700' },
-      { bg: 'bg-orange-100', border: 'border-orange-400', text: 'text-orange-700' },
+      { bg: 'bg-blue-100 dark:bg-blue-900/30', border: 'border-blue-400', text: 'text-blue-700 dark:text-blue-300' },
+      { bg: 'bg-green-100 dark:bg-green-900/30', border: 'border-green-400', text: 'text-green-700 dark:text-green-300' },
+      { bg: 'bg-yellow-100 dark:bg-yellow-900/30', border: 'border-yellow-400', text: 'text-yellow-700 dark:text-yellow-300' },
+      { bg: 'bg-purple-100 dark:bg-purple-900/30', border: 'border-purple-400', text: 'text-purple-700 dark:text-purple-300' },
+      { bg: 'bg-pink-100 dark:bg-pink-900/30', border: 'border-pink-400', text: 'text-pink-700 dark:text-pink-300' },
+      { bg: 'bg-indigo-100 dark:bg-indigo-900/30', border: 'border-indigo-400', text: 'text-indigo-700 dark:text-indigo-300' },
+      { bg: 'bg-cyan-100 dark:bg-cyan-900/30', border: 'border-cyan-400', text: 'text-cyan-700 dark:text-cyan-300' },
+      { bg: 'bg-orange-100 dark:bg-orange-900/30', border: 'border-orange-400', text: 'text-orange-700 dark:text-orange-300' },
     ];
     
     if (!categoryId) {
-      return { bg: 'bg-gray-100', border: 'border-gray-400', text: 'text-gray-700' };
+      return { bg: 'bg-gray-100 dark:bg-gray-700', border: 'border-gray-400 dark:border-gray-500', text: 'text-gray-700 dark:text-gray-300' };
     }
     
     // Usar el hash del categoryId para asignar colores consistentes
@@ -371,7 +371,7 @@ const Dashboard = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="spinner"></div>
-        <span className="ml-2 text-fr-gray-600">Cargando dashboard...</span>
+        <span className="ml-2 text-fr-gray-600 dark:text-gray-400">Cargando dashboard...</span>
       </div>
     );
   }
@@ -384,14 +384,14 @@ const Dashboard = () => {
         <div className="card">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-fr-gray-600">
+              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
                 Balance Total
               </p>
               <p className={`text-xl lg:text-2xl font-bold ${data.balance >= 0 ? 'text-fr-secondary' : 'text-fr-error'} break-words`}>
                 {formatAmount(data.balance)}
               </p>
             </div>
-            <div className={`flex-shrink-0 p-2 lg:p-3 rounded-fr ${data.balance >= 0 ? 'bg-green-100' : 'bg-red-100'} ml-2`}>
+            <div className={`flex-shrink-0 p-2 lg:p-3 rounded-fr ${data.balance >= 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'} ml-2`}>
               <DollarSign className={`w-5 h-5 lg:w-6 lg:h-6 ${data.balance >= 0 ? 'text-fr-secondary' : 'text-fr-error'}`} />
             </div>
           </div>
@@ -411,20 +411,20 @@ const Dashboard = () => {
         <div className="card">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-fr-gray-600">
+              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
                 Total Ingresos
               </p>
               <p className="text-xl lg:text-2xl font-bold text-fr-secondary break-words">
                 {formatAmount(data.totalIncome)}
               </p>
             </div>
-            <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-green-100 ml-2">
+            <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-green-100 dark:bg-green-900/30 ml-2">
               <TrendingUp className="w-5 h-5 lg:w-6 lg:h-6 text-fr-secondary" />
             </div>
           </div>
           <div className="mt-3 flex items-center">
             <TrendingUp className="w-4 h-4 text-fr-secondary mr-1 flex-shrink-0" />
-            <span className="text-sm text-fr-gray-500">
+            <span className="text-sm text-fr-gray-500 dark:text-gray-400">
               {data.incomes.length} {data.incomes.length === 1 ? 'ingreso' : 'ingresos'} registrados
             </span>
           </div>
@@ -434,20 +434,20 @@ const Dashboard = () => {
         <div className="card">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-fr-gray-600">
+              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
                 Total Gastos
               </p>
-              <p className="text-xl lg:text-2xl font-bold text-fr-gray-900 break-words">
+              <p className="text-xl lg:text-2xl font-bold text-fr-gray-900 dark:text-gray-100 break-words">
                 {formatAmount(data.totalExpenses)}
               </p>
             </div>
-            <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-gray-100 ml-2">
-              <TrendingDown className="w-5 h-5 lg:w-6 lg:h-6 text-fr-gray-900" />
+            <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-gray-100 dark:bg-gray-700 ml-2">
+              <TrendingDown className="w-5 h-5 lg:w-6 lg:h-6 text-fr-gray-900 dark:text-gray-300" />
             </div>
           </div>
           <div className="mt-3 flex items-center">
-            <TrendingDown className="w-4 h-4 text-fr-gray-900 mr-1 flex-shrink-0" />
-            <span className="text-sm text-fr-gray-500">
+            <TrendingDown className="w-4 h-4 text-fr-gray-900 dark:text-gray-300 mr-1 flex-shrink-0" />
+            <span className="text-sm text-fr-gray-500 dark:text-gray-400">
               {data.expenses.length} {data.expenses.length === 1 ? 'gasto' : 'gastos'} registrados
             </span>
           </div>
@@ -457,19 +457,19 @@ const Dashboard = () => {
         <div className="card">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-fr-gray-600">
+              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
                 Gastos Pendientes
               </p>
-              <p className="text-xl lg:text-2xl font-bold text-fr-gray-900">
+              <p className="text-xl lg:text-2xl font-bold text-fr-gray-900 dark:text-gray-100">
                 {data.expenses.filter(e => !e.paid).length}
               </p>
             </div>
-            <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-gray-100 ml-2">
-              <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-fr-gray-900" />
+            <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-gray-100 dark:bg-gray-700 ml-2">
+              <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-fr-gray-900 dark:text-gray-300" />
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-sm text-fr-gray-500">
+            <span className="text-sm text-fr-gray-500 dark:text-gray-400">
               {formatAmount(data.expenses.filter(e => !e.paid).reduce((sum, e) => sum + e.amount, 0))} por pagar
             </span>
           </div>
@@ -483,15 +483,15 @@ const Dashboard = () => {
           <div className="card">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-fr-gray-600">
+                <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
                   Presupuestos
                 </p>
-                <p className="text-xl lg:text-2xl font-bold text-fr-gray-900 break-words">
+                <p className="text-xl lg:text-2xl font-bold text-fr-gray-900 dark:text-gray-100 break-words">
                   {budgetsSummary.summary?.total_budgets || 0}
                 </p>
               </div>
-              <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-blue-100 ml-2">
-                <PieChart className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
+              <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-blue-100 dark:bg-blue-900/30 ml-2">
+                <PieChart className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
             <div className="mt-3 flex items-center justify-between">
@@ -499,10 +499,10 @@ const Dashboard = () => {
                 <span className="text-green-600">
                   {budgetsSummary.summary?.on_track_count || 0} en meta
                 </span>
-                <span className="text-yellow-600">
+                <span className="text-yellow-600 dark:text-yellow-400">
                   {budgetsSummary.summary?.warning_count || 0} alerta
                 </span>
-                <span className="text-red-600">
+                <span className="text-red-600 dark:text-red-400">
                   {budgetsSummary.summary?.exceeded_count || 0} excedidos
                 </span>
               </div>
@@ -515,22 +515,22 @@ const Dashboard = () => {
           <div className="card">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-fr-gray-600">
+                <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
                   Metas de Ahorro
                 </p>
                 <p className="text-xl lg:text-2xl font-bold text-green-600 break-words">
                   {formatAmount(savingsGoalsSummary.summary?.total_saved || 0)}
                 </p>
               </div>
-              <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-green-100 ml-2">
+              <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-green-100 dark:bg-green-900/30 ml-2">
                 <Target className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
               </div>
             </div>
             <div className="mt-3 flex items-center justify-between">
-              <span className="text-sm text-fr-gray-500">
+              <span className="text-sm text-fr-gray-500 dark:text-gray-400">
                 {savingsGoalsSummary.summary?.active_goals || 0} metas activas
               </span>
-              <span className="text-sm text-fr-gray-500">
+              <span className="text-sm text-fr-gray-500 dark:text-gray-400">
                 Meta: {formatAmount(savingsGoalsSummary.summary?.total_target || 0)}
               </span>
             </div>
@@ -542,22 +542,22 @@ const Dashboard = () => {
           <div className="card">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-fr-gray-600">
+                <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
                   Transacciones Recurrentes
                 </p>
-                <p className="text-xl lg:text-2xl font-bold text-fr-gray-900 break-words">
+                <p className="text-xl lg:text-2xl font-bold text-fr-gray-900 dark:text-gray-100 break-words">
                   {recurringTransactionsSummary.summary?.total_active || 0}
                 </p>
               </div>
-              <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-purple-100 ml-2">
-                <RefreshCw className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600" />
+              <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-purple-100 dark:bg-purple-900/30 ml-2">
+                <RefreshCw className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
             <div className="mt-3 flex items-center justify-between">
               <span className="text-sm text-green-600">
                 +{formatAmount(recurringTransactionsSummary.summary?.monthly_income_total || 0)}/mes
               </span>
-              <span className="text-sm text-red-600">
+              <span className="text-sm text-red-600 dark:text-red-400">
                 -{formatAmount(recurringTransactionsSummary.summary?.monthly_expense_total || 0)}/mes
               </span>
             </div>
@@ -569,17 +569,17 @@ const Dashboard = () => {
       {hasActiveFilters && (data.expenses.length > 0 || data.incomes.length > 0) && (
         <div className="card">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-fr-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               💰 Transacciones de {getPeriodTitle()}
             </h3>
             <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
               {/* Dropdown de ordenamiento */}
               <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-fr-gray-600">Ordenar por:</label>
+                <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Ordenar por:</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="text-sm border border-fr-gray-300 rounded-fr px-3 py-1 focus:outline-none focus:ring-2 focus:ring-fr-primary focus:border-transparent"
+                  className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="fecha">Fecha</option>
                   <option value="monto">Monto</option>
@@ -590,12 +590,12 @@ const Dashboard = () => {
               {/* Indicadores de cantidad */}
               <div className="flex items-center space-x-4 text-sm">
                 <div className="flex items-center">
-                  <div className="w-3 h-3 bg-fr-error rounded-full mr-2"></div>
-                  <span className="text-fr-gray-600">Gastos ({data.expenses.length})</span>
+                  <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                  <span className="text-gray-600 dark:text-gray-400">Gastos ({data.expenses.length})</span>
                 </div>
                 <div className="flex items-center">
-                  <div className="w-3 h-3 bg-fr-secondary rounded-full mr-2"></div>
-                  <span className="text-fr-gray-600">Ingresos ({data.incomes.length})</span>
+                  <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                  <span className="text-gray-600 dark:text-gray-400">Ingresos ({data.incomes.length})</span>
                 </div>
               </div>
             </div>
@@ -606,11 +606,11 @@ const Dashboard = () => {
             <div className="space-y-4">
               <div className="space-y-3 mb-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-fr-gray-900 flex items-center">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                     <TrendingDown className="w-5 h-5 mr-2" />
                     Gastos
                   </h4>
-                  <span className="text-lg font-bold text-fr-gray-900">
+                  <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
                     {formatAmount(data.totalExpenses)}
                   </span>
                 </div>
@@ -620,7 +620,7 @@ const Dashboard = () => {
               
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {data.expenses.length === 0 ? (
-                  <div className="text-center py-8 text-fr-gray-500">
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                     <TrendingDown className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p>No hay gastos en este período</p>
                   </div>
@@ -630,20 +630,20 @@ const Dashboard = () => {
                       const category = data.categories.find(c => c.id === expense.category_id);
                       const color = getCategoryColor(expense.category_id);
                       return (
-                        <div key={expense.id || index} className={`flex items-center justify-between p-3 rounded-fr bg-white border border-fr-gray-100 hover:shadow-sm transition-shadow`}>
+                        <div key={expense.id || index} className={`flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-shadow`}>
                           <div className="flex items-start space-x-3">
                             {/* Indicador de pago */}
                             <div className="flex-shrink-0 mt-1">
                               {expense.paid ? (
-                                <CheckCircle className="w-5 h-5 text-fr-secondary" />
+                                <CheckCircle className="w-5 h-5 text-green-500" />
                               ) : (
-                                <XCircle className="w-5 h-5 text-fr-error" />
+                                <XCircle className="w-5 h-5 text-red-500" />
                               )}
                             </div>
                             
                             <div className="flex-1">
                               <div className="flex items-center space-x-2">
-                                <p className="font-medium text-fr-gray-900 text-sm">
+                                <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                                   {expense.description}
                                 </p>
                                 {!expense.paid && (
@@ -655,7 +655,7 @@ const Dashboard = () => {
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-fr-gray-500 mt-1">
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                 {new Date(expense.created_at).toLocaleDateString('es-AR')}
                                 {expense.due_date && (
                                   <span className="ml-2">
@@ -666,16 +666,16 @@ const Dashboard = () => {
                             </div>
                           </div>
                           <div className="text-right ml-3">
-                            <p className="font-semibold text-fr-gray-900">
+                            <p className="font-semibold text-gray-900 dark:text-gray-100">
                               -{formatAmount(expense.amount)}
                             </p>
                             {expense.percentage && (
-                              <p className="text-xs text-fr-gray-500">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
                                 {formatPercentage(expense.percentage)} del total
                               </p>
                             )}
                             {expense.amount_paid > 0 && expense.amount_paid < expense.amount && (
-                              <p className="text-xs text-fr-gray-500">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
                                 Pagado: {formatAmount(expense.amount_paid)}
                               </p>
                             )}
@@ -688,17 +688,17 @@ const Dashboard = () => {
             </div>
 
             {/* Separador vertical - Solo visible en desktop */}
-            <div className="hidden lg:block absolute left-1/2 top-4 bottom-4 w-px bg-gradient-to-b from-transparent via-fr-gray-200 to-transparent transform -translate-x-1/2"></div>
+            <div className="hidden lg:block absolute left-1/2 top-4 bottom-4 w-px bg-gradient-to-b from-transparent via-gray-200 dark:via-gray-600 to-transparent transform -translate-x-1/2"></div>
 
             {/* Columna de Ingresos */}
             <div className="space-y-4">
               <div className="space-y-3 mb-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-fr-secondary flex items-center">
+                  <h4 className="font-semibold text-green-600 dark:text-green-400 flex items-center">
                     <TrendingUp className="w-5 h-5 mr-2" />
                     Ingresos
                   </h4>
-                  <span className="text-lg font-bold text-fr-secondary">
+                  <span className="text-lg font-bold text-green-600 dark:text-green-400">
                     {formatAmount(data.totalIncome)}
                   </span>
                 </div>
@@ -707,7 +707,7 @@ const Dashboard = () => {
               
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {data.incomes.length === 0 ? (
-                  <div className="text-center py-8 text-fr-gray-500">
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                     <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p>No hay ingresos en este período</p>
                   </div>
@@ -717,10 +717,10 @@ const Dashboard = () => {
                       const color = getCategoryColor(income.category_id);
                       const category = data.categories.find(c => c.id === income.category_id);
                       return (
-                        <div key={income.id || index} className={`flex items-center justify-between p-3 rounded-fr bg-white border border-fr-gray-100 hover:shadow-sm transition-shadow`}>
+                        <div key={income.id || index} className={`flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-shadow`}>
                           <div className="flex-1">
                             <div className="flex items-center space-x-2">
-                              <p className="font-medium text-fr-gray-900 text-sm">
+                              <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                                 {income.description}
                               </p>
                               {category && (
@@ -729,16 +729,16 @@ const Dashboard = () => {
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-fr-gray-500 mt-1">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                               {new Date(income.created_at).toLocaleDateString('es-AR')}
                             </p>
                           </div>
                           <div className="text-right ml-3">
-                            <p className="font-semibold text-fr-secondary">
+                            <p className="font-semibold text-green-600 dark:text-green-400">
                               +{formatAmount(income.amount)}
                             </p>
                             {income.percentage && (
-                              <p className="text-xs text-fr-gray-500">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
                                 {formatPercentage(income.percentage)}
                               </p>
                             )}
@@ -753,17 +753,17 @@ const Dashboard = () => {
 
           {/* Resumen de totales del período */}
           {(data.expenses.length > 0 || data.incomes.length > 0) && (
-            <div className="mt-6 pt-4 border-t border-fr-gray-200">
+            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 {/* Total gastos */}
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-fr-gray-600">Total gastos:</span>
+                  <span className="font-medium text-gray-600 dark:text-gray-400">Total gastos:</span>
                   <div className="text-right">
-                    <div className="font-bold text-fr-gray-900">
+                    <div className="font-bold text-gray-900 dark:text-gray-100">
                       {formatAmount(data.totalExpenses)}
                     </div>
                     {data.totalIncome > 0 && (
-                      <div className="text-xs text-fr-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
                         {((data.totalExpenses / data.totalIncome) * 100).toFixed(1)}% de ingresos
                       </div>
                     )}
@@ -772,12 +772,12 @@ const Dashboard = () => {
 
                 {/* Total ingresos */}
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-fr-gray-600">Total ingresos:</span>
+                  <span className="font-medium text-gray-600 dark:text-gray-400">Total ingresos:</span>
                   <div className="text-right">
-                    <div className="font-bold text-fr-secondary">
+                    <div className="font-bold text-green-600 dark:text-green-400">
                       {formatAmount(data.totalIncome)}
                     </div>
-                    <div className="text-xs text-fr-gray-500">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
                       100% base
                     </div>
                   </div>
@@ -785,9 +785,9 @@ const Dashboard = () => {
               </div>
               
               {/* Balance del período */}
-              <div className="flex items-center justify-between pt-3 border-t border-fr-gray-200">
-                <span className="text-fr-gray-600">Balance del período:</span>
-                <span className={`text-xl font-bold ${data.balance >= 0 ? 'text-fr-secondary' : 'text-fr-error'}`}>
+              <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-600">
+                <span className="text-gray-600 dark:text-gray-400">Balance del período:</span>
+                <span className={`text-xl font-bold ${data.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                   {data.balance >= 0 ? '+' : ''}{formatAmount(data.balance)}
                 </span>
               </div>
@@ -802,25 +802,25 @@ const Dashboard = () => {
         <div className="card">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-semibold text-fr-gray-900">
-                {hasActiveFilters ? `Métricas de ${getPeriodTitle()}` : 'Métricas del Período'}
-              </h3>
-              <p className="text-sm text-fr-gray-500 mt-1">
-                Estadísticas clave de tus finanzas
-              </p>
+                          <h3 className="text-lg font-semibold text-fr-gray-900 dark:text-gray-100">
+              {hasActiveFilters ? `Métricas de ${getPeriodTitle()}` : 'Métricas del Período'}
+            </h3>
+            <p className="text-sm text-fr-gray-500 dark:text-gray-400 mt-1">
+              Estadísticas clave de tus finanzas
+            </p>
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             {/* Total de transacciones */}
-            <div className="bg-fr-gray-50 rounded-fr p-4">
+            <div className="bg-fr-gray-50 dark:bg-gray-700 rounded-fr p-4">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 rounded-fr">
-                  <BarChart3 className="w-5 h-5 text-blue-600" />
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-fr">
+                  <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-fr-gray-600">Total Transacciones</p>
-                  <p className="text-xl font-bold text-fr-gray-900">
+                  <p className="text-sm text-fr-gray-600 dark:text-gray-400">Total Transacciones</p>
+                  <p className="text-xl font-bold text-fr-gray-900 dark:text-gray-100">
                     {data.expenses.length + data.incomes.length}
                   </p>
                 </div>
@@ -828,14 +828,14 @@ const Dashboard = () => {
             </div>
 
             {/* Promedio diario */}
-            <div className="bg-fr-gray-50 rounded-fr p-4">
+            <div className="bg-fr-gray-50 dark:bg-gray-700 rounded-fr p-4">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-purple-100 rounded-fr">
-                  <Calendar className="w-5 h-5 text-purple-600" />
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-fr">
+                  <Calendar className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-fr-gray-600">Promedio Diario</p>
-                  <p className="text-xl font-bold text-fr-gray-900">
+                  <p className="text-sm text-fr-gray-600 dark:text-gray-400">Promedio Diario</p>
+                  <p className="text-xl font-bold text-fr-gray-900 dark:text-gray-100">
                     {(() => {
                       const totalExpenses = data.expenses.reduce((sum, exp) => sum + exp.amount, 0);
                       const daysInPeriod = hasActiveFilters ? 30 : 30; // Simplificado por ahora
@@ -848,14 +848,14 @@ const Dashboard = () => {
             </div>
 
             {/* Categoría top */}
-            <div className="bg-fr-gray-50 rounded-fr p-4">
+            <div className="bg-fr-gray-50 dark:bg-gray-700 rounded-fr p-4">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-orange-100 rounded-fr">
-                  <Target className="w-5 h-5 text-orange-600" />
+                <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-fr">
+                  <Target className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-fr-gray-600">Mayor Gasto</p>
-                  <p className="text-sm font-semibold text-fr-gray-900">
+                  <p className="text-sm text-fr-gray-600 dark:text-gray-400">Mayor Gasto</p>
+                  <p className="text-sm font-semibold text-fr-gray-900 dark:text-gray-100">
                     {(() => {
                       const categoryExpenses = {};
                       data.expenses.forEach(expense => {
@@ -880,14 +880,14 @@ const Dashboard = () => {
             </div>
 
             {/* Gastos pendientes */}
-            <div className="bg-fr-gray-50 rounded-fr p-4">
+            <div className="bg-fr-gray-50 dark:bg-gray-700 rounded-fr p-4">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-red-100 rounded-fr">
-                  <AlertCircle className="w-5 h-5 text-red-600" />
+                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-fr">
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-fr-gray-600">Pendientes</p>
-                  <p className="text-xl font-bold text-red-600">
+                  <p className="text-sm text-fr-gray-600 dark:text-gray-400">Pendientes</p>
+                  <p className="text-xl font-bold text-red-600 dark:text-red-400">
                     {data.expenses.filter(exp => !exp.paid).length}
                   </p>
                 </div>
@@ -898,7 +898,7 @@ const Dashboard = () => {
 
         {/* Gráfico de categorías */}
         <div className="card">
-          <h3 className="text-lg font-semibold text-fr-gray-900 mb-6">
+          <h3 className="text-lg font-semibold text-fr-gray-900 dark:text-gray-100 mb-6">
             Gastos por Categoría{hasActiveFilters && ` - ${getPeriodTitle()}`}
           </h3>
           {pieData.length > 0 ? (
@@ -923,11 +923,12 @@ const Dashboard = () => {
                         <text 
                           x={x} 
                           y={y} 
-                          fill="#374151" 
+                          fill="currentColor" 
                           textAnchor={x > cx ? 'start' : 'end'} 
                           dominantBaseline="central"
                           fontSize="13"
                           fontWeight="500"
+                          className="text-gray-700 dark:text-gray-200"
                         >
                           {`${name}: ${value.toFixed(1)}%`}
                         </text>
@@ -952,10 +953,11 @@ const Dashboard = () => {
                       'Porcentaje'
                     ]}
                     contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
+                      backgroundColor: 'var(--tooltip-bg)',
+                      border: '1px solid var(--tooltip-border)',
                       borderRadius: '8px',
                       boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.15)',
+                      color: 'var(--tooltip-text)'
                     }}
                   />
                 </RechartsPieChart>
@@ -963,9 +965,9 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-64 text-center">
-              <PieChart className="w-12 h-12 text-fr-gray-400 mb-4" />
-              <h4 className="text-lg font-medium text-fr-gray-600 mb-2">No hay gastos por categorías</h4>
-              <p className="text-sm text-fr-gray-500">
+              <PieChart className="w-12 h-12 text-fr-gray-400 dark:text-gray-500 mb-4" />
+              <h4 className="text-lg font-medium text-fr-gray-600 dark:text-gray-400 mb-2">No hay gastos por categorías</h4>
+              <p className="text-sm text-fr-gray-500 dark:text-gray-400">
                 Los gastos aparecerán aquí una vez que agregues algunos gastos con categorías
               </p>
             </div>
@@ -976,7 +978,7 @@ const Dashboard = () => {
       {/* Transacciones recientes */}
       <div className="card">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-fr-gray-900">Transacciones Recientes</h3>
+          <h3 className="text-lg font-semibold text-fr-gray-900 dark:text-gray-100">Transacciones Recientes</h3>
           <button className="btn-ghost">Ver todas</button>
         </div>
         <div className="space-y-4">
@@ -991,18 +993,18 @@ const Dashboard = () => {
               const color = getCategoryColor(transaction.category_id);
               const category = data.categories.find(c => c.id === transaction.category_id);
               return (
-                <div key={index} className={`flex items-center justify-between p-4 rounded-fr bg-fr-gray-50 border-l-4 ${color.border || (isExpense ? 'border-fr-gray-900' : 'border-fr-secondary')}`}>
+                <div key={index} className={`flex items-center justify-between p-4 rounded-fr bg-fr-gray-50 dark:bg-gray-700 border-l-4 ${color.border || (isExpense ? 'border-fr-gray-900 dark:border-gray-500' : 'border-fr-secondary')}`}>
                   <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-fr ${isExpense ? 'bg-gray-100' : 'bg-green-100'}`}>
+                    <div className={`p-2 rounded-fr ${isExpense ? 'bg-gray-100 dark:bg-gray-600' : 'bg-green-100 dark:bg-green-900/30'}`}>
                       {isExpense ? (
-                        <TrendingDown className="w-4 h-4 text-fr-gray-900" />
+                        <TrendingDown className="w-4 h-4 text-fr-gray-900 dark:text-gray-300" />
                       ) : (
                         <TrendingUp className="w-4 h-4 text-fr-secondary" />
                       )}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
-                        <p className="font-medium text-fr-gray-900">{transaction.description}</p>
+                        <p className="font-medium text-fr-gray-900 dark:text-gray-100">{transaction.description}</p>
                         {/* Indicador de pago solo para gastos */}
                         {isExpense && (
                           <div className="flex items-center space-x-1">
@@ -1023,17 +1025,17 @@ const Dashboard = () => {
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-fr-gray-500">
+                      <p className="text-sm text-fr-gray-500 dark:text-gray-400">
                         {transaction.created_at ? formatDate(transaction.created_at) : 'Fecha no disponible'}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`font-semibold ${isExpense ? 'text-fr-gray-900' : 'text-fr-secondary'}`}>
+                    <p className={`font-semibold ${isExpense ? 'text-fr-gray-900 dark:text-gray-100' : 'text-fr-secondary'}`}>
                       {isExpense ? '-' : '+'}{formatAmount(transaction.amount)}
                     </p>
                     {transaction.percentage && (
-                      <p className="text-sm text-fr-gray-500">
+                      <p className="text-sm text-fr-gray-500 dark:text-gray-400">
                         {formatPercentage(transaction.percentage)} del total
                       </p>
                     )}

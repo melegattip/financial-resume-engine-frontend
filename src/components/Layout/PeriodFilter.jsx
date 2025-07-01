@@ -28,13 +28,13 @@ const PeriodFilter = () => {
       {/* Botón para ocultar/mostrar saldos */}
       <button
         onClick={toggleBalancesVisibility}
-        className="p-2 rounded-fr hover:bg-fr-gray-100 transition-colors"
+        className="p-2 rounded-fr hover:bg-fr-gray-100 dark:hover:bg-gray-700 transition-colors"
         title={balancesHidden ? "Mostrar saldos" : "Ocultar saldos"}
       >
         {balancesHidden ? (
-          <EyeOff className="w-5 h-5 text-fr-gray-600" />
+          <EyeOff className="w-5 h-5 text-fr-gray-600 dark:text-gray-400" />
         ) : (
-          <Eye className="w-5 h-5 text-fr-gray-600" />
+          <Eye className="w-5 h-5 text-fr-gray-600 dark:text-gray-400" />
         )}
       </button>
 

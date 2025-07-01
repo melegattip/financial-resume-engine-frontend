@@ -278,10 +278,10 @@ const AIInsights = () => {
   };
 
   const getScoreColor = (score) => {
-    if (score >= 800) return 'text-green-600';
-    if (score >= 600) return 'text-blue-600';
-    if (score >= 400) return 'text-yellow-600';
-    return 'text-red-600';
+    if (score >= 800) return 'text-green-600 dark:text-green-400';
+    if (score >= 600) return 'text-blue-600 dark:text-blue-400';
+    if (score >= 400) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-red-600 dark:text-red-400';
   };
 
 
@@ -303,30 +303,30 @@ const AIInsights = () => {
     const percentage = (score / maxScore) * 100;
     
     const getScoreLevel = (score) => {
-      if (score >= 800) return { level: 'Excelente', message: '¡Tu salud financiera es excepcional!', color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' };
-      if (score >= 600) return { level: 'Bueno', message: 'Tu situación financiera es sólida', color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' };
-      if (score >= 400) return { level: 'Regular', message: 'Hay oportunidades de mejora', color: 'text-yellow-600', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200' };
-      return { level: 'Mejorable', message: 'Enfócate en las recomendaciones', color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' };
+      if (score >= 800) return { level: 'Excelente', message: '¡Tu salud financiera es excepcional!', color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-50 dark:bg-green-900/20', borderColor: 'border-green-200 dark:border-green-700' };
+      if (score >= 600) return { level: 'Bueno', message: 'Tu situación financiera es sólida', color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-900/20', borderColor: 'border-blue-200 dark:border-blue-700' };
+      if (score >= 400) return { level: 'Regular', message: 'Hay oportunidades de mejora', color: 'text-yellow-600 dark:text-yellow-400', bgColor: 'bg-yellow-50 dark:bg-yellow-900/20', borderColor: 'border-yellow-200 dark:border-yellow-700' };
+      return { level: 'Mejorable', message: 'Enfócate en las recomendaciones', color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-50 dark:bg-red-900/20', borderColor: 'border-red-200 dark:border-red-700' };
     };
 
     const { level, message, color, bgColor, borderColor } = getScoreLevel(score);
 
     if (loading) {
       return (
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+        <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-6">
           <div className="text-center mb-4">
-            <div className="w-16 h-16 bg-gray-300 rounded-full animate-pulse mx-auto mb-2"></div>
-            <div className="w-12 h-4 bg-gray-300 rounded animate-pulse mx-auto mb-2"></div>
-            <div className="w-20 h-6 bg-gray-300 rounded-full animate-pulse mx-auto"></div>
+            <div className="w-16 h-16 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse mx-auto mb-2"></div>
+            <div className="w-12 h-4 bg-gray-300 dark:bg-gray-600 rounded animate-pulse mx-auto mb-2"></div>
+            <div className="w-20 h-6 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse mx-auto"></div>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-            <div className="h-full bg-gray-300 rounded-full animate-pulse w-1/2"></div>
+          <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 mb-4">
+            <div className="h-full bg-gray-300 dark:bg-gray-500 rounded-full animate-pulse w-1/2"></div>
           </div>
-          <div className="flex justify-between text-xs text-gray-300 mb-4">
+          <div className="flex justify-between text-xs text-gray-300 dark:text-gray-500 mb-4">
             <span>0</span><span>250</span><span>500</span><span>750</span><span>1000</span>
           </div>
           <div className="text-center">
-            <div className="w-48 h-4 bg-gray-300 rounded animate-pulse mx-auto"></div>
+            <div className="w-48 h-4 bg-gray-300 dark:bg-gray-600 rounded animate-pulse mx-auto"></div>
           </div>
         </div>
       );
@@ -336,15 +336,15 @@ const AIInsights = () => {
       <div className={`${bgColor} ${borderColor} border rounded-xl p-6`}>
         {/* Score principal */}
         <div className="text-center mb-4">
-          <div className="text-4xl font-bold text-gray-900 mb-1">{score}</div>
-          <div className="text-gray-500 text-sm">/ {maxScore}</div>
+          <div className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1">{score}</div>
+          <div className="text-gray-500 dark:text-gray-400 text-sm">/ {maxScore}</div>
           <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mt-2 ${color} ${bgColor}`}>
             {level}
           </div>
         </div>
 
         {/* Barra de progreso */}
-        <div className="w-full bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
+        <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 mb-4 overflow-hidden">
           <div 
             className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full transition-all duration-1000 ease-out"
             style={{ width: `${percentage}%` }}
@@ -352,7 +352,7 @@ const AIInsights = () => {
         </div>
 
         {/* Etiquetas de referencia */}
-        <div className="flex justify-between text-xs text-gray-500 mb-4">
+        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
           <span>0</span>
           <span>250</span>
           <span>500</span>
@@ -362,7 +362,7 @@ const AIInsights = () => {
 
         {/* Mensaje */}
         <div className="text-center">
-          <p className="text-gray-600 text-sm leading-relaxed">{message}</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">{message}</p>
         </div>
       </div>
     );
@@ -370,16 +370,16 @@ const AIInsights = () => {
 
   // Loading Skeleton Component
   const InsightSkeleton = () => (
-    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 animate-pulse">
+    <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 animate-pulse">
       <div className="flex items-start space-x-3">
-        <div className="w-8 h-8 bg-gray-300 rounded"></div>
+        <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded"></div>
         <div className="flex-1 space-y-2">
-          <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-          <div className="h-3 bg-gray-300 rounded w-full"></div>
-          <div className="h-3 bg-gray-300 rounded w-5/6"></div>
+          <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
+          <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-full"></div>
+          <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-5/6"></div>
           <div className="flex justify-between items-center mt-3">
-            <div className="h-6 bg-gray-300 rounded w-20"></div>
-            <div className="h-4 bg-gray-300 rounded w-16"></div>
+            <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
+            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-16"></div>
           </div>
         </div>
       </div>
@@ -388,71 +388,32 @@ const AIInsights = () => {
 
   return (
     <div className="space-y-6">
-      {/* Hero Section - Puntuación Financiera */}
-      <div className="bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 rounded-2xl p-6 md:p-8 text-white shadow-xl">
-        <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-              <Brain className="w-8 h-8 text-white" />
-            </div>
-            <div className="text-center md:text-left">
-              <h1 className="text-2xl md:text-3xl font-bold">Análisis Inteligente</h1>
-              <p className="text-blue-100 flex items-center justify-center md:justify-start space-x-1 mt-1">
-                <Sparkles className="w-4 h-4" />
-                <span>Powered by GPT-4</span>
-              </p>
-            </div>
-          </div>
-          <div className="text-center">
-            {healthScoreLoading ? (
-              <div className="text-4xl md:text-5xl font-bold animate-pulse">
-                <Loader2 className="w-12 h-12 mx-auto animate-spin" />
-              </div>
-            ) : (
-              <div className="text-4xl md:text-5xl font-bold">{healthScore}</div>
-            )}
-            <div className="text-blue-100 text-sm">Puntuación financiera</div>
-            <button
-              onClick={() => {
-                loadAIInsights();
-                loadHealthScore();
-              }}
-              className="mt-2 text-xs text-blue-100 hover:text-white underline flex items-center justify-center space-x-1"
-              title="Actualizar análisis con datos más recientes"
-            >
-              <RefreshCw className="w-3 h-3" />
-              <span>Actualizar</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Salud Financiera */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-gray-900/20 border border-gray-100 dark:border-gray-700 p-6 md:p-8">
         <div className="text-center mb-6">
-          <h2 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2">Tu salud financiera</h2>
-          <p className="text-gray-600">Basada en tus hábitos y análisis</p>
+          <h2 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Tu salud financiera</h2>
+          <p className="text-gray-600 dark:text-gray-400">Evaluación inteligente powered by IA</p>
         </div>
         <HealthScoreDisplay score={healthScore} loading={healthScoreLoading} />
       </div>
 
       {/* Tabs Navigation */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-gray-900/20 border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="flex space-x-8 px-6" aria-label="Tabs">
             <button
               onClick={() => setActiveTab('insights')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'insights'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
               <div className="flex items-center space-x-2">
                 <Lightbulb className="w-4 h-4" />
                 <span>Recomendaciones</span>
                 {insights.length > 0 && (
-                  <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full">
+                  <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-xs px-2 py-1 rounded-full">
                     {insights.length}
                   </span>
                 )}
@@ -462,8 +423,8 @@ const AIInsights = () => {
               onClick={() => setActiveTab('purchase')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'purchase'
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-green-500 text-green-600 dark:text-green-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
               <div className="flex items-center space-x-2">
@@ -485,12 +446,12 @@ const AIInsights = () => {
                 </div>
               ) : error && insights.length === 0 ? (
                 <div className="text-center py-12">
-                  <WifiOff className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Sin conexión</h3>
-                  <p className="text-gray-600 mb-6 max-w-md mx-auto">{error}</p>
+                  <WifiOff className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Sin conexión</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">{error}</p>
                   <button
                     onClick={loadAIInsights}
-                    className="inline-flex items-center px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                    className="inline-flex items-center px-6 py-3 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors font-medium"
                   >
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Reintentar análisis
@@ -498,9 +459,9 @@ const AIInsights = () => {
                 </div>
               ) : insights.length === 0 ? (
                 <div className="text-center py-12">
-                  <Target className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">¡Perfecto!</h3>
-                  <p className="text-gray-600 max-w-md mx-auto">
+                  <Target className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">¡Perfecto!</h3>
+                  <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
                     Tu situación financiera está tan bien que no tenemos recomendaciones urgentes. 
                     Sigue así y revisa periódicamente.
                   </p>
@@ -511,7 +472,7 @@ const AIInsights = () => {
                     {displayedInsights.map((insight, index) => (
                       <div
                         key={index}
-                        className="bg-gray-50 border border-gray-200 rounded-xl p-4 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer group"
+                        className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-500 transition-all cursor-pointer group"
                         onMouseEnter={() => handleViewInsight(index, insight.title)}
                       >
                         <div className="flex items-start space-x-3">
@@ -519,15 +480,15 @@ const AIInsights = () => {
                             {getImpactIcon(insight.impact)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                               {insight.title}
                             </h3>
-                            <p className="text-gray-600 text-sm leading-relaxed mb-3">
+                            <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-3">
                               {insight.description}
                             </p>
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                               <div className="flex items-center space-x-3">
-                                <span className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium">
+                                <span className="inline-flex items-center px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-medium">
                                   📊 {insight.category}
                                 </span>
                                 <span className={`text-sm font-bold ${getScoreColor(insight.score)}`}>
@@ -538,14 +499,14 @@ const AIInsights = () => {
                                 {!understoodInsights.has(index) && (
                                   <button
                                     onClick={() => handleUnderstandInsight(index, insight.title)}
-                                    className="inline-flex items-center px-3 py-1.5 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                                    className="inline-flex items-center px-3 py-1.5 bg-blue-500 dark:bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors font-medium"
                                   >
                                     <Check className="w-3 h-3 mr-1" />
                                     Marcar como revisado
                                   </button>
                                 )}
                                 {understoodInsights.has(index) && (
-                                  <div className="inline-flex items-center px-3 py-1.5 bg-green-100 text-green-700 text-xs rounded-lg font-medium">
+                                  <div className="inline-flex items-center px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs rounded-lg font-medium">
                                     <CheckCircle className="w-3 h-3 mr-1" />
                                     ¡Revisado!
                                   </div>
@@ -563,7 +524,7 @@ const AIInsights = () => {
                     <div className="text-center pt-4">
                       <button
                         onClick={() => setShowAllInsights(!showAllInsights)}
-                        className="inline-flex items-center px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                        className="inline-flex items-center px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
                       >
                         {showAllInsights ? (
                           <>
@@ -587,50 +548,50 @@ const AIInsights = () => {
           {activeTab === 'purchase' && (
             <div className="max-w-2xl mx-auto space-y-6">
               <div className="text-center mb-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Análisis de Compra Inteligente</h3>
-                <p className="text-gray-600">Te ayudamos a tomar decisiones financieras informadas</p>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Análisis de Compra Inteligente</h3>
+                <p className="text-gray-600 dark:text-gray-400">Te ayudamos a tomar decisiones financieras informadas</p>
               </div>
 
               {/* Información financiera automática */}
               {dashboardData ? (
-                <div className="bg-blue-50 rounded-xl p-4 mb-4">
-                  <h4 className="font-medium text-blue-900 mb-3 flex items-center">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-4">
+                  <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-3 flex items-center">
                     <Calculator className="w-4 h-4 mr-2" />
                     Datos financieros actuales (automáticos)
                   </h4>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-blue-700">Balance actual:</span>
-                      <p className="font-semibold text-blue-900">${(dashboardData?.Metrics?.Balance || dashboardData?.metrics?.balance || 0).toLocaleString()}</p>
+                      <span className="text-blue-700 dark:text-blue-400">Balance actual:</span>
+                      <p className="font-semibold text-blue-900 dark:text-blue-200">${(dashboardData?.Metrics?.Balance || dashboardData?.metrics?.balance || 0).toLocaleString()}</p>
                     </div>
                     <div>
-                      <span className="text-blue-700">Ingresos mensuales:</span>
-                      <p className="font-semibold text-blue-900">${(dashboardData?.Metrics?.TotalIncome || dashboardData?.metrics?.total_income || 0).toLocaleString()}</p>
+                      <span className="text-blue-700 dark:text-blue-400">Ingresos mensuales:</span>
+                      <p className="font-semibold text-blue-900 dark:text-blue-200">${(dashboardData?.Metrics?.TotalIncome || dashboardData?.metrics?.total_income || 0).toLocaleString()}</p>
                     </div>
                     <div>
-                      <span className="text-blue-700">Gastos mensuales:</span>
-                      <p className="font-semibold text-blue-900">${(dashboardData?.Metrics?.TotalExpenses || dashboardData?.metrics?.total_expenses || 0).toLocaleString()}</p>
+                      <span className="text-blue-700 dark:text-blue-400">Gastos mensuales:</span>
+                      <p className="font-semibold text-blue-900 dark:text-blue-200">${(dashboardData?.Metrics?.TotalExpenses || dashboardData?.metrics?.total_expenses || 0).toLocaleString()}</p>
                     </div>
                     <div>
-                      <span className="text-blue-700">Disponible/mes:</span>
-                      <p className="font-semibold text-green-700">${((dashboardData?.Metrics?.TotalIncome || dashboardData?.metrics?.total_income || 0) - (dashboardData?.Metrics?.TotalExpenses || dashboardData?.metrics?.total_expenses || 0)).toLocaleString()}</p>
+                      <span className="text-blue-700 dark:text-blue-400">Disponible/mes:</span>
+                      <p className="font-semibold text-green-700 dark:text-green-400">${((dashboardData?.Metrics?.TotalIncome || dashboardData?.metrics?.total_income || 0) - (dashboardData?.Metrics?.TotalExpenses || dashboardData?.metrics?.total_expenses || 0)).toLocaleString()}</p>
                     </div>
                   </div>
                   <div className="flex items-center justify-between mt-2">
-                    <p className="text-xs text-blue-600">
+                    <p className="text-xs text-blue-600 dark:text-blue-400">
                       💡 Estos datos se calculan automáticamente basándose en tus transacciones
                     </p>
                     <button
                       onClick={loadDashboardData}
-                      className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
+                      className="text-xs bg-blue-500 dark:bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
                     >
                       🔄 Actualizar
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="bg-gray-50 rounded-xl p-4 mb-4">
-                  <div className="flex items-center justify-center space-x-2 text-gray-600">
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
+                  <div className="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span className="text-sm">Cargando datos financieros...</span>
                   </div>
@@ -638,9 +599,9 @@ const AIInsights = () => {
               )}
 
               {/* Formulario optimizado para móvil */}
-              <div className="bg-gray-50 rounded-xl p-4 md:p-6 space-y-4">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 md:p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     ¿Qué quieres comprar? *
                   </label>
                   <input
@@ -648,28 +609,28 @@ const AIInsights = () => {
                     value={purchaseForm.itemName}
                     onChange={(e) => setPurchaseForm({...purchaseForm, itemName: e.target.value})}
                     placeholder="Ej: iPhone 15, Notebook, Vacaciones..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Monto *
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
                     <input
                       type="number"
                       value={purchaseForm.amount}
                       onChange={(e) => setPurchaseForm({...purchaseForm, amount: e.target.value})}
                       placeholder="150000"
-                      className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+                      className="w-full pl-8 pr-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Descripción (opcional)
                   </label>
                   <textarea
@@ -677,17 +638,17 @@ const AIInsights = () => {
                     onChange={(e) => setPurchaseForm({...purchaseForm, description: e.target.value})}
                     placeholder="¿Para qué lo necesitas? ¿Es urgente?"
                     rows="3"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base resize-none"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base resize-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                     Tipo de pago
                   </label>
                   <div className="space-y-2">
                     {paymentTypes.map(type => (
-                      <label key={type.value} className="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                      <label key={type.value} className="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                         <input
                           type="radio"
                           name="paymentType"
@@ -696,13 +657,13 @@ const AIInsights = () => {
                           onChange={(e) => setPurchaseForm({...purchaseForm, paymentType: e.target.value})}
                           className="w-4 h-4 text-blue-500 focus:ring-blue-500"
                         />
-                        <span className="text-sm text-gray-700 font-medium">{type.label}</span>
+                        <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">{type.label}</span>
                       </label>
                     ))}
                   </div>
                 </div>
 
-                <div className="bg-blue-50 rounded-lg p-3">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
                   <label className="flex items-start space-x-3 cursor-pointer">
                     <input
                       type="checkbox"
@@ -711,10 +672,10 @@ const AIInsights = () => {
                       className="w-4 h-4 text-blue-500 focus:ring-blue-500 rounded mt-0.5"
                     />
                     <div>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         Es una necesidad urgente
                       </span>
-                      <p className="text-xs text-gray-600 mt-1">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                         Marca esto solo si es esencial para tu trabajo, salud o seguridad
                       </p>
                     </div>
@@ -724,7 +685,7 @@ const AIInsights = () => {
                 <button
                   onClick={analyzePurchase}
                   disabled={purchaseLoading || !purchaseForm.itemName || !purchaseForm.amount}
-                  className="w-full px-6 py-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 text-base font-medium shadow-lg"
+                  className="w-full px-6 py-4 bg-green-500 dark:bg-green-600 text-white rounded-lg hover:bg-green-600 dark:hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 text-base font-medium shadow-lg"
                 >
                   {purchaseLoading ? (
                     <>
@@ -742,12 +703,12 @@ const AIInsights = () => {
 
               {/* Resultado del análisis mejorado */}
               {purchaseError && (
-                <div className="bg-red-50 border-l-4 border-red-400 rounded-lg p-4">
+                <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-500 rounded-lg p-4">
                   <div className="flex">
-                    <AlertTriangle className="w-5 h-5 text-red-400" />
+                    <AlertTriangle className="w-5 h-5 text-red-400 dark:text-red-500" />
                     <div className="ml-3">
-                      <p className="text-red-700 font-medium">Error en el análisis</p>
-                      <p className="text-red-600 text-sm mt-1">{purchaseError}</p>
+                      <p className="text-red-700 dark:text-red-300 font-medium">Error en el análisis</p>
+                      <p className="text-red-600 dark:text-red-400 text-sm mt-1">{purchaseError}</p>
                     </div>
                   </div>
                 </div>
@@ -756,51 +717,51 @@ const AIInsights = () => {
               {purchaseAnalysis && (
                 <div className={`rounded-xl p-6 border-2 shadow-lg ${
                   purchaseAnalysis.can_buy 
-                    ? 'bg-green-50 border-green-200' 
-                    : 'bg-red-50 border-red-200'
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' 
+                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700'
                 }`}>
                   <div className="flex items-start space-x-4 mb-4">
                     {purchaseAnalysis.can_buy ? (
-                      <div className="p-2 bg-green-100 rounded-full">
-                        <CheckCircle className="w-6 h-6 text-green-600" />
+                      <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
+                        <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
                       </div>
                     ) : (
-                      <div className="p-2 bg-red-100 rounded-full">
-                        <AlertTriangle className="w-6 h-6 text-red-600" />
+                      <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full">
+                        <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
                       </div>
                     )}
                     <div className="flex-1">
                       <h4 className={`text-lg font-bold mb-1 ${
-                        purchaseAnalysis.can_buy ? 'text-green-800' : 'text-red-800'
+                        purchaseAnalysis.can_buy ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'
                       }`}>
                         {purchaseAnalysis.can_buy ? '✅ ¡Puedes comprarlo!' : '❌ Te recomendamos esperar'}
                       </h4>
                       <p className={`text-sm ${
-                        purchaseAnalysis.can_buy ? 'text-green-600' : 'text-red-600'
+                        purchaseAnalysis.can_buy ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                       }`}>
                         Confianza del análisis: {Math.round(purchaseAnalysis.confidence * 100)}%
                       </p>
                     </div>
                   </div>
                   
-                  <div className={`bg-white rounded-lg p-4 mb-4 ${
-                    purchaseAnalysis.can_buy ? 'border border-green-200' : 'border border-red-200'
+                  <div className={`bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 ${
+                    purchaseAnalysis.can_buy ? 'border border-green-200 dark:border-green-700' : 'border border-red-200 dark:border-red-700'
                   }`}>
-                    <p className="text-gray-700 leading-relaxed">
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                       {purchaseAnalysis.reasoning}
                     </p>
                   </div>
                   
                   {purchaseAnalysis.alternatives && purchaseAnalysis.alternatives.length > 0 && (
-                    <div className="bg-white rounded-lg p-4 border border-gray-200">
-                      <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-                        <Lightbulb className="w-4 h-4 mr-2 text-yellow-500" />
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                      <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+                        <Lightbulb className="w-4 h-4 mr-2 text-yellow-500 dark:text-yellow-400" />
                         Alternativas sugeridas
                       </h5>
                       <ul className="space-y-2">
                         {purchaseAnalysis.alternatives.map((alt, index) => (
-                          <li key={index} className="flex items-center text-sm text-gray-600">
-                            <ChevronRight className="w-4 h-4 mr-2 text-gray-400" />
+                          <li key={index} className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <ChevronRight className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
                             <span>{alt}</span>
                           </li>
                         ))}
@@ -808,8 +769,8 @@ const AIInsights = () => {
                     </div>
                   )}
                   
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                       <span>Impacto en tu presupuesto</span>
                       <span className="font-medium">{purchaseAnalysis.impact_score} pts</span>
                     </div>
@@ -823,7 +784,7 @@ const AIInsights = () => {
 
       {/* Footer con información de actualización */}
       <div className="text-center">
-        <div className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
+        <div className="inline-flex items-center px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg text-sm">
           <Brain className="w-4 h-4 mr-2" />
           <span>
             Analizamos tu situación financiera una vez por día
