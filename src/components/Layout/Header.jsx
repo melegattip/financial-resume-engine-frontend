@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import PeriodFilter from './PeriodFilter';
+import ThemeToggle from '../ThemeToggle';
 import { 
   User, 
   LogOut, 
@@ -91,20 +92,20 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm mt-1">
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 shadow-sm dark:shadow-gray-900/20 mt-1 transition-colors duration-300">
               <div className="px-4 lg:px-6 xl:px-8">
           <div className="flex items-center justify-between h-20">
           {/* Page title and info */}
           <div className="flex items-center space-x-4 flex-1 min-w-0">
             <div className="hidden sm:flex items-center space-x-3">
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <PageIcon className="w-5 h-5 text-blue-600" />
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                <PageIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-xl lg:text-2xl font-bold text-gray-900 truncate">
+                <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
                   {pageInfo.title}
                 </h1>
-                <p className="text-sm text-gray-600 truncate hidden lg:block">
+                <p className="text-sm text-gray-600 dark:text-gray-400 truncate hidden lg:block">
                   {pageInfo.subtitle}
                 </p>
               </div>
@@ -112,7 +113,7 @@ const Header = () => {
             
             {/* Mobile: Solo título */}
             <div className="sm:hidden">
-              <h1 className="text-lg font-bold text-gray-900 truncate">
+              <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100 truncate">
                 {pageInfo.title}
               </h1>
             </div>
@@ -123,8 +124,11 @@ const Header = () => {
             {/* Period Filter */}
             <PeriodFilter />
 
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
             {/* Notifications */}
-            <button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <button className="relative p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
@@ -132,10 +136,10 @@ const Header = () => {
             {/* User menu */}
             <div className="flex items-center space-x-3">
               <div className="hidden sm:block text-right">
-                <p className="text-sm font-medium text-gray-900 truncate max-w-32">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate max-w-32">
                   {user?.name || user?.email || 'Usuario'}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {user?.role || 'Miembro'}
                 </p>
               </div>
@@ -149,7 +153,7 @@ const Header = () => {
                 {/* Logout button */}
                 <button
                   onClick={handleLogout}
-                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                   title="Cerrar sesión"
                 >
                   <LogOut className="w-4 h-4 lg:w-5 lg:h-5" />

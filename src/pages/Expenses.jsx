@@ -262,7 +262,7 @@ const Expenses = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="spinner"></div>
-        <span className="ml-2 text-fr-gray-600">Cargando gastos...</span>
+        <span className="ml-2 text-fr-gray-600 dark:text-gray-400">Cargando gastos...</span>
       </div>
     );
   }
@@ -274,23 +274,11 @@ const Expenses = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-fr-gray-600">Total Gastos</p>
-              <p className="text-2xl font-bold text-fr-gray-900">{formatAmount(totalExpenses)}</p>
+              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Total Gastos</p>
+              <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">{formatAmount(totalExpenses)}</p>
             </div>
-            <div className="p-3 rounded-fr bg-gray-100">
-              <TrendingDown className="w-6 h-6 text-fr-gray-900" />
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-fr-gray-600">Gastos Pendientes</p>
-              <p className="text-2xl font-bold text-fr-gray-900">{unpaidExpenses.length}</p>
-            </div>
-            <div className="p-3 rounded-fr bg-gray-100">
-              <Calendar className="w-6 h-6 text-fr-gray-900" />
+            <div className="p-3 rounded-fr bg-gray-100 dark:bg-gray-700">
+              <TrendingDown className="w-6 h-6 text-fr-gray-900 dark:text-gray-300" />
             </div>
           </div>
         </div>
@@ -298,13 +286,25 @@ const Expenses = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-fr-gray-600">Monto Pendiente</p>
-                              <p className="text-2xl font-bold text-fr-gray-900">
+              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Gastos Pendientes</p>
+              <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">{unpaidExpenses.length}</p>
+            </div>
+            <div className="p-3 rounded-fr bg-gray-100 dark:bg-gray-700">
+              <Calendar className="w-6 h-6 text-fr-gray-900 dark:text-gray-300" />
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Monto Pendiente</p>
+                              <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">
                   {formatAmount(unpaidExpenses.reduce((sum, e) => sum + e.amount, 0))}
                 </p>
             </div>
-            <div className="p-3 rounded-fr bg-gray-100">
-              <XCircle className="w-6 h-6 text-fr-gray-900" />
+            <div className="p-3 rounded-fr bg-gray-100 dark:bg-gray-700">
+              <XCircle className="w-6 h-6 text-fr-gray-900 dark:text-gray-300" />
             </div>
           </div>
         </div>
@@ -318,7 +318,7 @@ const Expenses = () => {
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               {/* Búsqueda */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-fr-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-fr-gray-400 dark:text-gray-500" />
                 <input
                   type="text"
                   placeholder="Buscar gastos..."
@@ -358,22 +358,22 @@ const Expenses = () => {
         <div className="space-y-4">
           {filteredExpenses.length === 0 ? (
             <div className="text-center py-12">
-              <TrendingDown className="w-12 h-12 text-fr-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-fr-gray-900 mb-2">No hay gastos</h3>
-              <p className="text-fr-gray-500">Comienza agregando tu primer gasto</p>
+              <TrendingDown className="w-12 h-12 text-fr-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-fr-gray-900 dark:text-gray-100 mb-2">No hay gastos</h3>
+              <p className="text-fr-gray-500 dark:text-gray-400">Comienza agregando tu primer gasto</p>
             </div>
           ) : (
             filteredExpenses.map((expense) => {
               const category = categories.find(c => c.id === expense.category_id);
               return (
-                <div key={expense.id} className="flex items-center justify-between p-4 rounded-fr bg-fr-gray-50 hover:bg-fr-gray-100 transition-colors">
+                <div key={expense.id} className="flex items-center justify-between p-4 rounded-fr bg-fr-gray-50 dark:bg-gray-700 hover:bg-fr-gray-100 dark:hover:bg-gray-600 transition-colors">
                   <div className="flex items-center space-x-4">
                     <button
                       onClick={() => togglePaid(expense)}
                       className={`p-2 rounded-fr transition-colors ${
                         expense.paid 
-                          ? 'bg-green-100 text-fr-secondary hover:bg-green-200' 
-                          : 'bg-red-100 text-fr-error hover:bg-red-200'
+                          ? 'bg-green-100 dark:bg-green-900/30 text-fr-secondary dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50' 
+                          : 'bg-red-100 dark:bg-red-900/30 text-fr-error dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
                       }`}
                     >
                       {expense.paid ? (
@@ -385,7 +385,7 @@ const Expenses = () => {
 
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
-                        <h3 className="font-medium text-fr-gray-900">{expense.description}</h3>
+                        <h3 className="font-medium text-fr-gray-900 dark:text-gray-100">{expense.description}</h3>
                         {category && (
                           <span className="badge-info">{category.name}</span>
                         )}
@@ -393,7 +393,7 @@ const Expenses = () => {
                           <span className="badge-success">Pagado</span>
                         )}
                       </div>
-                      <div className="flex items-center space-x-4 mt-1 text-sm text-fr-gray-500">
+                      <div className="flex items-center space-x-4 mt-1 text-sm text-fr-gray-500 dark:text-gray-400">
                         {expense.due_date && (
                           <span>Vence: {new Date(expense.due_date).toLocaleDateString('es-AR')}</span>
                         )}
@@ -407,24 +407,24 @@ const Expenses = () => {
                       {expense.amount_paid > 0 && expense.amount_paid < expense.amount ? (
                         // Pago parcial - mostrar total vs pendiente
                         <div>
-                          <p className="font-semibold text-fr-gray-900 text-lg">
+                          <p className="font-semibold text-fr-gray-900 dark:text-gray-100 text-lg">
                             {formatAmount(expense.pending_amount || (expense.amount - (expense.amount_paid || 0)))}
                           </p>
-                          <p className="text-sm text-fr-gray-500">
+                          <p className="text-sm text-fr-gray-500 dark:text-gray-400">
                             de {formatAmount(expense.amount)} total
                           </p>
-                          <p className="text-xs text-fr-secondary">
+                          <p className="text-xs text-fr-secondary dark:text-green-400">
                             Pagado: {formatAmount(expense.amount_paid || 0)}
                           </p>
                         </div>
                       ) : (
                         // Sin pagos parciales - mostrar solo el monto
-                        <p className="font-semibold text-fr-gray-900 text-lg">
+                        <p className="font-semibold text-fr-gray-900 dark:text-gray-100 text-lg">
                           {formatAmount(expense.amount)}
                         </p>
                       )}
                       {expense.percentage && (
-                        <p className="text-sm text-fr-gray-500">
+                        <p className="text-sm text-fr-gray-500 dark:text-gray-400">
                           {formatPercentageAmount(expense.percentage)} del total
                         </p>
                       )}
@@ -433,13 +433,13 @@ const Expenses = () => {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleEdit(expense)}
-                        className="p-2 rounded-fr text-fr-gray-600 hover:bg-fr-gray-200 transition-colors"
+                        className="p-2 rounded-fr text-fr-gray-600 dark:text-gray-400 hover:bg-fr-gray-200 dark:hover:bg-gray-600 transition-colors"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(expense)}
-                        className="p-2 rounded-fr text-fr-error hover:bg-red-100 transition-colors"
+                        className="p-2 rounded-fr text-fr-error dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -455,14 +455,14 @@ const Expenses = () => {
       {/* Modal */}
       {showModal && createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white rounded-fr-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-fr-gray-900 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-fr-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-fr-gray-900 dark:text-gray-100 mb-6">
               {editingExpense ? 'Editar Gasto' : 'Nuevo Gasto'}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
                   Descripción
                 </label>
                 <input
@@ -475,7 +475,7 @@ const Expenses = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
                   Monto
                 </label>
                 <input
@@ -489,7 +489,7 @@ const Expenses = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
                   Categoría
                 </label>
                 <select
@@ -507,7 +507,7 @@ const Expenses = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
                   Fecha de vencimiento
                 </label>
                 <input
@@ -526,7 +526,7 @@ const Expenses = () => {
                   onChange={(e) => setFormData({ ...formData, paid: e.target.checked })}
                   className="mr-2"
                 />
-                <label htmlFor="paid" className="text-sm font-medium text-fr-gray-700">
+                <label htmlFor="paid" className="text-sm font-medium text-fr-gray-700 dark:text-gray-300">
                   Marcar como pagado
                 </label>
               </div>
@@ -562,31 +562,31 @@ const Expenses = () => {
       {/* Modal de Pago */}
       {showPaymentModal && payingExpense && createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white rounded-fr-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-fr-gray-900 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-fr-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-fr-gray-900 dark:text-gray-100 mb-6">
               Registrar Pago
             </h2>
 
             {/* Información del gasto */}
-            <div className="bg-fr-gray-50 rounded-fr p-4 mb-6">
-              <h3 className="font-medium text-fr-gray-900 mb-2">{payingExpense.description}</h3>
+            <div className="bg-fr-gray-50 dark:bg-gray-700 rounded-fr p-4 mb-6">
+              <h3 className="font-medium text-fr-gray-900 dark:text-gray-100 mb-2">{payingExpense.description}</h3>
               <div className="space-y-1">
-                <p className="text-lg font-bold text-fr-gray-900">
+                <p className="text-lg font-bold text-fr-gray-900 dark:text-gray-100">
                   Monto total: {formatCurrency(payingExpense.amount)}
                 </p>
                 {payingExpense.amount_paid > 0 && (
                   <>
-                    <p className="text-sm text-fr-secondary">
+                    <p className="text-sm text-fr-secondary dark:text-green-400">
                       Ya pagado: {formatCurrency(payingExpense.amount_paid)}
                     </p>
-                    <p className="text-lg font-bold text-fr-accent">
+                    <p className="text-lg font-bold text-fr-accent dark:text-yellow-400">
                       Pendiente: {formatCurrency(payingExpense.pending_amount || (payingExpense.amount - payingExpense.amount_paid))}
                     </p>
                   </>
                 )}
               </div>
               {payingExpense.due_date && (
-                <p className="text-sm text-fr-gray-600 mt-1">
+                <p className="text-sm text-fr-gray-600 dark:text-gray-400 mt-1">
                   Vence: {new Date(payingExpense.due_date).toLocaleDateString('es-AR')}
                 </p>
               )}
@@ -597,25 +597,25 @@ const Expenses = () => {
               {/* Pago Total */}
               <button
                 onClick={() => handlePayment('total')}
-                className="w-full p-4 border-2 border-fr-secondary rounded-fr hover:bg-green-50 transition-colors text-left"
+                className="w-full p-4 border-2 border-fr-secondary dark:border-green-600 rounded-fr hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors text-left"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium text-fr-gray-900">💰 Pago Total</h4>
-                    <p className="text-sm text-fr-gray-600">Marcar como completamente pagado</p>
+                    <h4 className="font-medium text-fr-gray-900 dark:text-gray-100">💰 Pago Total</h4>
+                    <p className="text-sm text-fr-gray-600 dark:text-gray-400">Marcar como completamente pagado</p>
                   </div>
-                  <p className="font-bold text-fr-secondary">
+                  <p className="font-bold text-fr-secondary dark:text-green-400">
                     {formatCurrency(payingExpense.pending_amount || (payingExpense.amount - (payingExpense.amount_paid || 0)))}
                   </p>
                 </div>
               </button>
 
               {/* Pago Parcial */}
-              <div className="border-2 border-fr-accent rounded-fr p-4">
-                <h4 className="font-medium text-fr-gray-900 mb-3">💸 Pago Parcial</h4>
+              <div className="border-2 border-fr-accent dark:border-yellow-600 rounded-fr p-4">
+                <h4 className="font-medium text-fr-gray-900 dark:text-gray-100 mb-3">💸 Pago Parcial</h4>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-fr-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
                       Monto a pagar
                     </label>
                     <input
@@ -628,7 +628,7 @@ const Expenses = () => {
                       placeholder="0.00"
                     />
                   </div>
-                  <div className="text-sm text-fr-gray-600">
+                  <div className="text-sm text-fr-gray-600 dark:text-gray-400">
                     <p>Quedarían pendientes: <span className="font-medium">
                       {formatCurrency(Math.max(0, (payingExpense.pending_amount || (payingExpense.amount - (payingExpense.amount_paid || 0))) - (parseFloat(paymentAmount) || 0)))}
                     </span></p>

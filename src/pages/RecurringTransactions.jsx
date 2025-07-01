@@ -212,24 +212,14 @@ const RecurringTransactions = () => {
     }
   };
 
-
-
-
-
   const resetForm = () => {
-    // Calcular fecha por defecto (próximo mes)
-    const nextMonth = new Date();
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
-    nextMonth.setDate(1); // Primer día del próximo mes
-    const defaultDate = nextMonth.toISOString().split('T')[0];
-    
     setFormData({
       description: '',
       amount: '',
       type: 'expense',
       frequency: 'monthly',
       category_id: '',
-      next_date: defaultDate,
+      next_date: getDefaultDate(),
       end_date: '',
       day_of_month: '',
       day_of_week: '',
@@ -238,29 +228,23 @@ const RecurringTransactions = () => {
   };
 
   const getTypeColor = (type) => {
-    switch (type) {
-      case 'income': return 'text-green-600 bg-green-100';
-      case 'expense': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
+    return type === 'income' 
+      ? 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30' 
+      : 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/30';
   };
 
   const getTypeText = (type) => {
-    switch (type) {
-      case 'income': return 'Ingreso';
-      case 'expense': return 'Gasto';
-      default: return type;
-    }
+    return type === 'income' ? 'Ingreso' : 'Gasto';
   };
 
   const getFrequencyText = (frequency) => {
-    switch (frequency) {
-      case 'daily': return 'Diaria';
-      case 'weekly': return 'Semanal';
-      case 'monthly': return 'Mensual';
-      case 'yearly': return 'Anual';
-      default: return frequency;
-    }
+    const frequencies = {
+      daily: 'Diaria',
+      weekly: 'Semanal',
+      monthly: 'Mensual',
+      yearly: 'Anual'
+    };
+    return frequencies[frequency] || frequency;
   };
 
   const getCategoryName = (categoryId) => {
@@ -269,12 +253,10 @@ const RecurringTransactions = () => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString('es-ES');
   };
 
   const getDaysUntilNext = (nextDate) => {
-    if (!nextDate) return 'N/A';
     const today = new Date();
     const next = new Date(nextDate);
     const diffTime = next - today;
@@ -286,13 +268,11 @@ const RecurringTransactions = () => {
     return `${diffDays} días`;
   };
 
-
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="spinner"></div>
-        <span className="ml-2 text-fr-gray-600">Cargando transacciones recurrentes...</span>
+        <span className="ml-2 text-gray-600 dark:text-gray-400">Cargando transacciones recurrentes...</span>
       </div>
     );
   }
@@ -302,18 +282,18 @@ const RecurringTransactions = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <p className="text-fr-gray-600">Gestiona tus ingresos y gastos automáticos</p>
+          <p className="text-gray-600 dark:text-gray-400">Gestiona tus ingresos y gastos automáticos</p>
         </div>
         <div className="flex space-x-3">
           <button
             onClick={loadProjection}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
           >
             Ver Proyección
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="bg-fr-primary text-white px-4 py-2 rounded-lg hover:bg-fr-primary-dark transition-colors"
+            className="btn-primary"
           >
             Nueva Transacción
           </button>
@@ -323,23 +303,23 @@ const RecurringTransactions = () => {
       {/* Dashboard Summary */}
       {dashboard && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-fr-gray-500">Total Activas</h3>
-            <p className="text-2xl font-bold text-fr-gray-900">{dashboard.summary?.total_active || 0}</p>
+          <div className="card">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Activas</h3>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{dashboard.summary?.total_active || 0}</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-fr-gray-500">Inactivas</h3>
-            <p className="text-2xl font-bold text-yellow-600">{dashboard.summary?.total_inactive || 0}</p>
+          <div className="card">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Inactivas</h3>
+            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{dashboard.summary?.total_inactive || 0}</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-fr-gray-500">Ingresos Mensuales</h3>
-            <p className="text-2xl font-bold text-green-600">
+          <div className="card">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Ingresos Mensuales</h3>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
               {formatCurrency(dashboard.summary?.monthly_income_total || 0)}
             </p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-fr-gray-500">Gastos Mensuales</h3>
-            <p className="text-2xl font-bold text-red-600">
+          <div className="card">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Gastos Mensuales</h3>
+            <p className="text-2xl font-bold text-red-600 dark:text-red-400">
               {formatCurrency(dashboard.summary?.monthly_expense_total || 0)}
             </p>
           </div>
@@ -347,12 +327,12 @@ const RecurringTransactions = () => {
       )}
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow">
+      <div className="card">
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <select
             value={filters.type}
             onChange={(e) => setFilters({...filters, type: e.target.value})}
-            className="border border-fr-gray-300 rounded-lg px-3 py-2"
+            className="input"
           >
             <option value="">Todos los tipos</option>
             <option value="income">Ingresos</option>
@@ -362,7 +342,7 @@ const RecurringTransactions = () => {
           <select
             value={filters.frequency}
             onChange={(e) => setFilters({...filters, frequency: e.target.value})}
-            className="border border-fr-gray-300 rounded-lg px-3 py-2"
+            className="input"
           >
             <option value="">Todas las frecuencias</option>
             <option value="daily">Diaria</option>
@@ -374,7 +354,7 @@ const RecurringTransactions = () => {
           <select
             value={filters.status}
             onChange={(e) => setFilters({...filters, status: e.target.value})}
-            className="border border-fr-gray-300 rounded-lg px-3 py-2"
+            className="input"
           >
             <option value="">Todos los estados</option>
             <option value="active">Activa</option>
@@ -384,7 +364,7 @@ const RecurringTransactions = () => {
           <select
             value={filters.category_id}
             onChange={(e) => setFilters({...filters, category_id: e.target.value})}
-            className="border border-fr-gray-300 rounded-lg px-3 py-2"
+            className="input"
           >
             <option value="">Todas las categorías</option>
             {categories.map(category => (
@@ -395,7 +375,7 @@ const RecurringTransactions = () => {
           <select
             value={filters.sort_by}
             onChange={(e) => setFilters({...filters, sort_by: e.target.value})}
-            className="border border-fr-gray-300 rounded-lg px-3 py-2"
+            className="input"
           >
             <option value="next_execution_date">Próxima ejecución</option>
             <option value="description">Descripción</option>
@@ -406,7 +386,7 @@ const RecurringTransactions = () => {
           <select
             value={filters.sort_order}
             onChange={(e) => setFilters({...filters, sort_order: e.target.value})}
-            className="border border-fr-gray-300 rounded-lg px-3 py-2"
+            className="input"
           >
             <option value="asc">Ascendente</option>
             <option value="desc">Descendente</option>
@@ -415,60 +395,60 @@ const RecurringTransactions = () => {
       </div>
 
       {/* Transactions List */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="card overflow-hidden">
         {transactions.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-fr-gray-400 mb-4">
+            <div className="text-gray-400 dark:text-gray-500 mb-4">
               <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-fr-gray-900 mb-2">No hay transacciones recurrentes</h3>
-            <p className="text-fr-gray-600 mb-4">Crea tu primera transacción recurrente para automatizar tus finanzas</p>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No hay transacciones recurrentes</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">Crea tu primera transacción recurrente para automatizar tus finanzas</p>
             <button
               onClick={() => setShowModal(true)}
-              className="bg-fr-primary text-white px-4 py-2 rounded-lg hover:bg-fr-primary-dark transition-colors"
+              className="btn-primary"
             >
               Crear Transacción
             </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-fr-gray-200">
-              <thead className="bg-fr-gray-50">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Transacción
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Tipo
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Monto
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Frecuencia
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Categoría
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Próxima Ejecución
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Estado
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-fr-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Acciones
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-fr-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {transactions.map((transaction) => (
-                  <tr key={transaction.id} className="hover:bg-fr-gray-50">
+                  <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-fr-gray-900">{transaction.description}</div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{transaction.description}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -476,26 +456,28 @@ const RecurringTransactions = () => {
                         {getTypeText(transaction.type)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-fr-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                       {formatCurrency(transaction.amount)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-fr-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                       {getFrequencyText(transaction.frequency)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-fr-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                       {getCategoryName(transaction.category_id)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-fr-gray-900">
+                      <div className="text-sm text-gray-900 dark:text-gray-100">
                         {formatDate(transaction.next_date)}
                       </div>
-                      <div className="text-xs text-fr-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
                         {getDaysUntilNext(transaction.next_date)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        transaction.is_active ? 'text-green-600 bg-green-100' : 'text-yellow-600 bg-yellow-100'
+                        transaction.is_active 
+                          ? 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30' 
+                          : 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30'
                       }`}>
                         {transaction.is_active ? 'Activa' : 'Pausada'}
                       </span>
@@ -505,7 +487,7 @@ const RecurringTransactions = () => {
                         {transaction.is_active ? (
                           <button
                             onClick={() => handlePause(transaction.id)}
-                            className="text-yellow-600 hover:text-yellow-900"
+                            className="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300"
                             title="Pausar"
                           >
                             ⏸️
@@ -513,7 +495,7 @@ const RecurringTransactions = () => {
                         ) : (
                           <button
                             onClick={() => handleResume(transaction.id)}
-                            className="text-green-600 hover:text-green-900"
+                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
                             title="Reanudar"
                           >
                             ▶️
@@ -521,14 +503,14 @@ const RecurringTransactions = () => {
                         )}
                         <button
                           onClick={() => handleEdit(transaction)}
-                          className="text-fr-primary hover:text-fr-primary-dark"
+                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                           title="Editar"
                         >
                           ⚙️
                         </button>
                         <button
                           onClick={() => handleDelete(transaction)}
-                          className="text-red-600 hover:text-red-900"
+                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                           title="Eliminar"
                         >
                           🗑️
@@ -546,26 +528,26 @@ const RecurringTransactions = () => {
       {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-screen overflow-y-auto">
-            <h2 className="text-lg font-bold text-fr-gray-900 mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-screen overflow-y-auto">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
               {editingTransaction ? 'Editar Transacción Recurrente' : 'Nueva Transacción Recurrente'}
             </h2>
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Descripción
                 </label>
                 <input
                   type="text"
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  className="input"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Monto
                 </label>
                 <input
@@ -573,19 +555,19 @@ const RecurringTransactions = () => {
                   step="0.01"
                   value={formData.amount}
                   onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                  className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  className="input"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Tipo
                 </label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value})}
-                  className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  className="input"
                   required
                 >
                   <option value="expense">Gasto</option>
@@ -594,13 +576,13 @@ const RecurringTransactions = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Frecuencia
                 </label>
                 <select
                   value={formData.frequency}
                   onChange={(e) => setFormData({...formData, frequency: e.target.value})}
-                  className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  className="input"
                   required
                 >
                   <option value="daily">Diaria</option>
@@ -611,13 +593,13 @@ const RecurringTransactions = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Categoría
                 </label>
                 <select
                   value={formData.category_id}
                   onChange={(e) => setFormData({...formData, category_id: e.target.value})}
-                  className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  className="input"
                 >
                   <option value="">Seleccionar categoría</option>
                   {categories.map(category => (
@@ -627,41 +609,41 @@ const RecurringTransactions = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Próxima ejecución
                 </label>
                 <input
                   type="date"
                   value={formData.next_date}
                   onChange={(e) => setFormData({...formData, next_date: e.target.value})}
-                  className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  className="input"
                   min={new Date().toISOString().split('T')[0]}
                   required
                 />
-                <p className="text-xs text-fr-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Puede ser hoy o cualquier fecha futura
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Fecha de fin (opcional)
                 </label>
                 <input
                   type="date"
                   value={formData.end_date}
                   onChange={(e) => setFormData({...formData, end_date: e.target.value})}
-                  className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                  className="input"
                   min={formData.next_date || new Date().toISOString().split('T')[0]}
                 />
-                <p className="text-xs text-fr-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Debe ser posterior a la fecha de próxima ejecución
                 </p>
               </div>
 
               {formData.frequency === 'monthly' && (
                 <div>
-                  <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Día del mes (1-31)
                   </label>
                   <input
@@ -670,20 +652,20 @@ const RecurringTransactions = () => {
                     max="31"
                     value={formData.day_of_month}
                     onChange={(e) => setFormData({...formData, day_of_month: e.target.value})}
-                    className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                    className="input"
                   />
                 </div>
               )}
 
               {formData.frequency === 'weekly' && (
                 <div>
-                  <label className="block text-sm font-medium text-fr-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Día de la semana
                   </label>
                   <select
                     value={formData.day_of_week}
                     onChange={(e) => setFormData({...formData, day_of_week: e.target.value})}
-                    className="w-full border border-fr-gray-300 rounded-lg px-3 py-2"
+                    className="input"
                   >
                     <option value="">Seleccionar día</option>
                     <option value="0">Domingo</option>
@@ -703,9 +685,9 @@ const RecurringTransactions = () => {
                   id="is_active"
                   checked={formData.is_active}
                   onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-                  className="h-4 w-4 text-fr-primary focus:ring-fr-primary border-fr-gray-300 rounded"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
                 />
-                <label htmlFor="is_active" className="ml-2 block text-sm text-fr-gray-700">
+                <label htmlFor="is_active" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                   Activa
                 </label>
               </div>
@@ -718,13 +700,13 @@ const RecurringTransactions = () => {
                     setEditingTransaction(null);
                     resetForm();
                   }}
-                  className="px-4 py-2 text-fr-gray-700 border border-fr-gray-300 rounded-lg hover:bg-fr-gray-50"
+                  className="btn-secondary"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-fr-primary text-white rounded-lg hover:bg-fr-primary-dark"
+                  className="btn-primary"
                 >
                   {editingTransaction ? 'Actualizar' : 'Crear'}
                 </button>
@@ -737,9 +719,9 @@ const RecurringTransactions = () => {
       {/* Projection Modal */}
       {showProjectionModal && projection && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-screen overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-screen overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-fr-gray-900">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                 Proyección de Flujo de Caja - {projectionMonths} meses
               </h2>
               <div className="flex items-center space-x-2">
@@ -751,7 +733,7 @@ const RecurringTransactions = () => {
                     // Trigger automatic update with the new value
                     loadProjection(newMonths);
                   }}
-                  className="border border-fr-gray-300 rounded px-2 py-1"
+                  className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 >
                   <option value="3">3 meses</option>
                   <option value="6">6 meses</option>
@@ -760,7 +742,7 @@ const RecurringTransactions = () => {
                 </select>
                 <button
                   onClick={() => setShowProjectionModal(false)}
-                  className="text-fr-gray-500 hover:text-fr-gray-700"
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                 >
                   ✕
                 </button>
@@ -768,22 +750,24 @@ const RecurringTransactions = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-green-800">Total Ingresos</h3>
-                <p className="text-2xl font-bold text-green-600">
+              <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
+                <h3 className="text-sm font-medium text-green-800 dark:text-green-300">Total Ingresos</h3>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {formatCurrency(projection.summary?.total_projected_income || 0)}
                 </p>
               </div>
-              <div className="bg-red-50 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-red-800">Total Gastos</h3>
-                <p className="text-2xl font-bold text-red-600">
+              <div className="bg-red-50 dark:bg-red-900/30 p-4 rounded-lg">
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-300">Total Gastos</h3>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {formatCurrency(projection.summary?.total_projected_expenses || 0)}
                 </p>
               </div>
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-blue-800">Flujo Neto</h3>
+              <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+                <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">Flujo Neto</h3>
                 <p className={`text-2xl font-bold ${
-                  (projection.summary?.net_projected_amount || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                  (projection.summary?.net_projected_amount || 0) >= 0 
+                    ? 'text-green-600 dark:text-green-400' 
+                    : 'text-red-600 dark:text-red-400'
                 }`}>
                   {formatCurrency(projection.summary?.net_projected_amount || 0)}
                 </p>
@@ -791,37 +775,39 @@ const RecurringTransactions = () => {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-fr-gray-200">
-                <thead className="bg-fr-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Mes
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Ingresos
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Gastos
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-fr-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Flujo Neto
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-fr-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {projection.monthly_projections?.map((month, index) => (
-                    <tr key={index} className="hover:bg-fr-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-fr-gray-900">
+                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                         {month.month_display}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400">
                         {formatCurrency(month.income)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 dark:text-red-400">
                         {formatCurrency(month.expenses)}
                       </td>
                       <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                        month.net_amount >= 0 ? 'text-green-600' : 'text-red-600'
+                        month.net_amount >= 0 
+                          ? 'text-green-600 dark:text-green-400' 
+                          : 'text-red-600 dark:text-red-400'
                       }`}>
                         {formatCurrency(month.net_amount)}
                       </td>
@@ -837,20 +823,20 @@ const RecurringTransactions = () => {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && deletingTransaction && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
             <div className="flex items-center mb-4">
-              <div className="flex-shrink-0 w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex-shrink-0 w-10 h-10 mx-auto bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
             </div>
             
             <div className="text-center">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                 Eliminar Transacción Recurrente
               </h3>
-              <p className="text-sm text-gray-500 mb-6">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                 ¿Estás seguro de que quieres eliminar la transacción "{deletingTransaction.description}"? 
                 Esta acción no se puede deshacer.
               </p>
@@ -860,14 +846,14 @@ const RecurringTransactions = () => {
               <button
                 type="button"
                 onClick={cancelDelete}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="btn-secondary"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={confirmDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 transition-colors"
               >
                 Eliminar
               </button>

@@ -164,7 +164,7 @@ const Incomes = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="spinner"></div>
-        <span className="ml-2 text-fr-gray-600">Cargando ingresos...</span>
+        <span className="ml-2 text-fr-gray-600 dark:text-gray-400">Cargando ingresos...</span>
       </div>
     );
   }
@@ -176,11 +176,11 @@ const Incomes = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-fr-gray-600">Total Ingresos</p>
-              <p className="text-2xl font-bold text-fr-secondary">{formatAmount(totalIncomes)}</p>
+              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Total Ingresos</p>
+              <p className="text-2xl font-bold text-fr-secondary dark:text-green-400">{formatAmount(totalIncomes)}</p>
             </div>
-            <div className="p-3 rounded-fr bg-green-100">
-              <TrendingUp className="w-6 h-6 text-fr-secondary" />
+            <div className="p-3 rounded-fr bg-green-100 dark:bg-green-900/30">
+              <TrendingUp className="w-6 h-6 text-fr-secondary dark:text-green-400" />
             </div>
           </div>
         </div>
@@ -188,11 +188,11 @@ const Incomes = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-fr-gray-600">Cantidad de Ingresos</p>
-              <p className="text-2xl font-bold text-fr-secondary">{filteredIncomes.length}</p>
+              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Cantidad de Ingresos</p>
+              <p className="text-2xl font-bold text-fr-secondary dark:text-green-400">{filteredIncomes.length}</p>
             </div>
-            <div className="p-3 rounded-fr bg-green-100">
-              <TrendingUp className="w-6 h-6 text-fr-secondary" />
+            <div className="p-3 rounded-fr bg-green-100 dark:bg-green-900/30">
+              <TrendingUp className="w-6 h-6 text-fr-secondary dark:text-green-400" />
             </div>
           </div>
         </div>
@@ -204,7 +204,7 @@ const Incomes = () => {
           <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4">
             {/* Primera fila: Búsqueda */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-fr-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-fr-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Buscar ingresos..."
@@ -232,28 +232,28 @@ const Incomes = () => {
         <div className="space-y-4">
           {filteredIncomes.length === 0 ? (
             <div className="text-center py-12">
-              <TrendingUp className="w-12 h-12 text-fr-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-fr-gray-900 mb-2">No hay ingresos</h3>
-              <p className="text-fr-gray-500">Comienza agregando tu primer ingreso</p>
+              <TrendingUp className="w-12 h-12 text-fr-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-fr-gray-900 dark:text-gray-100 mb-2">No hay ingresos</h3>
+              <p className="text-fr-gray-500 dark:text-gray-400">Comienza agregando tu primer ingreso</p>
             </div>
           ) : (
             filteredIncomes.map((income) => {
               const category = categories.find(c => c.id === income.category_id);
               return (
-                <div key={income.id} className="flex items-center justify-between p-4 rounded-fr bg-fr-gray-50 hover:bg-fr-gray-100 transition-colors">
+                <div key={income.id} className="flex items-center justify-between p-4 rounded-fr bg-fr-gray-50 dark:bg-gray-700 hover:bg-fr-gray-100 dark:hover:bg-gray-600 transition-colors">
                   <div className="flex items-center space-x-4">
-                    <div className="p-2 rounded-fr bg-green-100">
-                      <TrendingUp className="w-5 h-5 text-fr-secondary" />
+                    <div className="p-2 rounded-fr bg-green-100 dark:bg-green-900/30">
+                      <TrendingUp className="w-5 h-5 text-fr-secondary dark:text-green-400" />
                     </div>
 
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
-                        <h3 className="font-medium text-fr-gray-900">{income.description}</h3>
+                        <h3 className="font-medium text-fr-gray-900 dark:text-gray-100">{income.description}</h3>
                         {category && (
                           <span className="badge-info">{category.name}</span>
                         )}
                       </div>
-                      <div className="text-sm text-fr-gray-500 mt-1">
+                      <div className="text-sm text-fr-gray-500 dark:text-gray-400 mt-1">
                         Creado: {new Date(income.created_at).toLocaleDateString('es-AR')}
                       </div>
                     </div>
@@ -261,7 +261,7 @@ const Incomes = () => {
 
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <p className="font-semibold text-fr-secondary text-lg">
+                      <p className="font-semibold text-fr-secondary dark:text-green-400 text-lg">
                         +{formatAmount(income.amount)}
                       </p>
                     </div>
@@ -269,13 +269,13 @@ const Incomes = () => {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleEdit(income)}
-                        className="p-2 rounded-fr text-fr-gray-600 hover:bg-fr-gray-200 transition-colors"
+                        className="p-2 rounded-fr text-fr-gray-600 dark:text-gray-400 hover:bg-fr-gray-200 dark:hover:bg-gray-600 transition-colors"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(income)}
-                        className="p-2 rounded-fr text-fr-error hover:bg-red-100 transition-colors"
+                        className="p-2 rounded-fr text-fr-error dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -292,14 +292,14 @@ const Incomes = () => {
       {showModal && (
         createPortal(
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-fr-lg max-w-md w-full p-6">
-              <h2 className="text-xl font-bold text-fr-gray-900 mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-fr-lg max-w-md w-full p-6">
+              <h2 className="text-xl font-bold text-fr-gray-900 dark:text-gray-100 mb-6">
                 {editingIncome ? 'Editar Ingreso' : 'Nuevo Ingreso'}
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-fr-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
                     Descripción
                   </label>
                   <input
@@ -312,7 +312,7 @@ const Incomes = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-fr-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
                     Monto
                   </label>
                   <input
@@ -326,7 +326,7 @@ const Incomes = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-fr-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
                     Categoría
                   </label>
                   <select

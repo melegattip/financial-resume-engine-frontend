@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { PeriodProvider } from './contexts/PeriodContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute, { PublicOnlyRoute } from './components/ProtectedRoute';
 
 // Páginas principales
@@ -80,10 +81,10 @@ function AppContent() {
       <Route 
         path="*" 
         element={
-          <div className="min-h-screen flex items-center justify-center bg-fr-gray-50">
+          <div className="min-h-screen flex items-center justify-center bg-fr-gray-50 dark:bg-gray-900">
             <div className="text-center">
-              <h1 className="text-4xl font-bold text-fr-gray-900 mb-4">404</h1>
-              <p className="text-fr-gray-600 mb-6">Página no encontrada</p>
+              <h1 className="text-4xl font-bold text-fr-gray-900 dark:text-gray-100 mb-4">404</h1>
+              <p className="text-fr-gray-600 dark:text-gray-400 mb-6">Página no encontrada</p>
               <a 
                 href="/" 
                 className="btn-primary"
@@ -104,11 +105,13 @@ function App() {
   
   return (
     <Router>
-      <AuthProvider>
-        <PeriodProvider>
-          <AppContent />
-        </PeriodProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <PeriodProvider>
+            <AppContent />
+          </PeriodProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </Router>
   );
 }
