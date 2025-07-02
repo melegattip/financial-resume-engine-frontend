@@ -13,6 +13,7 @@ import {
 import { formatCurrency, formatPercentage } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
 import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
+import useDataRefresh from '../hooks/useDataRefresh';
 import toast from 'react-hot-toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 
@@ -103,6 +104,9 @@ const Expenses = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Hook para refrescar automáticamente cuando cambian los datos
+  useDataRefresh(loadData, ['expense', 'recurring_transaction']);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

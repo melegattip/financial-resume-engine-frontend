@@ -277,9 +277,64 @@ class DataService {
         this.clearCache('categories');
         this.clearCache('analytics_categories');
         break;
+      case 'recurring_transaction':
+        // Cuando se ejecuta una transacción recurrente, puede crear gastos o ingresos
+        this.clearCache('expenses');
+        this.clearCache('incomes');
+        this.clearCache('analytics_expenses');
+        this.clearCache('analytics_incomes');
+        this.clearCache('dashboard');
+        this.clearCache('recurring'); // Para el propio dashboard de recurrentes
+        console.log('🔄 Cache invalidado después de ejecutar transacción recurrente');
+        break;
       default:
         this.clearCache(); // Limpiar todo
     }
+    
+    // Emitir evento personalizado para notificar a componentes
+    this.notifyDataChange(type);
+  }
+
+  /**
+   * Emite un evento personalizado para notificar cambios de datos
+   */
+  notifyDataChange(type) {
+    const timestamp = Date.now();
+    
+    // 1. Emitir evento en la ventana actual (para misma pestaña)
+    const event = new CustomEvent('dataChanged', {
+      detail: { type, timestamp }
+    });
+    window.dispatchEvent(event);
+    console.log(`📡 Evento 'dataChanged' emitido para tipo: ${type}`);
+    
+    // 2. Guardar en localStorage para comunicación entre pestañas
+    const storageEvent = {
+      type,
+      timestamp,
+      id: Math.random().toString(36).substr(2, 9) // ID único para evitar loops
+    };
+    localStorage.setItem('dataChanged', JSON.stringify(storageEvent));
+    console.log(`💾 Evento guardado en localStorage para comunicación entre pestañas:`, storageEvent);
+    
+    // 3. También emitir con un delay para casos donde el backend necesita tiempo
+    setTimeout(() => {
+      const delayedEvent = new CustomEvent('dataChanged', {
+        detail: { type, timestamp: Date.now(), delayed: true }
+      });
+      window.dispatchEvent(delayedEvent);
+      console.log(`📡 Evento 'dataChanged' DIFERIDO emitido para tipo: ${type}`);
+      
+      // También actualizar localStorage con evento diferido
+      const delayedStorageEvent = {
+        type,
+        timestamp: Date.now(),
+        delayed: true,
+        id: Math.random().toString(36).substr(2, 9)
+      };
+      localStorage.setItem('dataChanged', JSON.stringify(delayedStorageEvent));
+      console.log(`💾 Evento DIFERIDO guardado en localStorage:`, delayedStorageEvent);
+    }, 1000);
   }
 }
 

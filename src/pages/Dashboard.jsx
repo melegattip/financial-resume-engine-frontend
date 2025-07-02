@@ -25,6 +25,7 @@ import { formatCurrency, formatDate, formatPercentage as formatPercentageUtil, b
 import { usePeriod } from '../contexts/PeriodContext';
 import { useAuth } from '../contexts/AuthContext';
 import dataService from '../services/dataService';
+import useDataRefresh from '../hooks/useDataRefresh';
 
 import toast from 'react-hot-toast';
 
@@ -67,21 +68,6 @@ const Dashboard = () => {
       token: localStorage.getItem('auth_token') ? 'EXISTS' : 'MISSING'
     });
   }, [isAuthenticated, user]);
-
-  // Cargar datos iniciales
-  useEffect(() => {
-    loadDashboardData();
-    loadNewFeaturesSummary();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Recargar datos cuando cambien los filtros
-  useEffect(() => {
-    if (selectedMonth !== null || selectedYear !== null) {
-      loadDashboardData(false); // false = no recalcular meses disponibles
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMonth, selectedYear]);
 
   const loadDashboardData = async (shouldUpdateAvailableData = true) => {
     try {
@@ -332,6 +318,24 @@ const Dashboard = () => {
   // Datos para los gráficos
   const chartData = calculateChartData();
   const pieData = calculateCategoryData();
+
+  // Hook para refrescar automáticamente cuando cambian los datos
+  useDataRefresh(loadDashboardData, ['expense', 'income', 'recurring_transaction']);
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    loadDashboardData();
+    loadNewFeaturesSummary();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Recargar datos cuando cambien los filtros
+  useEffect(() => {
+    if (selectedMonth !== null || selectedYear !== null) {
+      loadDashboardData(false); // false = no recalcular meses disponibles
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMonth, selectedYear]);
 
   // Función para ordenar transacciones
   const sortTransactions = (transactions, sortType) => {

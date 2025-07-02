@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { recurringTransactionsAPI, categoriesAPI, formatCurrency } from '../services/api';
 import toast from '../utils/notifications';
+import dataService from '../services/dataService';
 
 const RecurringTransactions = () => {
   const [transactions, setTransactions] = useState([]);
@@ -10,6 +11,7 @@ const RecurringTransactions = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showProjectionModal, setShowProjectionModal] = useState(false);
+  const [showFuturePreview, setShowFuturePreview] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [deletingTransaction, setDeletingTransaction] = useState(null);
@@ -212,6 +214,76 @@ const RecurringTransactions = () => {
     }
   };
 
+  const handleProcessPending = async () => {
+    try {
+      setLoading(true);
+      const response = await recurringTransactionsAPI.processPending();
+      const result = response.data;
+      
+      if (result.success_count > 0) {
+        toast.success(`✅ ${result.success_count} transacciones ejecutadas exitosamente`);
+        
+        // Recargar datos locales primero
+        await loadData();
+        
+        // Invalidar cache inmediatamente
+        dataService.invalidateAfterMutation('recurring_transaction');
+        
+        // Forzar actualización adicional con delay para asegurar sincronización
+        setTimeout(() => {
+          console.log('🔄 Forzando actualización adicional después de ejecutar transacciones pendientes');
+          dataService.invalidateAfterMutation('recurring_transaction');
+        }, 1500);
+      }
+      
+      if (result.failure_count > 0) {
+        toast.error(`❌ ${result.failure_count} transacciones fallaron`);
+      }
+      
+      if (result.processed_count === 0) {
+        toast.info('ℹ️ No hay transacciones pendientes por ejecutar');
+      }
+      
+    } catch (error) {
+      console.error('Error processing pending transactions:', error);
+      toast.error('Error procesando transacciones pendientes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExecuteTransaction = async (id) => {
+    try {
+      const response = await recurringTransactionsAPI.execute(id);
+      const result = response.data.data;
+      
+      if (result.success) {
+        toast.success(`✅ Transacción ejecutada exitosamente`);
+        if (result.next_execution_date) {
+          toast.info(`📅 Próxima ejecución: ${formatDate(result.next_execution_date)}`);
+        }
+        
+        // Recargar datos locales primero
+        await loadData();
+        
+        // Invalidar cache inmediatamente
+        dataService.invalidateAfterMutation('recurring_transaction');
+        
+        // Forzar actualización adicional con delay para asegurar sincronización
+        setTimeout(() => {
+          console.log('🔄 Forzando actualización adicional después de ejecutar transacción individual');
+          dataService.invalidateAfterMutation('recurring_transaction');
+        }, 1500);
+      } else {
+        toast.error(`❌ Error: ${result.message}`);
+      }
+      
+    } catch (error) {
+      console.error('Error executing transaction:', error);
+      toast.error('Error ejecutando transacción');
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       description: '',
@@ -268,6 +340,61 @@ const RecurringTransactions = () => {
     return `${diffDays} días`;
   };
 
+  const isTransactionOverdue = (nextDate) => {
+    const today = new Date();
+    const next = new Date(nextDate);
+    return next <= today;
+  };
+
+  const generateFuturePreview = () => {
+    const futureMonths = [];
+    const today = new Date();
+    
+    for (let i = 0; i < 6; i++) {
+      const targetMonth = new Date(today.getFullYear(), today.getMonth() + i + 1, 1);
+      const monthName = targetMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+      
+      let monthlyIncome = 0;
+      let monthlyExpenses = 0;
+      
+      // Calcular transacciones que aplicarían en ese mes
+      transactions.forEach(transaction => {
+        if (!transaction.is_active) return;
+        
+        const monthlyAmount = calculateMonthlyEquivalent(transaction);
+        if (transaction.type === 'income') {
+          monthlyIncome += monthlyAmount;
+        } else {
+          monthlyExpenses += monthlyAmount;
+        }
+      });
+      
+      futureMonths.push({
+        month: monthName,
+        income: monthlyIncome,
+        expenses: monthlyExpenses,
+        balance: monthlyIncome - monthlyExpenses
+      });
+    }
+    
+    return futureMonths;
+  };
+
+  const calculateMonthlyEquivalent = (transaction) => {
+    switch (transaction.frequency) {
+      case 'daily':
+        return transaction.amount * 30; // Aproximado
+      case 'weekly':
+        return transaction.amount * 4.33; // Aproximado
+      case 'monthly':
+        return transaction.amount;
+      case 'yearly':
+        return transaction.amount / 12;
+      default:
+        return transaction.amount;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -285,6 +412,21 @@ const RecurringTransactions = () => {
           <p className="text-gray-600 dark:text-gray-400">Gestiona tus ingresos y gastos automáticos</p>
         </div>
         <div className="flex space-x-3">
+          {/* Botón discreto para desarrollo - ejecutar pendientes */}
+          <button
+            onClick={handleProcessPending}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 px-2 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm"
+            title="Ejecutar transacciones pendientes (desarrollo)"
+            disabled={loading}
+          >
+            {loading ? '⏳' : '🔄'}
+          </button>
+          <button
+            onClick={() => setShowFuturePreview(true)}
+            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 transition-colors"
+          >
+            Vista Futura
+          </button>
           <button
             onClick={loadProjection}
             className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
@@ -469,7 +611,12 @@ const RecurringTransactions = () => {
                       <div className="text-sm text-gray-900 dark:text-gray-100">
                         {formatDate(transaction.next_date)}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className={`text-xs font-medium ${
+                        isTransactionOverdue(transaction.next_date) 
+                          ? 'text-red-600 dark:text-red-400' 
+                          : 'text-gray-500 dark:text-gray-400'
+                      }`}>
+                        {isTransactionOverdue(transaction.next_date) && '⚠️ '}
                         {getDaysUntilNext(transaction.next_date)}
                       </div>
                     </td>
@@ -484,6 +631,16 @@ const RecurringTransactions = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
+                        {/* Botón de ejecutar para transacciones vencidas y activas */}
+                        {transaction.is_active && isTransactionOverdue(transaction.next_date) && (
+                          <button
+                            onClick={() => handleExecuteTransaction(transaction.id)}
+                            className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
+                            title="Ejecutar ahora (vencida)"
+                          >
+                            ⚡
+                          </button>
+                        )}
                         {transaction.is_active ? (
                           <button
                             onClick={() => handlePause(transaction.id)}
@@ -712,6 +869,83 @@ const RecurringTransactions = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Future Preview Modal */}
+      {showFuturePreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-screen overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                🔮 Vista Futura - Próximos 6 Meses
+              </h2>
+              <button
+                onClick={() => setShowFuturePreview(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <p className="text-sm text-blue-800 dark:text-blue-300">
+                💡 Esta vista muestra una proyección aproximada basada en tus transacciones recurrentes activas.
+                Los cálculos son estimativos y pueden variar según fechas específicas y cambios futuros.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {generateFuturePreview().map((month, index) => (
+                <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 capitalize">
+                    {month.month}
+                  </h3>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Ingresos:</span>
+                      <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                        {formatCurrency(month.income)}
+                      </span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Gastos:</span>
+                      <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                        {formatCurrency(month.expenses)}
+                      </span>
+                    </div>
+                    
+                    <div className="border-t pt-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Balance:</span>
+                        <span className={`text-sm font-bold ${
+                          month.balance >= 0 
+                            ? 'text-green-600 dark:text-green-400' 
+                            : 'text-red-600 dark:text-red-400'
+                        }`}>
+                          {formatCurrency(month.balance)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+              <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-300 mb-2">
+                🚀 Próximas Funcionalidades
+              </h4>
+              <ul className="text-sm text-yellow-700 dark:text-yellow-400 space-y-1">
+                <li>• Integración con metas de ahorro</li>
+                <li>• Comparación con presupuestos</li>
+                <li>• Alertas de desvíos financieros</li>
+                <li>• Simulación de escenarios</li>
+              </ul>
+            </div>
           </div>
         </div>
       )}

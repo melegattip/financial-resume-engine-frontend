@@ -545,6 +545,9 @@ const AIInsights = () => {
               <div className="flex items-center space-x-2">
                 <ShoppingCart className="w-4 h-4" />
                 <span>¿Puedo comprarlo?</span>
+                <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-300 text-xs px-2 py-1 rounded-full font-medium">
+                  BETA
+                </span>
               </div>
             </button>
           </nav>
