@@ -28,6 +28,7 @@ const Incomes = () => {
     selectedYear,
     selectedMonth,
     balancesHidden,
+    updateAvailableData,
   } = usePeriod();
 
   // Usar el hook optimizado para operaciones API
@@ -58,6 +59,9 @@ const Incomes = () => {
       setIncomes(Array.isArray(incomesData) ? incomesData : []);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       
+      // Actualizar datos disponibles en el contexto de períodos
+      updateAvailableData([], incomesData);
+      
       console.log('✅ Datos de ingresos cargados exitosamente:', {
         incomes: incomesData.length,
         categories: categoriesData.length
@@ -74,7 +78,7 @@ const Incomes = () => {
     } finally {
       setLoading(false);
     }
-  }, [incomesAPI, categoriesAPI]);
+  }, [incomesAPI, categoriesAPI, updateAvailableData]);
 
   useEffect(() => {
     loadData();

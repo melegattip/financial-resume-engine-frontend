@@ -250,8 +250,8 @@ export const budgetsAPI = {
   create: (data) => api.post('/budgets', data),
   update: (id, data) => api.put(`/budgets/${id}`, data),
   delete: (id) => api.delete(`/budgets/${id}`),
-  getStatus: (id) => api.get(`/budgets/${id}/status`),
-  getDashboard: () => api.get('/budgets/dashboard'),
+  getStatus: (params) => api.get('/budgets/status', { params }),
+  getDashboard: (params) => api.get('/budgets/dashboard', { params }),
 };
 
 // Servicios de Metas de Ahorro

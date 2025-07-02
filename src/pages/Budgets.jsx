@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { budgetsAPI, categoriesAPI, formatCurrency } from '../services/api';
+import { usePeriod } from '../contexts/PeriodContext';
 import toast from '../utils/notifications';
 
 const Budgets = () => {
+  const { getFilterParams } = usePeriod();
   const [budgets, setBudgets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [dashboard, setDashboard] = useState(null);
@@ -29,15 +31,20 @@ const Budgets = () => {
 
   useEffect(() => {
     loadData();
-  }, [filters]);
+  }, [filters, getFilterParams]);
 
   const loadData = async () => {
     try {
       setLoading(true);
+      
+      // Combinar filtros locales con filtros de período global
+      const periodParams = getFilterParams();
+      const combinedFilters = { ...filters, ...periodParams };
+      
       const [budgetsRes, categoriesRes, dashboardRes] = await Promise.all([
-        budgetsAPI.list(filters),
+        budgetsAPI.list(combinedFilters),
         categoriesAPI.list(),
-        budgetsAPI.getDashboard()
+        budgetsAPI.getDashboard(periodParams)
       ]);
       
       setBudgets(budgetsRes.data.data?.budgets || []);

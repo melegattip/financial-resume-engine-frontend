@@ -43,6 +43,7 @@ const Expenses = () => {
     selectedYear,
     selectedMonth,
     balancesHidden,
+    updateAvailableData,
   } = usePeriod();
 
   // Usar el hook optimizado para operaciones API
@@ -78,6 +79,9 @@ const Expenses = () => {
       setExpenses(Array.isArray(expensesData) ? expensesData : []);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       
+      // Actualizar datos disponibles en el contexto de períodos
+      updateAvailableData(expensesData, []);
+      
       console.log('✅ Datos de gastos cargados exitosamente:', {
         expenses: expensesData.length,
         categories: categoriesData.length
@@ -94,7 +98,7 @@ const Expenses = () => {
     } finally {
       setLoading(false);
     }
-  }, [expensesAPI, categoriesAPI]);
+  }, [expensesAPI, categoriesAPI, updateAvailableData]);
 
   useEffect(() => {
     loadData();

@@ -16,12 +16,14 @@ import {
   ChevronUp,
   Target
 } from 'lucide-react';
-import { aiAPI, dashboardAPI } from '../services/api';
+import { aiAPI, savingsGoalsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { usePeriod } from '../contexts/PeriodContext';
 import gamificationService from '../services/gamificationServiceSimple';
 
 const AIInsights = () => {
   const { user, isAuthenticated } = useAuth();
+  const { updateAvailableData } = usePeriod();
   const [insights, setInsights] = useState([]);
   const [purchaseAnalysis, setPurchaseAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -32,6 +34,7 @@ const AIInsights = () => {
   const [healthScoreLoading, setHealthScoreLoading] = useState(false);
   const [lastEvaluationDate, setLastEvaluationDate] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
+  const [savingsGoals, setSavingsGoals] = useState([]);
   
   // Estados para Progressive Disclosure
   const [showAllInsights, setShowAllInsights] = useState(false);
@@ -42,7 +45,7 @@ const AIInsights = () => {
     itemName: '',
     amount: '',
     description: '',
-    paymentType: 'contado',
+    paymentTypes: [], // Cambiado de paymentType a paymentTypes array
     isNecessary: false,
     currentBalance: 0,
     monthlyIncome: 0,
@@ -60,31 +63,71 @@ const AIInsights = () => {
     { value: 'ahorro', label: 'Necesito ahorrar para esto' }
   ];
 
+  // Función para manejar cambios en tipos de pago múltiples
+  const handlePaymentTypeChange = (paymentType, isChecked) => {
+    setPurchaseForm(prev => {
+      const currentTypes = prev.paymentTypes || [];
+      if (isChecked) {
+        // Agregar tipo si no existe
+        if (!currentTypes.includes(paymentType)) {
+          return { ...prev, paymentTypes: [...currentTypes, paymentType] };
+        }
+      } else {
+        // Remover tipo si existe
+        return { ...prev, paymentTypes: currentTypes.filter(type => type !== paymentType) };
+      }
+      return prev;
+    });
+  };
+
   // Cargar datos del dashboard para obtener información financiera real
   const loadDashboardData = useCallback(async () => {
     try {
-      const response = await dashboardAPI.overview();
-      const data = response.data || response;
-      setDashboardData(data);
+      // Usar el servicio de datos para obtener información completa
+      const dataService = (await import('../services/dataService')).default;
+      const dashboardData = await dataService.loadDashboardData({}, isAuthenticated && user);
+      
+      setDashboardData(dashboardData);
+      
+      // Actualizar datos disponibles en el contexto de períodos
+      updateAvailableData(
+        dashboardData.allExpenses || dashboardData.expenses || [], 
+        dashboardData.allIncomes || dashboardData.incomes || []
+      );
       
       // Actualizar el formulario de compra con datos reales
-      const metrics = data?.Metrics || data?.metrics;
       const newFormData = {
-        currentBalance: metrics?.Balance || metrics?.balance || 0,
-        monthlyIncome: metrics?.TotalIncome || metrics?.total_income || 0,
-        monthlyExpenses: metrics?.TotalExpenses || metrics?.total_expenses || 0,
-        savingsGoal: data?.savings_goal || 50000
+        currentBalance: dashboardData.balance || 0,
+        monthlyIncome: dashboardData.totalIncome || 0,
+        monthlyExpenses: dashboardData.totalExpenses || 0,
+        savingsGoal: dashboardData.savings_goal || 50000
       };
       
       setPurchaseForm(prev => ({
         ...prev,
         ...newFormData
       }));
+      
+      console.log('✅ AIInsights: Datos del dashboard y períodos actualizados');
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       // Mantener valores por defecto en caso de error
     }
-  }, []);
+  }, [updateAvailableData, isAuthenticated, user]);
+
+  // Cargar metas de ahorro
+  const loadSavingsGoals = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const response = await savingsGoalsAPI.list({ status: 'active' });
+      const goals = response.data?.data?.goals || [];
+      setSavingsGoals(goals);
+    } catch (error) {
+      console.error('Error loading savings goals:', error);
+      setSavingsGoals([]);
+    }
+  }, [isAuthenticated]);
 
   // Cache removido - el backend maneja su propio cache de 20 horas
 
@@ -206,27 +249,105 @@ const AIInsights = () => {
     loadAIInsightsSimple();
     loadHealthScore();
     loadDashboardData();
-  }, [isAuthenticated, loadAIInsightsSimple, loadHealthScore, loadDashboardData]);
+    loadSavingsGoals();
+  }, [isAuthenticated, loadAIInsightsSimple, loadHealthScore, loadDashboardData, loadSavingsGoals]);
+
+  // Función para filtrar metas de ahorro relevantes
+  const getRelevantSavingsGoals = (itemName, description) => {
+    if (!savingsGoals || savingsGoals.length === 0) return [];
+
+    const itemNameLower = itemName.toLowerCase();
+    const descriptionLower = description.toLowerCase();
+
+    return savingsGoals.filter(goal => {
+      if (goal.status !== 'active') return false;
+
+      const goalNameLower = goal.name.toLowerCase();
+      const goalCategoryLower = goal.category.toLowerCase();
+
+      // 1. Coincidencia directa en nombre o categoría
+      if (itemNameLower.includes(goalCategoryLower) ||
+          goalNameLower.includes(itemNameLower) ||
+          goalCategoryLower.includes(itemNameLower)) {
+        return true;
+      }
+
+      // 2. Coincidencias específicas por categoría
+      switch (goal.category) {
+        case 'car':
+          if (itemNameLower.includes('auto') ||
+              itemNameLower.includes('carro') ||
+              itemNameLower.includes('vehículo') ||
+              itemNameLower.includes('vehiculo') ||
+              descriptionLower.includes('auto') ||
+              descriptionLower.includes('carro')) {
+            return true;
+          }
+          break;
+        case 'house':
+          if (itemNameLower.includes('casa') ||
+              itemNameLower.includes('vivienda') ||
+              itemNameLower.includes('inmueble') ||
+              itemNameLower.includes('propiedad')) {
+            return true;
+          }
+          break;
+        case 'vacation':
+          if (itemNameLower.includes('viaje') ||
+              itemNameLower.includes('vacaciones') ||
+              itemNameLower.includes('turismo')) {
+            return true;
+          }
+          break;
+        case 'education':
+          if (itemNameLower.includes('curso') ||
+              itemNameLower.includes('educación') ||
+              itemNameLower.includes('educacion') ||
+              itemNameLower.includes('estudio')) {
+            return true;
+          }
+          break;
+      }
+
+      // 3. Análisis de descripción para palabras clave
+      if (description && (descriptionLower.includes(goalNameLower) ||
+                         descriptionLower.includes(goalCategoryLower))) {
+        return true;
+      }
+
+      return false;
+    }).map(goal => ({
+      name: goal.name,
+      category: goal.category,
+      current_amount: goal.current_amount,
+      target_amount: goal.target_amount,
+      progress: goal.progress
+    }));
+  };
 
   const analyzePurchase = async () => {
-    if (!purchaseForm.itemName || !purchaseForm.amount) {
-      setPurchaseError('Por favor completa el nombre del artículo y el monto');
+    if (!purchaseForm.itemName || !purchaseForm.amount || purchaseForm.paymentTypes.length === 0) {
+      setPurchaseError('Por favor completa el nombre del artículo, el monto y selecciona al menos un tipo de pago');
       return;
     }
 
     setPurchaseLoading(true);
     setPurchaseError(null);
     try {
+      // Obtener metas de ahorro relevantes
+      const relevantSavingsGoals = getRelevantSavingsGoals(purchaseForm.itemName, purchaseForm.description);
+      
       const response = await aiAPI.canIBuy({
         item_name: purchaseForm.itemName,
         amount: parseFloat(purchaseForm.amount),
         description: purchaseForm.description,
-        payment_type: purchaseForm.paymentType,
+        payment_types: purchaseForm.paymentTypes, // Enviar array de tipos de pago
         is_necessary: purchaseForm.isNecessary,
         current_balance: purchaseForm.currentBalance,
         monthly_income: purchaseForm.monthlyIncome,
         monthly_expenses: purchaseForm.monthlyExpenses,
-        savings_goal: purchaseForm.savingsGoal
+        savings_goal: purchaseForm.savingsGoal,
+        savings_goals: relevantSavingsGoals // Agregar metas de ahorro relevantes
       });
       setPurchaseAnalysis(response);
       
@@ -238,21 +359,15 @@ const AIInsights = () => {
       
     } catch (err) {
       console.error('Error analyzing purchase:', err.message);
-      setPurchaseError('Error conectando con GPT-4. Usando análisis básico.');
-      // Usar datos de ejemplo
-      const amount = parseFloat(purchaseForm.amount);
-      const available = purchaseForm.monthlyIncome - purchaseForm.monthlyExpenses;
-      const canAfford = amount <= available * 0.3;
       
-      setPurchaseAnalysis({
-        can_buy: canAfford,
-        confidence: 0.8,
-        reasoning: canAfford 
-          ? `Puedes permitirte esta compra. Representa ${((amount/available)*100).toFixed(1)}% de tu dinero disponible mensual.`
-          : `Esta compra representa ${((amount/available)*100).toFixed(1)}% de tu dinero disponible. Considera esperar o buscar alternativas.`,
-        alternatives: ["Buscar ofertas", "Comprar usado", "Esperar a fin de mes"],
-        impact_score: Math.round((amount / purchaseForm.monthlyIncome) * 1000)
-      });
+      // Si es un error de IA no configurada, mostrar mensaje específico
+      if (err.message.includes('IA no configurada') || err.message.includes('no disponible')) {
+        setPurchaseError('❌ Análisis de compra no disponible: IA no configurada. Esta función requiere OpenAI para funcionar correctamente.');
+      } else {
+        setPurchaseError('❌ Error conectando con la IA. Verifica tu conexión e intenta nuevamente.');
+      }
+      
+      setPurchaseAnalysis(null);
     } finally {
       setPurchaseLoading(false);
     }
@@ -562,19 +677,19 @@ const AIInsights = () => {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-blue-700 dark:text-blue-400">Balance actual:</span>
-                      <p className="font-semibold text-blue-900 dark:text-blue-200">${(dashboardData?.Metrics?.Balance || dashboardData?.metrics?.balance || 0).toLocaleString()}</p>
+                      <p className="font-semibold text-blue-900 dark:text-blue-200">${(dashboardData?.balance || dashboardData?.Metrics?.Balance || dashboardData?.metrics?.balance || 0).toLocaleString()}</p>
                     </div>
                     <div>
                       <span className="text-blue-700 dark:text-blue-400">Ingresos mensuales:</span>
-                      <p className="font-semibold text-blue-900 dark:text-blue-200">${(dashboardData?.Metrics?.TotalIncome || dashboardData?.metrics?.total_income || 0).toLocaleString()}</p>
+                      <p className="font-semibold text-blue-900 dark:text-blue-200">${(dashboardData?.totalIncome || dashboardData?.Metrics?.TotalIncome || dashboardData?.metrics?.total_income || 0).toLocaleString()}</p>
                     </div>
                     <div>
                       <span className="text-blue-700 dark:text-blue-400">Gastos mensuales:</span>
-                      <p className="font-semibold text-blue-900 dark:text-blue-200">${(dashboardData?.Metrics?.TotalExpenses || dashboardData?.metrics?.total_expenses || 0).toLocaleString()}</p>
+                      <p className="font-semibold text-blue-900 dark:text-blue-200">${(dashboardData?.totalExpenses || dashboardData?.Metrics?.TotalExpenses || dashboardData?.metrics?.total_expenses || 0).toLocaleString()}</p>
                     </div>
                     <div>
                       <span className="text-blue-700 dark:text-blue-400">Disponible/mes:</span>
-                      <p className="font-semibold text-green-700 dark:text-green-400">${((dashboardData?.Metrics?.TotalIncome || dashboardData?.metrics?.total_income || 0) - (dashboardData?.Metrics?.TotalExpenses || dashboardData?.metrics?.total_expenses || 0)).toLocaleString()}</p>
+                      <p className="font-semibold text-green-700 dark:text-green-400">${((dashboardData?.totalIncome || dashboardData?.Metrics?.TotalIncome || dashboardData?.metrics?.total_income || 0) - (dashboardData?.totalExpenses || dashboardData?.Metrics?.TotalExpenses || dashboardData?.metrics?.total_expenses || 0)).toLocaleString()}</p>
                     </div>
                   </div>
                   <div className="flex items-center justify-between mt-2">
@@ -644,23 +759,27 @@ const AIInsights = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    Tipo de pago
+                    Tipo de pago (puedes seleccionar varios)
                   </label>
                   <div className="space-y-2">
                     {paymentTypes.map(type => (
                       <label key={type.value} className="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                         <input
-                          type="radio"
-                          name="paymentType"
+                          type="checkbox"
                           value={type.value}
-                          checked={purchaseForm.paymentType === type.value}
-                          onChange={(e) => setPurchaseForm({...purchaseForm, paymentType: e.target.value})}
-                          className="w-4 h-4 text-blue-500 focus:ring-blue-500"
+                          checked={purchaseForm.paymentTypes.includes(type.value)}
+                          onChange={(e) => handlePaymentTypeChange(type.value, e.target.checked)}
+                          className="w-4 h-4 text-blue-500 focus:ring-blue-500 rounded"
                         />
                         <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">{type.label}</span>
                       </label>
                     ))}
                   </div>
+                  {purchaseForm.paymentTypes.length === 0 && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Selecciona al menos un tipo de pago
+                    </p>
+                  )}
                 </div>
 
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
@@ -684,7 +803,7 @@ const AIInsights = () => {
                 
                 <button
                   onClick={analyzePurchase}
-                  disabled={purchaseLoading || !purchaseForm.itemName || !purchaseForm.amount}
+                  disabled={purchaseLoading || !purchaseForm.itemName || !purchaseForm.amount || purchaseForm.paymentTypes.length === 0}
                   className="w-full px-6 py-4 bg-green-500 dark:bg-green-600 text-white rounded-lg hover:bg-green-600 dark:hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 text-base font-medium shadow-lg"
                 >
                   {purchaseLoading ? (
