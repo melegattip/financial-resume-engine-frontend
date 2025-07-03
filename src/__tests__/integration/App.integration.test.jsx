@@ -1,7 +1,7 @@
 import React from 'react';
 import { screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import App from '../../App';
+import { AppContent } from '../../App';
 import { renderWithRouter, mockAPI, mockExpense, mockIncome, mockCategory, setupTest } from '../utils/testUtils';
 import * as api from '../../services/api';
 
@@ -42,7 +42,7 @@ describe('App Integration Tests', () => {
     mockAPI.incomes.list.mockResolvedValue({ data: [mockIncome] });
     mockAPI.categories.list.mockResolvedValue({ data: [mockCategory] });
 
-    renderWithRouter(<App />);
+    renderWithRouter(<AppContent />);
 
     // Inicialmente estamos en Dashboard
     await waitFor(() => {
@@ -87,7 +87,7 @@ describe('App Integration Tests', () => {
     mockAPI.expenses.list.mockResolvedValue({ data: [] });
     mockAPI.categories.list.mockResolvedValue({ data: [mockCategory] });
     
-    renderWithRouter(<App />);
+    renderWithRouter(<AppContent />);
 
     // Navegar a gastos
     const expensesLink = screen.getByText('Gastos');
@@ -179,7 +179,7 @@ describe('App Integration Tests', () => {
       }
     });
 
-    renderWithRouter(<App />);
+    renderWithRouter(<AppContent />);
 
     // Verificar datos en Dashboard
     await waitFor(() => {
@@ -225,7 +225,7 @@ describe('App Integration Tests', () => {
     // Simular error de red inicial
     mockAPI.dashboard.overview.mockRejectedValueOnce(new Error('Network Error'));
     
-    renderWithRouter(<App />);
+    renderWithRouter(<AppContent />);
 
     // Debe mostrar valores por defecto
     await waitFor(() => {
@@ -266,7 +266,7 @@ describe('App Integration Tests', () => {
     mockAPI.expenses.list.mockResolvedValue({ data: expenses });
     mockAPI.categories.list.mockResolvedValue({ data: [mockCategory] });
 
-    renderWithRouter(<App />);
+    renderWithRouter(<AppContent />);
 
     // Navegar a gastos
     const expensesLink = screen.getByText('Gastos');
@@ -317,7 +317,7 @@ describe('App Integration Tests', () => {
       }
     });
 
-    renderWithRouter(<App />);
+    renderWithRouter(<AppContent />);
 
     await waitFor(() => {
       expect(screen.getByText('Balance Total')).toBeInTheDocument();

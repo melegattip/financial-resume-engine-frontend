@@ -92,21 +92,9 @@ class GamificationAPI {
    */
   async recordAction(actionType, entityType, entityId, description = '') {
     try {
-      // Obtener user_id del localStorage para incluirlo en el request body
-      const userData = localStorage.getItem('auth_user');
-      let userId = '';
-      
-      if (userData) {
-        try {
-          const user = JSON.parse(userData);
-          userId = user?.id?.toString() || '';
-        } catch (error) {
-          console.warn('Error parsing user data:', error);
-        }
-      }
-
+      // El userID se extrae automáticamente del JWT token en el backend
+      // NO necesitamos enviarlo en el payload
       const response = await apiClient.post(`${this.baseURL}/actions`, {
-        user_id: userId,
         action_type: actionType,
         entity_type: entityType,
         entity_id: entityId,

@@ -29,8 +29,8 @@ import Layout from './components/Layout/Layout';
 // Estilos
 import './index.css';
 
-// Componente de rutas que usa los contexts
-function AppContent() {
+// Componente de rutas que usa los contexts (exportado para tests)
+export function AppContent() {
   console.log('🚀 AppContent rendering...');
   
   return (

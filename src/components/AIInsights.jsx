@@ -378,8 +378,8 @@ const AIInsights = () => {
     if (!viewedInsights.has(insightId)) {
       setViewedInsights(prev => new Set([...prev, insightId]));
       
-      // Registrar en gamificación
-      await gamificationService.recordInsightViewed(insightId, insightTitle);
+      // Registrar en gamificación - convertir ID a string
+      await gamificationService.recordInsightViewed(String(insightId), insightTitle);
     }
   };
 
@@ -387,8 +387,8 @@ const AIInsights = () => {
     if (!understoodInsights.has(insightId)) {
       setUnderstoodInsights(prev => new Set([...prev, insightId]));
       
-      // Registrar en gamificación
-      await gamificationService.recordInsightUnderstood(insightId, insightTitle);
+      // Registrar en gamificación - convertir ID a string
+      await gamificationService.recordInsightUnderstood(String(insightId), insightTitle);
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -315,9 +315,9 @@ const Dashboard = () => {
     }];
   };
 
-  // Datos para los gráficos
-  const chartData = calculateChartData();
-  const pieData = calculateCategoryData();
+  // Datos para los gráficos (usando useMemo para optimizar)
+  const chartData = useMemo(() => calculateChartData(), [selectedMonth, selectedYear, data.totalIncome, data.totalExpenses]);
+  const pieData = useMemo(() => calculateCategoryData(), [data.expenses, data.categories, data.categoriesAnalytics]);
 
   // Hook para refrescar automáticamente cuando cambian los datos
   useDataRefresh(loadDashboardData, ['expense', 'income', 'recurring_transaction']);

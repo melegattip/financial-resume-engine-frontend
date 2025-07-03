@@ -1,15 +1,40 @@
 import React from 'react';
 import { render } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
+import { AuthProvider } from '../../contexts/AuthContext';
+import { ThemeProvider } from '../../contexts/ThemeContext';
+import { PeriodProvider } from '../../contexts/PeriodContext';
 
 // Custom render que incluye providers necesarios
 export const renderWithRouter = (ui, options = {}) => {
   const Wrapper = ({ children }) => (
-    <BrowserRouter>
-      {children}
-      <Toaster />
-    </BrowserRouter>
+    <MemoryRouter initialEntries={['/']}>
+      <ThemeProvider>
+        <AuthProvider>
+          <PeriodProvider>
+            {children}
+            <Toaster />
+          </PeriodProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </MemoryRouter>
+  );
+
+  return render(ui, { wrapper: Wrapper, ...options });
+};
+
+// Custom render sin router para cuando el componente ya tiene uno
+export const renderWithoutRouter = (ui, options = {}) => {
+  const Wrapper = ({ children }) => (
+    <ThemeProvider>
+      <AuthProvider>
+        <PeriodProvider>
+          {children}
+          <Toaster />
+        </PeriodProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 
   return render(ui, { wrapper: Wrapper, ...options });
