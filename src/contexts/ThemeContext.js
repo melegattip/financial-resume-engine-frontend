@@ -13,30 +13,44 @@ export const useTheme = () => {
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
     // Verificar localStorage primero
-    const savedTheme = localStorage.getItem('financial-resume-theme');
-    if (savedTheme) {
-      return savedTheme;
+    try {
+      const savedTheme = localStorage?.getItem('financial-resume-theme');
+      if (savedTheme) {
+        return savedTheme;
+      }
+    } catch (error) {
+      // localStorage no disponible (tests)
     }
     
     // Si no hay tema guardado, verificar preferencia del sistema
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
+    try {
+      if (window?.matchMedia && window.matchMedia('(prefers-color-scheme: dark)')?.matches) {
+        return 'dark';
+      }
+    } catch (error) {
+      // matchMedia no disponible (tests)
     }
     
     return 'light';
   });
 
   useEffect(() => {
-    const root = window.document.documentElement;
-    
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
+    try {
+      const root = window?.document?.documentElement;
+      
+      if (root) {
+        if (theme === 'dark') {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+      }
+      
+      // Guardar en localStorage
+      localStorage?.setItem('financial-resume-theme', theme);
+    } catch (error) {
+      // Ignorar errores en entorno de tests
     }
-    
-    // Guardar en localStorage
-    localStorage.setItem('financial-resume-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
@@ -46,8 +60,13 @@ export const ThemeProvider = ({ children }) => {
   const setLightTheme = () => setTheme('light');
   const setDarkTheme = () => setTheme('dark');
   const setSystemTheme = () => {
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    setTheme(systemTheme);
+    try {
+      const systemTheme = window?.matchMedia && window.matchMedia('(prefers-color-scheme: dark)')?.matches ? 'dark' : 'light';
+      setTheme(systemTheme);
+    } catch (error) {
+      // Fallback a light si no se puede detectar
+      setTheme('light');
+    }
   };
 
   const value = {

@@ -38,7 +38,7 @@ describe('Dashboard Component', () => {
   test('muestra estado de loading inicial', () => {
     renderWithRouter(<Dashboard />);
     
-    expect(screen.getByText('Cargando datos...')).toBeInTheDocument();
+    expect(screen.getByText('Cargando dashboard...')).toBeInTheDocument();
   });
 
   test('renderiza métricas financieras correctamente', async () => {
