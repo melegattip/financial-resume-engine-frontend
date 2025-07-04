@@ -107,22 +107,7 @@ class GamificationAPI {
     }
   }
 
-  /**
-   * Obtiene el leaderboard de usuarios
-   * @param {number} limit - Límite de resultados
-   * @param {string} period - Período del ranking
-   */
-  async getLeaderboard(limit = 10, period = 'all_time') {
-    try {
-      const response = await apiClient.get(`${this.baseURL}/leaderboard`, {
-        params: { limit, period }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error);
-      throw error;
-    }
-  }
+
 
   // 🎯 MÉTODOS DE CONVENIENCIA
 
@@ -141,10 +126,10 @@ class GamificationAPI {
   }
 
   /**
-   * Registra que el usuario completó una acción sugerida
+   * Registra que el usuario completó una acción
    */
-  async recordCompleteAction(actionId, description = 'User completed suggested action') {
-    return this.recordAction('complete_action', 'suggestion', actionId, description);
+  async recordCompleteAction(actionId, description = 'User completed action') {
+    return this.recordAction('complete_action', 'action', actionId, description);
   }
 
   /**
