@@ -18,8 +18,8 @@ WORKDIR /app
 # Copiar package files primero (para cache de Docker layers)
 COPY package*.json ./
 
-# Instalar dependencias (incluyendo devDependencies para build)
-RUN npm ci --silent
+# Limpiar cache npm y instalar dependencias
+RUN npm cache clean --force && npm install --silent
 
 # Copiar código fuente
 COPY . .
