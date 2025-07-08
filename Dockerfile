@@ -18,8 +18,8 @@ WORKDIR /app
 # Copiar package files primero (para cache de Docker layers)
 COPY package*.json ./
 
-# Instalar dependencias
-RUN npm ci --only=production --silent
+# Instalar dependencias (incluyendo devDependencies para build)
+RUN npm ci --silent
 
 # Copiar código fuente
 COPY . .
@@ -55,15 +55,15 @@ RUN touch /var/run/nginx.pid && \
 # Cambiar a usuario no-root
 USER appuser
 
-# Puerto del frontend
-EXPOSE 3000
+# Puerto del frontend (nginx)
+EXPOSE 80
 
 # Variables de entorno
 ENV NODE_ENV=production
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:80 || exit 1
 
 # Comando por defecto
 CMD ["nginx", "-g", "daemon off;"] 
