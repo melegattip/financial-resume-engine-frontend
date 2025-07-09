@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { usePeriod } from '../../contexts/PeriodContext';
 
 const PeriodFilter = () => {
@@ -32,9 +32,9 @@ const PeriodFilter = () => {
         title={balancesHidden ? "Mostrar saldos" : "Ocultar saldos"}
       >
         {balancesHidden ? (
-          <EyeOff className="w-5 h-5 text-fr-gray-600 dark:text-gray-400" />
+          <FaEyeSlash className="w-5 h-5 text-fr-gray-600 dark:text-gray-400" />
         ) : (
-          <Eye className="w-5 h-5 text-fr-gray-600 dark:text-gray-400" />
+          <FaEye className="w-5 h-5 text-fr-gray-600 dark:text-gray-400" />
         )}
       </button>
 

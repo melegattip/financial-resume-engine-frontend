@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { AlertTriangle, X } from 'lucide-react';
+import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
 
 const ConfirmationModal = ({ 
   isOpen, 
@@ -66,7 +66,7 @@ const ConfirmationModal = ({
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${styles.iconBg}`}>
-                <AlertTriangle className={`w-6 h-6 ${styles.iconColor}`} />
+                <FaExclamationTriangle className={`w-6 h-6 ${styles.iconColor}`} />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">
                 {title}
@@ -77,7 +77,7 @@ const ConfirmationModal = ({
               disabled={loading}
               className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
             >
-              <X className="w-5 h-5" />
+              <FaTimes className="w-5 h-5" />
             </button>
           </div>
 

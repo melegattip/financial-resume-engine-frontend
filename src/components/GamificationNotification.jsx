@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Trophy, Star, Target, Zap, X } from 'lucide-react';
+import { FaTrophy, FaStar, FaBullseye, FaBolt, FaTimes } from 'react-icons/fa';
 import { createPortal } from 'react-dom';
 
 const GamificationNotification = ({ 
@@ -99,7 +99,7 @@ const GamificationNotification = ({
                 </p>
                 {points > 0 && (
                   <div className="flex items-center space-x-1 mt-2">
-                    <Zap className="w-4 h-4 text-yellow-200" />
+                    <FaBolt className="w-4 h-4 text-yellow-200" />
                     <span className="text-sm font-medium text-yellow-200">
                       +{points} XP
                     </span>
@@ -111,7 +111,7 @@ const GamificationNotification = ({
                 onClick={handleClose}
                 className="flex-shrink-0 p-1 hover:bg-white/20 rounded-full transition-colors"
               >
-                <X className="w-4 h-4 text-white/80" />
+                <FaTimes className="w-4 h-4 text-white/80" />
               </button>
             </div>
           </div>

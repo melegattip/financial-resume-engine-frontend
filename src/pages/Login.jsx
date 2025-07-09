@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, LogIn, Loader2 } from 'lucide-react';
+import { FaEye, FaEyeSlash, FaEnvelope, FaLock, FaSignInAlt, FaSpinner } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import { validateAndSanitize } from '../utils/validation';
 
@@ -114,7 +114,7 @@ const Login = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-fr-gray-50">
         <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-fr-primary" />
+          <FaSpinner className="w-8 h-8 animate-spin text-fr-primary" />
           <p className="text-fr-gray-600">Cargando...</p>
         </div>
       </div>
@@ -155,7 +155,7 @@ const Login = () => {
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="flex justify-center mb-6">
             <div className="w-12 h-12 bg-gradient-to-br from-fr-primary to-fr-secondary rounded-fr flex items-center justify-center">
-              <LogIn className="w-6 h-6 text-white" />
+              <FaSignInAlt className="w-6 h-6 text-white" />
             </div>
           </div>
 
@@ -180,7 +180,7 @@ const Login = () => {
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fr-gray-400" />
+                <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fr-gray-400" />
                 <input
                   id="email"
                   name="email"
@@ -205,7 +205,7 @@ const Login = () => {
                 Contraseña
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fr-gray-400" />
+                <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fr-gray-400" />
                 <input
                   id="password"
                   name="password"
@@ -225,9 +225,9 @@ const Login = () => {
                   disabled={isSubmitting}
                 >
                   {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
+                    <FaEyeSlash className="w-5 h-5" />
                   ) : (
-                    <Eye className="w-5 h-5" />
+                    <FaEye className="w-5 h-5" />
                   )}
                 </button>
               </div>
@@ -244,12 +244,12 @@ const Login = () => {
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <FaSpinner className="w-4 h-4 animate-spin" />
                   <span>Iniciando sesión...</span>
                 </>
               ) : (
                 <>
-                  <LogIn className="w-4 h-4" />
+                  <FaSignInAlt className="w-4 h-4" />
                   <span>Iniciar Sesión</span>
                 </>
               )}

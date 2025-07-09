@@ -1,19 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  PieChart,
-  ArrowUpRight,
-  ArrowDownRight,
-  Calendar,
-  CheckCircle,
-  XCircle,
-  BarChart3,
-  Target,
-  AlertCircle,
-  RefreshCw
-} from 'lucide-react';
+import { FaArrowUp, FaArrowDown, FaDollarSign, FaChartPie, FaCalendar, FaCheckCircle, FaTimesCircle, FaChartBar, FaBullseye, FaExclamationCircle, FaRedo } from 'react-icons/fa';
 import { 
   ResponsiveContainer,
   PieChart as RechartsPieChart,
@@ -396,14 +382,14 @@ const Dashboard = () => {
               </p>
             </div>
             <div className={`flex-shrink-0 p-2 lg:p-3 rounded-fr ${data.balance >= 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'} ml-2`}>
-              <DollarSign className={`w-5 h-5 lg:w-6 lg:h-6 ${data.balance >= 0 ? 'text-fr-secondary' : 'text-fr-error'}`} />
+              <FaDollarSign className={`w-5 h-5 lg:w-6 lg:h-6 ${data.balance >= 0 ? 'text-fr-secondary' : 'text-fr-error'}`} />
             </div>
           </div>
           <div className="mt-3 flex items-center">
             {data.balance >= 0 ? (
-              <ArrowUpRight className="w-4 h-4 text-fr-secondary mr-1 flex-shrink-0" />
+              <FaArrowUp className="w-4 h-4 text-fr-secondary mr-1 flex-shrink-0" />
             ) : (
-              <ArrowDownRight className="w-4 h-4 text-fr-error mr-1 flex-shrink-0" />
+              <FaArrowDown className="w-4 h-4 text-fr-error mr-1 flex-shrink-0" />
             )}
             <span className={`text-sm ${data.balance >= 0 ? 'text-fr-secondary' : 'text-fr-error'}`}>
               {data.balance >= 0 ? 'Positivo' : 'Negativo'}
@@ -423,11 +409,11 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-green-100 dark:bg-green-900/30 ml-2">
-              <TrendingUp className="w-5 h-5 lg:w-6 lg:h-6 text-fr-secondary" />
+              <FaArrowUp className="w-5 h-5 lg:w-6 lg:h-6 text-fr-secondary" />
             </div>
           </div>
           <div className="mt-3 flex items-center">
-            <TrendingUp className="w-4 h-4 text-fr-secondary mr-1 flex-shrink-0" />
+            <FaArrowUp className="w-4 h-4 text-fr-secondary mr-1 flex-shrink-0" />
             <span className="text-sm text-fr-gray-500 dark:text-gray-400">
               {data.incomes.length} {data.incomes.length === 1 ? 'ingreso' : 'ingresos'} registrados
             </span>
@@ -446,11 +432,11 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-gray-100 dark:bg-gray-700 ml-2">
-              <TrendingDown className="w-5 h-5 lg:w-6 lg:h-6 text-fr-gray-900 dark:text-gray-300" />
+              <FaArrowDown className="w-5 h-5 lg:w-6 lg:h-6 text-fr-gray-900 dark:text-gray-300" />
             </div>
           </div>
           <div className="mt-3 flex items-center">
-            <TrendingDown className="w-4 h-4 text-fr-gray-900 dark:text-gray-300 mr-1 flex-shrink-0" />
+            <FaArrowDown className="w-4 h-4 text-fr-gray-900 dark:text-gray-300 mr-1 flex-shrink-0" />
             <span className="text-sm text-fr-gray-500 dark:text-gray-400">
               {data.expenses.length} {data.expenses.length === 1 ? 'gasto' : 'gastos'} registrados
             </span>
@@ -469,7 +455,7 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-gray-100 dark:bg-gray-700 ml-2">
-              <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-fr-gray-900 dark:text-gray-300" />
+              <FaCalendar className="w-5 h-5 lg:w-6 lg:h-6 text-fr-gray-900 dark:text-gray-300" />
             </div>
           </div>
           <div className="mt-3">
@@ -495,7 +481,7 @@ const Dashboard = () => {
                 </p>
               </div>
               <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-blue-100 dark:bg-blue-900/30 ml-2">
-                <PieChart className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
+                <FaChartPie className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
             <div className="mt-3 flex items-center justify-between">
@@ -527,7 +513,7 @@ const Dashboard = () => {
                 </p>
               </div>
               <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-green-100 dark:bg-green-900/30 ml-2">
-                <Target className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
+                <FaBullseye className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
               </div>
             </div>
             <div className="mt-3 flex items-center justify-between">
@@ -554,7 +540,7 @@ const Dashboard = () => {
                 </p>
               </div>
               <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-purple-100 dark:bg-purple-900/30 ml-2">
-                <RefreshCw className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600 dark:text-purple-400" />
+                <FaRedo className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
             <div className="mt-3 flex items-center justify-between">
@@ -611,7 +597,7 @@ const Dashboard = () => {
               <div className="space-y-3 mb-4">
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                    <TrendingDown className="w-5 h-5 mr-2" />
+                    <FaArrowDown className="w-5 h-5 mr-2" />
                     Gastos
                   </h4>
                   <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
@@ -625,7 +611,7 @@ const Dashboard = () => {
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {data.expenses.length === 0 ? (
                   <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <TrendingDown className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <FaArrowDown className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p>No hay gastos en este período</p>
                   </div>
                 ) : (
@@ -639,9 +625,9 @@ const Dashboard = () => {
                             {/* Indicador de pago */}
                             <div className="flex-shrink-0 mt-1">
                               {expense.paid ? (
-                                <CheckCircle className="w-5 h-5 text-green-500" />
+                                <FaCheckCircle className="w-5 h-5 text-green-500" />
                               ) : (
-                                <XCircle className="w-5 h-5 text-red-500" />
+                                <FaTimesCircle className="w-5 h-5 text-red-500" />
                               )}
                             </div>
                             
@@ -699,7 +685,7 @@ const Dashboard = () => {
               <div className="space-y-3 mb-4">
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold text-green-600 dark:text-green-400 flex items-center">
-                    <TrendingUp className="w-5 h-5 mr-2" />
+                    <FaArrowUp className="w-5 h-5 mr-2" />
                     Ingresos
                   </h4>
                   <span className="text-lg font-bold text-green-600 dark:text-green-400">
@@ -712,7 +698,7 @@ const Dashboard = () => {
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {data.incomes.length === 0 ? (
                   <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <FaArrowUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p>No hay ingresos en este período</p>
                   </div>
                 ) : (
@@ -820,7 +806,7 @@ const Dashboard = () => {
             <div className="bg-fr-gray-50 dark:bg-gray-700 rounded-fr p-4">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-fr">
-                  <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <FaChartBar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
                   <p className="text-sm text-fr-gray-600 dark:text-gray-400">Total Transacciones</p>
@@ -835,7 +821,7 @@ const Dashboard = () => {
             <div className="bg-fr-gray-50 dark:bg-gray-700 rounded-fr p-4">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-fr">
-                  <Calendar className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  <FaCalendar className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
                   <p className="text-sm text-fr-gray-600 dark:text-gray-400">Promedio Diario</p>
@@ -855,7 +841,7 @@ const Dashboard = () => {
             <div className="bg-fr-gray-50 dark:bg-gray-700 rounded-fr p-4">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-fr">
-                  <Target className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                  <FaBullseye className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
                   <p className="text-sm text-fr-gray-600 dark:text-gray-400">Mayor Gasto</p>
@@ -887,7 +873,7 @@ const Dashboard = () => {
             <div className="bg-fr-gray-50 dark:bg-gray-700 rounded-fr p-4">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-fr">
-                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  <FaExclamationCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
                 </div>
                 <div>
                   <p className="text-sm text-fr-gray-600 dark:text-gray-400">Pendientes</p>
@@ -969,7 +955,7 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-64 text-center">
-              <PieChart className="w-12 h-12 text-fr-gray-400 dark:text-gray-500 mb-4" />
+              <FaChartPie className="w-12 h-12 text-fr-gray-400 dark:text-gray-500 mb-4" />
               <h4 className="text-lg font-medium text-fr-gray-600 dark:text-gray-400 mb-2">No hay gastos por categorías</h4>
               <p className="text-sm text-fr-gray-500 dark:text-gray-400">
                 Los gastos aparecerán aquí una vez que agregues algunos gastos con categorías
@@ -1001,9 +987,9 @@ const Dashboard = () => {
                   <div className="flex items-center space-x-3">
                     <div className={`p-2 rounded-fr ${isExpense ? 'bg-gray-100 dark:bg-gray-600' : 'bg-green-100 dark:bg-green-900/30'}`}>
                       {isExpense ? (
-                        <TrendingDown className="w-4 h-4 text-fr-gray-900 dark:text-gray-300" />
+                        <FaArrowDown className="w-4 h-4 text-fr-gray-900 dark:text-gray-300" />
                       ) : (
-                        <TrendingUp className="w-4 h-4 text-fr-secondary" />
+                        <FaArrowUp className="w-4 h-4 text-fr-secondary" />
                       )}
                     </div>
                     <div className="flex-1">
@@ -1013,9 +999,9 @@ const Dashboard = () => {
                         {isExpense && (
                           <div className="flex items-center space-x-1">
                             {transaction.paid ? (
-                              <CheckCircle className="w-4 h-4 text-fr-secondary" />
+                              <FaCheckCircle className="w-4 h-4 text-fr-secondary" />
                             ) : (
-                              <XCircle className="w-4 h-4 text-fr-error" />
+                              <FaTimesCircle className="w-4 h-4 text-fr-error" />
                             )}
                             {!transaction.paid && (
                               <span className="badge-error text-xs">Pendiente</span>

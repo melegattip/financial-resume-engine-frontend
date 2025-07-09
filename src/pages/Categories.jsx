@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Tag, Edit, Trash2 } from 'lucide-react';
+import { FaPlus, FaSearch, FaTag, FaEdit, FaTrash } from 'react-icons/fa';
 import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
 
 const Categories = () => {
@@ -105,7 +105,7 @@ const Categories = () => {
       <div className="card">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-fr-gray-400" />
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-fr-gray-400" />
             <input
               type="text"
               placeholder="Buscar categorías..."
@@ -119,7 +119,7 @@ const Categories = () => {
             onClick={() => setShowModal(true)}
             className="btn-primary flex items-center space-x-2"
           >
-            <Plus className="w-4 h-4" />
+            <FaPlus className="w-4 h-4" />
             <span>Nueva Categoría</span>
           </button>
         </div>
@@ -129,7 +129,7 @@ const Categories = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredCategories.length === 0 ? (
           <div className="col-span-full text-center py-12">
-            <Tag className="w-12 h-12 text-fr-gray-400 mx-auto mb-4" />
+            <FaTag className="w-12 h-12 text-fr-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-fr-gray-900 mb-2">No hay categorías</h3>
             <p className="text-fr-gray-500">Comienza creando tu primera categoría</p>
           </div>
@@ -139,7 +139,7 @@ const Categories = () => {
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 rounded-fr bg-blue-100">
-                    <Tag className="w-5 h-5 text-fr-primary" />
+                    <FaTag className="w-5 h-5 text-fr-primary" />
                   </div>
                   <div>
                     <h3 className="font-medium text-fr-gray-900">{category.name}</h3>
@@ -154,13 +154,13 @@ const Categories = () => {
                     onClick={() => handleEdit(category)}
                     className="p-2 rounded-fr text-fr-gray-600 hover:bg-fr-gray-200 transition-colors"
                   >
-                    <Edit className="w-4 h-4" />
+                    <FaEdit className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(category)}
                     className="p-2 rounded-fr text-fr-error hover:bg-red-100 transition-colors"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <FaTrash className="w-4 h-4" />
                   </button>
                 </div>
               </div>

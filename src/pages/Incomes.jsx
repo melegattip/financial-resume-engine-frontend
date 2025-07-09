@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Search, TrendingUp, Edit, Trash2 } from 'lucide-react';
+import { FaPlus, FaSearch, FaArrowUp, FaEdit, FaTrash } from 'react-icons/fa';
 import { formatCurrency } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
 import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
@@ -188,7 +188,7 @@ const Incomes = () => {
               <p className="text-2xl font-bold text-fr-secondary dark:text-green-400">{formatAmount(totalIncomes)}</p>
             </div>
             <div className="p-3 rounded-fr bg-green-100 dark:bg-green-900/30">
-              <TrendingUp className="w-6 h-6 text-fr-secondary dark:text-green-400" />
+              <FaArrowUp className="w-6 h-6 text-fr-secondary dark:text-green-400" />
             </div>
           </div>
         </div>
@@ -200,7 +200,7 @@ const Incomes = () => {
               <p className="text-2xl font-bold text-fr-secondary dark:text-green-400">{filteredIncomes.length}</p>
             </div>
             <div className="p-3 rounded-fr bg-green-100 dark:bg-green-900/30">
-              <TrendingUp className="w-6 h-6 text-fr-secondary dark:text-green-400" />
+              <FaArrowUp className="w-6 h-6 text-fr-secondary dark:text-green-400" />
             </div>
           </div>
         </div>
@@ -212,7 +212,7 @@ const Incomes = () => {
           <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4">
             {/* Primera fila: Búsqueda */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-fr-gray-400 dark:text-gray-500" />
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-fr-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Buscar ingresos..."
@@ -229,7 +229,7 @@ const Incomes = () => {
             onClick={() => setShowModal(true)}
             className="btn-secondary flex items-center space-x-2"
           >
-            <Plus className="w-4 h-4" />
+            <FaPlus className="w-4 h-4" />
             <span>Nuevo Ingreso</span>
           </button>
         </div>
@@ -240,7 +240,7 @@ const Incomes = () => {
         <div className="space-y-4">
           {filteredIncomes.length === 0 ? (
             <div className="text-center py-12">
-              <TrendingUp className="w-12 h-12 text-fr-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <FaArrowUp className="w-12 h-12 text-fr-gray-400 dark:text-gray-500 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-fr-gray-900 dark:text-gray-100 mb-2">No hay ingresos</h3>
               <p className="text-fr-gray-500 dark:text-gray-400">Comienza agregando tu primer ingreso</p>
             </div>
@@ -251,7 +251,7 @@ const Incomes = () => {
                 <div key={income.id} className="flex items-center justify-between p-4 rounded-fr bg-fr-gray-50 dark:bg-gray-700 hover:bg-fr-gray-100 dark:hover:bg-gray-600 transition-colors">
                   <div className="flex items-center space-x-4">
                     <div className="p-2 rounded-fr bg-green-100 dark:bg-green-900/30">
-                      <TrendingUp className="w-5 h-5 text-fr-secondary dark:text-green-400" />
+                      <FaArrowUp className="w-5 h-5 text-fr-secondary dark:text-green-400" />
                     </div>
 
                     <div className="flex-1">
@@ -279,13 +279,13 @@ const Incomes = () => {
                         onClick={() => handleEdit(income)}
                         className="p-2 rounded-fr text-fr-gray-600 dark:text-gray-400 hover:bg-fr-gray-200 dark:hover:bg-gray-600 transition-colors"
                       >
-                        <Edit className="w-4 h-4" />
+                        <FaEdit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(income)}
                         className="p-2 rounded-fr text-fr-error dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <FaTrash className="w-4 h-4" />
                       </button>
                     </div>
                   </div>

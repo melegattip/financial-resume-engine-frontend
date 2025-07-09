@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { FaSpinner } from 'react-icons/fa';
 import { useAuthStatus } from '../contexts/AuthContext';
 
 /**
@@ -15,7 +15,7 @@ const ProtectedRoute = ({ children, redirectTo = '/login' }) => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-fr-gray-50">
         <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-fr-primary" />
+          <FaSpinner className="w-8 h-8 animate-spin text-fr-primary" />
           <p className="text-fr-gray-600">Verificando autenticación...</p>
         </div>
       </div>
@@ -50,7 +50,7 @@ export const PublicOnlyRoute = ({ children, redirectTo = '/dashboard' }) => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-fr-gray-50">
         <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-fr-primary" />
+          <FaSpinner className="w-8 h-8 animate-spin text-fr-primary" />
           <p className="text-fr-gray-600">Cargando...</p>
         </div>
       </div>

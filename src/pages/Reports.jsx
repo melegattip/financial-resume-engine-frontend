@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Download, BarChart3, TrendingUp, TrendingDown } from 'lucide-react';
+import { FaCalendar, FaDownload, FaChartBar, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { reportsAPI, formatCurrency } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
@@ -139,11 +139,11 @@ const Reports = () => {
               onClick={generateReport}
               className="btn-primary flex items-center space-x-2"
             >
-              <BarChart3 className="w-4 h-4" />
+              <FaChartBar className="w-4 h-4" />
               <span>Generar Reporte</span>
             </button>
             <button className="btn-outline flex items-center space-x-2">
-              <Download className="w-4 h-4" />
+              <FaDownload className="w-4 h-4" />
               <span>Exportar</span>
             </button>
           </div>
@@ -161,7 +161,7 @@ const Reports = () => {
               </p>
             </div>
             <div className="p-3 rounded-fr bg-green-100">
-              <TrendingUp className="w-6 h-6 text-fr-secondary" />
+                              <FaArrowUp className="w-6 h-6 text-fr-secondary" />
             </div>
           </div>
         </div>
@@ -175,7 +175,7 @@ const Reports = () => {
               </p>
             </div>
             <div className="p-3 rounded-fr bg-gray-100">
-              <TrendingDown className="w-6 h-6 text-fr-gray-900" />
+              <FaArrowDown className="w-6 h-6 text-fr-gray-900" />
             </div>
           </div>
         </div>
@@ -189,7 +189,7 @@ const Reports = () => {
               </p>
             </div>
             <div className="p-3 rounded-fr bg-blue-100">
-              <BarChart3 className="w-6 h-6 text-fr-primary" />
+              <FaChartBar className="w-6 h-6 text-fr-primary" />
             </div>
           </div>
         </div>
@@ -203,7 +203,7 @@ const Reports = () => {
               </p>
             </div>
             <div className="p-3 rounded-fr bg-gray-100">
-              <Calendar className="w-6 h-6 text-fr-gray-600" />
+              <FaCalendar className="w-6 h-6 text-fr-gray-600" />
             </div>
           </div>
         </div>
@@ -247,7 +247,7 @@ const Reports = () => {
             </ResponsiveContainer>
           ) : (
             <div className="flex flex-col items-center justify-center h-64 text-center">
-              <BarChart3 className="w-12 h-12 text-fr-gray-400 mb-4" />
+              <FaChartBar className="w-12 h-12 text-fr-gray-400 mb-4" />
               <h4 className="text-lg font-medium text-fr-gray-600 mb-2">No hay datos para el período</h4>
               <p className="text-sm text-fr-gray-500">
                 Selecciona un rango de fechas con transacciones para ver la tendencia
@@ -279,7 +279,7 @@ const Reports = () => {
             </ResponsiveContainer>
           ) : (
             <div className="flex flex-col items-center justify-center h-64 text-center">
-              <BarChart3 className="w-12 h-12 text-fr-gray-400 mb-4" />
+              <FaChartBar className="w-12 h-12 text-fr-gray-400 mb-4" />
               <h4 className="text-lg font-medium text-fr-gray-600 mb-2">No hay gastos por categorías</h4>
               <p className="text-sm text-fr-gray-500">
                 Los gastos con categorías aparecerán aquí una vez que generes el reporte

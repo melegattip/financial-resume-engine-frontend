@@ -1,21 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Brain, 
-  Loader2, 
-  WifiOff, 
-  RefreshCw, 
-  Sparkles, 
-  Lightbulb, 
-  ShoppingCart, 
-  Check, 
-  ChevronRight, 
-  Calculator,
-  AlertTriangle,
-  CheckCircle,
-  ChevronDown,
-  ChevronUp,
-  Target
-} from 'lucide-react';
+import { FaBrain, FaSpinner, FaRedo, FaLightbulb, FaShoppingCart, FaCheck, FaChevronRight, FaCalculator, FaExclamationTriangle, FaCheckCircle, FaChevronDown, FaChevronUp, FaBullseye } from 'react-icons/fa';
 import { aiAPI, savingsGoalsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { usePeriod } from '../contexts/PeriodContext';
@@ -525,7 +509,7 @@ const AIInsights = () => {
               }`}
             >
               <div className="flex items-center space-x-2">
-                <Lightbulb className="w-4 h-4" />
+                <FaLightbulb className="w-4 h-4" />
                 <span>Recomendaciones</span>
                 {insights.length > 0 && (
                   <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-xs px-2 py-1 rounded-full">
@@ -543,7 +527,7 @@ const AIInsights = () => {
               }`}
             >
               <div className="flex items-center space-x-2">
-                <ShoppingCart className="w-4 h-4" />
+                <FaShoppingCart className="w-4 h-4" />
                 <span>¿Puedo comprarlo?</span>
                 <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-300 text-xs px-2 py-1 rounded-full font-medium">
                   BETA
@@ -564,20 +548,20 @@ const AIInsights = () => {
                 </div>
               ) : error && insights.length === 0 ? (
                 <div className="text-center py-12">
-                  <WifiOff className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
+                  <FaSpinner className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
                   <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Sin conexión</h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">{error}</p>
                   <button
                     onClick={loadAIInsights}
                     className="inline-flex items-center px-6 py-3 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors font-medium"
                   >
-                    <RefreshCw className="w-4 h-4 mr-2" />
+                    <FaRedo className="w-4 h-4 mr-2" />
                     Reintentar análisis
                   </button>
                 </div>
               ) : insights.length === 0 ? (
                 <div className="text-center py-12">
-                  <Target className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
+                  <FaBullseye className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
                   <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">¡Perfecto!</h3>
                   <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
                     Tu situación financiera está tan bien que no tenemos recomendaciones urgentes. 
@@ -619,13 +603,13 @@ const AIInsights = () => {
                                     onClick={() => handleUnderstandInsight(index, insight.title)}
                                     className="inline-flex items-center px-3 py-1.5 bg-blue-500 dark:bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors font-medium"
                                   >
-                                    <Check className="w-3 h-3 mr-1" />
+                                    <FaCheck className="w-3 h-3 mr-1" />
                                     Marcar como revisado
                                   </button>
                                 )}
                                 {understoodInsights.has(index) && (
                                   <div className="inline-flex items-center px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs rounded-lg font-medium">
-                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    <FaCheckCircle className="w-3 h-3 mr-1" />
                                     ¡Revisado!
                                   </div>
                                 )}
@@ -646,12 +630,12 @@ const AIInsights = () => {
                       >
                         {showAllInsights ? (
                           <>
-                            <ChevronUp className="w-4 h-4 mr-2" />
+                            <FaChevronUp className="w-4 h-4 mr-2" />
                             Mostrar menos recomendaciones
                           </>
                         ) : (
                           <>
-                            <ChevronDown className="w-4 h-4 mr-2" />
+                            <FaChevronDown className="w-4 h-4 mr-2" />
                             Ver todas las recomendaciones ({insights.length - 3} más)
                           </>
                         )}
@@ -674,7 +658,7 @@ const AIInsights = () => {
               {dashboardData ? (
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-4">
                   <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-3 flex items-center">
-                    <Calculator className="w-4 h-4 mr-2" />
+                    <FaCalculator className="w-4 h-4 mr-2" />
                     Datos financieros actuales (automáticos)
                   </h4>
                   <div className="grid grid-cols-2 gap-4 text-sm">
@@ -710,7 +694,7 @@ const AIInsights = () => {
               ) : (
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
                   <div className="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400">
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <FaSpinner className="w-4 h-4 animate-spin" />
                     <span className="text-sm">Cargando datos financieros...</span>
                   </div>
                 </div>
@@ -811,12 +795,12 @@ const AIInsights = () => {
                 >
                   {purchaseLoading ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <FaSpinner className="w-5 h-5 animate-spin" />
                       <span>Analizando con IA...</span>
                     </>
                   ) : (
                     <>
-                      <Calculator className="w-5 h-5" />
+                      <FaCalculator className="w-5 h-5" />
                       <span>Analizar compra</span>
                     </>
                   )}
@@ -827,7 +811,7 @@ const AIInsights = () => {
               {purchaseError && (
                 <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-500 rounded-lg p-4">
                   <div className="flex">
-                    <AlertTriangle className="w-5 h-5 text-red-400 dark:text-red-500" />
+                    <FaExclamationTriangle className="w-5 h-5 text-red-400 dark:text-red-500" />
                     <div className="ml-3">
                       <p className="text-red-700 dark:text-red-300 font-medium">Error en el análisis</p>
                       <p className="text-red-600 dark:text-red-400 text-sm mt-1">{purchaseError}</p>
@@ -845,11 +829,11 @@ const AIInsights = () => {
                   <div className="flex items-start space-x-4 mb-4">
                     {purchaseAnalysis.can_buy ? (
                       <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
-                        <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                        <FaCheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
                       </div>
                     ) : (
                       <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full">
-                        <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                        <FaExclamationTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
                       </div>
                     )}
                     <div className="flex-1">
@@ -877,13 +861,13 @@ const AIInsights = () => {
                   {purchaseAnalysis.alternatives && purchaseAnalysis.alternatives.length > 0 && (
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                       <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
-                        <Lightbulb className="w-4 h-4 mr-2 text-yellow-500 dark:text-yellow-400" />
+                        <FaLightbulb className="w-4 h-4 mr-2 text-yellow-500 dark:text-yellow-400" />
                         Alternativas sugeridas
                       </h5>
                       <ul className="space-y-2">
                         {purchaseAnalysis.alternatives.map((alt, index) => (
                           <li key={index} className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                            <ChevronRight className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
+                            <FaChevronRight className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
                             <span>{alt}</span>
                           </li>
                         ))}
@@ -907,7 +891,7 @@ const AIInsights = () => {
       {/* Footer con información de actualización */}
       <div className="text-center">
         <div className="inline-flex items-center px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg text-sm">
-          <Brain className="w-4 h-4 mr-2" />
+          <FaBrain className="w-4 h-4 mr-2" />
           <span>
             Analizamos tu situación financiera una vez por día
             {lastEvaluationDate && (

@@ -1,15 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { 
-  Plus, 
-  Search, 
-  TrendingDown, 
-  Calendar,
-  Edit,
-  Trash2,
-  CheckCircle,
-  XCircle
-} from 'lucide-react';
+import { FaPlus, FaSearch, FaArrowDown, FaCalendar, FaEdit, FaTrash, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { formatCurrency, formatPercentage } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
 import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
@@ -286,7 +277,7 @@ const Expenses = () => {
               <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">{formatAmount(totalExpenses)}</p>
             </div>
             <div className="p-3 rounded-fr bg-gray-100 dark:bg-gray-700">
-              <TrendingDown className="w-6 h-6 text-fr-gray-900 dark:text-gray-300" />
+              <FaArrowDown className="w-6 h-6 text-fr-gray-900 dark:text-gray-300" />
             </div>
           </div>
         </div>
@@ -298,7 +289,7 @@ const Expenses = () => {
               <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">{unpaidExpenses.length}</p>
             </div>
             <div className="p-3 rounded-fr bg-gray-100 dark:bg-gray-700">
-              <Calendar className="w-6 h-6 text-fr-gray-900 dark:text-gray-300" />
+              <FaCalendar className="w-6 h-6 text-fr-gray-900 dark:text-gray-300" />
             </div>
           </div>
         </div>
@@ -312,7 +303,7 @@ const Expenses = () => {
                 </p>
             </div>
             <div className="p-3 rounded-fr bg-gray-100 dark:bg-gray-700">
-              <XCircle className="w-6 h-6 text-fr-gray-900 dark:text-gray-300" />
+              <FaTimesCircle className="w-6 h-6 text-fr-gray-900 dark:text-gray-300" />
             </div>
           </div>
         </div>
@@ -326,7 +317,7 @@ const Expenses = () => {
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               {/* Búsqueda */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-fr-gray-400 dark:text-gray-500" />
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-fr-gray-400 dark:text-gray-500" />
                 <input
                   type="text"
                   placeholder="Buscar gastos..."
@@ -355,7 +346,7 @@ const Expenses = () => {
             onClick={() => setShowModal(true)}
             className="btn-primary flex items-center space-x-2"
           >
-            <Plus className="w-4 h-4" />
+            <FaPlus className="w-4 h-4" />
             <span>Nuevo Gasto</span>
           </button>
         </div>
@@ -366,7 +357,7 @@ const Expenses = () => {
         <div className="space-y-4">
           {filteredExpenses.length === 0 ? (
             <div className="text-center py-12">
-              <TrendingDown className="w-12 h-12 text-fr-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <FaArrowDown className="w-12 h-12 text-fr-gray-400 dark:text-gray-500 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-fr-gray-900 dark:text-gray-100 mb-2">No hay gastos</h3>
               <p className="text-fr-gray-500 dark:text-gray-400">Comienza agregando tu primer gasto</p>
             </div>
@@ -385,9 +376,9 @@ const Expenses = () => {
                       }`}
                     >
                       {expense.paid ? (
-                        <CheckCircle className="w-5 h-5" />
+                        <FaCheckCircle className="w-5 h-5" />
                       ) : (
-                        <XCircle className="w-5 h-5" />
+                        <FaTimesCircle className="w-5 h-5" />
                       )}
                     </button>
 
@@ -443,13 +434,13 @@ const Expenses = () => {
                         onClick={() => handleEdit(expense)}
                         className="p-2 rounded-fr text-fr-gray-600 dark:text-gray-400 hover:bg-fr-gray-200 dark:hover:bg-gray-600 transition-colors"
                       >
-                        <Edit className="w-4 h-4" />
+                        <FaEdit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(expense)}
                         className="p-2 rounded-fr text-fr-error dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <FaTrash className="w-4 h-4" />
                       </button>
                     </div>
                   </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Moon } from 'lucide-react';
+import { FaSun, FaMoon } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
 
 const ThemeToggle = ({ className = '' }) => {
@@ -23,7 +23,7 @@ const ThemeToggle = ({ className = '' }) => {
     >
       <div className="relative">
         {/* Icono del sol (modo claro) */}
-        <Sun 
+        <FaSun 
           className={`
             w-5 h-5 text-yellow-500 transition-all duration-300 ease-in-out
             ${isDark ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100'}
@@ -31,7 +31,7 @@ const ThemeToggle = ({ className = '' }) => {
         />
         
         {/* Icono de la luna (modo oscuro) */}
-        <Moon 
+        <FaMoon 
           className={`
             absolute inset-0 w-5 h-5 text-blue-400 transition-all duration-300 ease-in-out
             ${isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-0'}

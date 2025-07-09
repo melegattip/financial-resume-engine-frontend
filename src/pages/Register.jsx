@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User, UserPlus, Loader2, CheckCircle } from 'lucide-react';
+import { FaEye, FaEyeSlash, FaEnvelope, FaLock, FaUser, FaUserPlus, FaSpinner, FaCheckCircle } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import { validateAndSanitize } from '../utils/validation';
 
@@ -210,7 +210,7 @@ const Register = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-fr-gray-50">
         <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-fr-primary" />
+          <FaSpinner className="w-8 h-8 animate-spin text-fr-primary" />
           <p className="text-fr-gray-600">Cargando...</p>
         </div>
       </div>
@@ -231,19 +231,19 @@ const Register = () => {
           </p>
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <CheckCircle className="w-5 h-5 text-white" />
+              <FaCheckCircle className="w-5 h-5 text-white" />
               <span className="text-white">Cuenta gratuita por 30 días</span>
             </div>
             <div className="flex items-center space-x-3">
-              <CheckCircle className="w-5 h-5 text-white" />
+              <FaCheckCircle className="w-5 h-5 text-white" />
               <span className="text-white">Sin tarjeta de crédito requerida</span>
             </div>
             <div className="flex items-center space-x-3">
-              <CheckCircle className="w-5 h-5 text-white" />
+              <FaCheckCircle className="w-5 h-5 text-white" />
               <span className="text-white">Acceso completo a todas las funciones</span>
             </div>
             <div className="flex items-center space-x-3">
-              <CheckCircle className="w-5 h-5 text-white" />
+              <FaCheckCircle className="w-5 h-5 text-white" />
               <span className="text-white">Soporte 24/7</span>
             </div>
           </div>
@@ -255,7 +255,7 @@ const Register = () => {
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="flex justify-center mb-6">
             <div className="w-12 h-12 bg-gradient-to-br from-fr-secondary to-fr-primary rounded-fr flex items-center justify-center">
-              <UserPlus className="w-6 h-6 text-white" />
+              <FaUserPlus className="w-6 h-6 text-white" />
             </div>
           </div>
 
@@ -281,7 +281,7 @@ const Register = () => {
                   Nombre
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fr-gray-400" />
+                  <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fr-gray-400" />
                   <input
                     id="firstName"
                     name="firstName"
@@ -305,7 +305,7 @@ const Register = () => {
                   Apellido
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fr-gray-400" />
+                  <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fr-gray-400" />
                   <input
                     id="lastName"
                     name="lastName"
@@ -331,7 +331,7 @@ const Register = () => {
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fr-gray-400" />
+                <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fr-gray-400" />
                 <input
                   id="email"
                   name="email"
@@ -356,7 +356,7 @@ const Register = () => {
                 Contraseña
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fr-gray-400" />
+                <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fr-gray-400" />
                 <input
                   id="password"
                   name="password"
@@ -376,9 +376,9 @@ const Register = () => {
                   disabled={isSubmitting}
                 >
                   {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
+                    <FaEyeSlash className="w-5 h-5" />
                   ) : (
-                    <Eye className="w-5 h-5" />
+                    <FaEye className="w-5 h-5" />
                   )}
                 </button>
               </div>
@@ -421,7 +421,7 @@ const Register = () => {
                 Confirmar Contraseña
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fr-gray-400" />
+                <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fr-gray-400" />
                 <input
                   id="confirmPassword"
                   name="confirmPassword"
@@ -441,9 +441,9 @@ const Register = () => {
                   disabled={isSubmitting}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff className="w-5 h-5" />
+                    <FaEyeSlash className="w-5 h-5" />
                   ) : (
-                    <Eye className="w-5 h-5" />
+                    <FaEye className="w-5 h-5" />
                   )}
                 </button>
               </div>
@@ -460,12 +460,12 @@ const Register = () => {
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <FaSpinner className="w-4 h-4 animate-spin" />
                   <span>Creando cuenta...</span>
                 </>
               ) : (
                 <>
-                  <UserPlus className="w-4 h-4" />
+                  <FaUserPlus className="w-4 h-4" />
                   <span>Crear Cuenta</span>
                 </>
               )}

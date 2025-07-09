@@ -3,21 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import PeriodFilter from './PeriodFilter';
 import ThemeToggle from '../ThemeToggle';
-import { 
-  User, 
-  LogOut, 
-  Bell,
-  Home,
-  Brain,
-  PlusCircle,
-  MinusCircle,
-  FolderOpen,
-  FileText,
-  Settings,
-  PieChart,
-  Target,
-  RefreshCw
-} from 'lucide-react';
+import { FaUser, FaSignOutAlt, FaBell, FaHome, FaBrain, FaPlusCircle, FaMinusCircle, FaFolderOpen, FaFileAlt, FaCog, FaChartPie, FaBullseye, FaRedo } from 'react-icons/fa';
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -29,58 +15,58 @@ const Header = () => {
       '/dashboard': { 
         title: 'Dashboard', 
         subtitle: 'Resumen de tu actividad financiera',
-        icon: Home
+        icon: FaHome
       },
       '/insights': { 
         title: 'Análisis Inteligente', 
         subtitle: 'Recomendaciones personalizadas con inteligencia artificial',
-        icon: Brain
+        icon: FaBrain
       },
       '/expenses': { 
         title: 'Gastos', 
         subtitle: 'Gestiona tus gastos y pagos pendientes',
-        icon: MinusCircle
+        icon: FaMinusCircle
       },
       '/incomes': { 
         title: 'Ingresos', 
         subtitle: 'Registra y controla tus ingresos',
-        icon: PlusCircle
+                  icon: FaPlusCircle
       },
       '/categories': { 
         title: 'Categorías', 
         subtitle: 'Organiza tus transacciones',
-        icon: FolderOpen
+                  icon: FaFolderOpen
       },
       '/reports': { 
         title: 'Reportes', 
         subtitle: 'Análisis detallado de tus finanzas',
-        icon: FileText
+        icon: FaFileAlt
       },
       '/budgets': { 
         title: 'Presupuestos', 
         subtitle: 'Controla tus límites de gasto',
-        icon: PieChart
+        icon: FaChartPie
       },
       '/savings-goals': { 
         title: 'Metas de Ahorro', 
         subtitle: 'Alcanza tus objetivos financieros',
-        icon: Target
+        icon: FaBullseye
       },
       '/recurring-transactions': { 
         title: 'Transacciones Recurrentes', 
         subtitle: 'Automatiza tus transacciones',
-        icon: RefreshCw
+        icon: FaRedo
       },
       '/settings': { 
         title: 'Configuración', 
         subtitle: 'Ajustes de tu cuenta',
-        icon: Settings
+        icon: FaCog
       },
     };
     return routes[pathname] || { 
       title: 'Financial Resume', 
       subtitle: 'Gestión financiera inteligente',
-      icon: Home
+      icon: FaHome
     };
   };
 
@@ -129,7 +115,7 @@ const Header = () => {
 
             {/* Notifications */}
             <button className="relative p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-              <Bell className="w-5 h-5" />
+              <FaBell className="w-5 h-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
 
@@ -147,7 +133,7 @@ const Header = () => {
               <div className="flex items-center space-x-2">
                 {/* Avatar */}
                 <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
+                  <FaUser className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
                 </div>
                 
                 {/* Logout button */}
@@ -156,7 +142,7 @@ const Header = () => {
                   className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                   title="Cerrar sesión"
                 >
-                  <LogOut className="w-4 h-4 lg:w-5 lg:h-5" />
+                  <FaSignOutAlt className="w-4 h-4 lg:w-5 lg:h-5" />
                 </button>
               </div>
             </div>

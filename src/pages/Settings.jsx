@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Bell, Shield, Palette, Download, Trash2 } from 'lucide-react';
+import { FaUser, FaBell, FaLock, FaPalette, FaDownload, FaTrash } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 const Settings = () => {
@@ -25,10 +25,10 @@ const Settings = () => {
   });
 
   const tabs = [
-    { id: 'profile', label: 'Perfil', icon: User },
-    { id: 'notifications', label: 'Notificaciones', icon: Bell },
-    { id: 'preferences', label: 'Preferencias', icon: Palette },
-    { id: 'security', label: 'Seguridad', icon: Shield },
+    { id: 'profile', label: 'Perfil', icon: FaUser },
+    { id: 'notifications', label: 'Notificaciones', icon: FaBell },
+    { id: 'preferences', label: 'Preferencias', icon: FaPalette },
+    { id: 'security', label: 'Seguridad', icon: FaLock },
   ];
 
   const handleSave = () => {
@@ -315,7 +315,7 @@ const Settings = () => {
                   Descarga una copia de todos tus datos financieros
                 </p>
                 <button onClick={handleExportData} className="btn-outline flex items-center space-x-2">
-                  <Download className="w-4 h-4" />
+                  <FaDownload className="w-4 h-4" />
                   <span>Exportar Datos</span>
                 </button>
               </div>
@@ -329,7 +329,7 @@ const Settings = () => {
                   onClick={handleDeleteAccount}
                   className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-fr transition-colors flex items-center space-x-2"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <FaTrash className="w-4 h-4" />
                   <span>Eliminar Cuenta</span>
                 </button>
               </div>

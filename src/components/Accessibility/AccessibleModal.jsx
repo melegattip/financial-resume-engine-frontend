@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import { FaTimes } from 'react-icons/fa';
 import { FocusManager } from './FocusManager';
 
 const AccessibleModal = ({
@@ -110,7 +110,7 @@ const AccessibleModal = ({
               "
               aria-label="Cerrar modal"
             >
-              <X className="w-5 h-5" />
+              <FaTimes className="w-5 h-5" />
             </button>
           </div>
 
