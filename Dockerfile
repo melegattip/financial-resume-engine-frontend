@@ -28,6 +28,11 @@ COPY . .
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV GENERATE_SOURCEMAP=false
 ENV CI=false
+
+# Configurar URL de la API para producción
+ENV REACT_APP_API_URL=https://financial-resume-engine-514917546267.southamerica-east1.run.app/api/v1
+ENV REACT_APP_ENV=production
+
 RUN npm run build
 
 # ================================
