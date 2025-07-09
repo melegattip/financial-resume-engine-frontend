@@ -47,7 +47,7 @@ COPY --from=builder /app/build /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Puerto del frontend (nginx)
-EXPOSE 80
+EXPOSE 8080
 
 # Variables de entorno
 ENV NODE_ENV=production
