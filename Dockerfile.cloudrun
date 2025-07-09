@@ -1,0 +1,57 @@
+# Multi-stage build optimizado para Cloud Run
+FROM node:18-alpine AS builder
+
+# Configurar zona horaria
+ENV TZ=America/Sao_Paulo
+
+# Instalar dependencias del sistema
+RUN apk add --no-cache git
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar package files primero (para cache de Docker layers)
+COPY package*.json ./
+
+# Instalar dependencias
+RUN npm install --legacy-peer-deps --force
+
+# Copiar código fuente
+COPY . .
+
+# Configurar variables de entorno para el build
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV GENERATE_SOURCEMAP=false
+ENV CI=false
+ENV REACT_APP_API_URL=https://financial-resume-engine-514917546267.southamerica-east1.run.app/api/v1
+ENV REACT_APP_ENV=production
+
+# Build para producción
+RUN npm run build
+
+# ================================
+# STAGE 2: PRODUCTION
+# ================================
+FROM nginx:1.25-alpine
+
+# Instalar gettext para envsubst
+RUN apk add --no-cache gettext
+
+# Copiar archivos build
+COPY --from=builder /app/build /usr/share/nginx/html
+
+# Copiar template de configuración nginx
+COPY nginx.conf.template /etc/nginx/nginx.conf.template
+
+# Copiar script de inicio
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Variables de entorno
+ENV NODE_ENV=production
+
+# Exponer puerto (será dinámico en Cloud Run)
+EXPOSE 8080
+
+# Usar nuestro script de inicio
+CMD ["/start.sh"] 
