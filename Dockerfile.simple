@@ -1,4 +1,4 @@
-# Multi-stage build simple para Cloud Run
+# Multi-stage build optimizado para Cloud Run
 FROM node:18-alpine AS builder
 
 # Configurar zona horaria
@@ -10,7 +10,7 @@ RUN apk add --no-cache git
 # Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar package files
+# Copiar package files primero (para cache de Docker layers)
 COPY package*.json ./
 
 # Instalar dependencias
@@ -23,25 +23,22 @@ COPY . .
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV GENERATE_SOURCEMAP=false
 ENV CI=false
-ENV REACT_APP_API_URL=https://financial-resume-engine-514917546267.southamerica-east1.run.app/api/v1
+ENV REACT_APP_API_URL=https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1
 ENV REACT_APP_ENV=production
 
 # Build para producción
 RUN npm run build
 
 # ================================
-# STAGE 2: PRODUCTION CON SERVE
+# STAGE 2: PRODUCTION
 # ================================
-FROM node:18-alpine
+FROM nginx:1.25-alpine
 
-# Instalar serve globalmente
-RUN npm install -g serve
+# Copiar archivos build
+COPY --from=builder /app/build /usr/share/nginx/html
 
-# Crear directorio de la aplicación
-WORKDIR /app
-
-# Copiar archivos build desde el stage anterior
-COPY --from=builder /app/build ./build
+# Copiar configuración nginx simple
+COPY nginx.conf.simple /etc/nginx/conf.d/default.conf
 
 # Variables de entorno
 ENV NODE_ENV=production
@@ -49,11 +46,5 @@ ENV NODE_ENV=production
 # Exponer puerto
 EXPOSE 8080
 
-# Copiar script de inicio
-COPY start-serve.sh /start.sh
-RUN chmod +x /start.sh
-
-# Comando para servir la aplicación
-# serve -s sirve archivos estáticos con fallback para SPA
-# Usa el puerto dinámico de Cloud Run
-CMD ["/start.sh"] 
+# Comando simple
+CMD ["nginx", "-g", "daemon off;"] 

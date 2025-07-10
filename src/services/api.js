@@ -1,7 +1,8 @@
 import axios from 'axios';
 import toast from '../utils/notifications';
+import configService from './configService';
 
-// Configuración base de axios
+// Configuración base de axios - se actualizará dinámicamente
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1',
   timeout: 10000,
@@ -9,6 +10,34 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Función para inicializar la configuración dinámica
+let configInitialized = false;
+
+const initializeConfig = async () => {
+  if (configInitialized) return;
+  
+  try {
+    console.log('🔄 Inicializando configuración dinámica...');
+    const config = await configService.loadConfig();
+    
+    // Actualizar la baseURL de axios con la configuración dinámica
+    api.defaults.baseURL = config.api_base_url;
+    configInitialized = true;
+    
+    console.log('✅ Configuración dinámica inicializada:', {
+      baseURL: api.defaults.baseURL,
+      environment: config.environment,
+      version: config.version
+    });
+  } catch (error) {
+    console.error('❌ Error inicializando configuración:', error);
+    // Mantener la configuración por defecto
+  }
+};
+
+// Inicializar configuración al cargar el módulo
+initializeConfig();
 
 // Función para obtener el token desde localStorage
 const getAuthToken = () => {
@@ -28,7 +57,12 @@ const getCurrentUser = () => {
 
 // Interceptor para agregar el token JWT
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    // Asegurar que la configuración esté inicializada antes de cada request
+    if (!configInitialized) {
+      await initializeConfig();
+    }
+    
     const token = getAuthToken();
     const user = getCurrentUser();
     
@@ -45,6 +79,7 @@ api.interceptors.request.use(
     console.log('🔧 API Request:', {
       url: config.url,
       method: config.method,
+      baseURL: config.baseURL,
       hasAuth: !!token,
       hasCallerId: !!(user && user.id),
       userId: user?.id

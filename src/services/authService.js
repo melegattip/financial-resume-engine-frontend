@@ -1,16 +1,54 @@
 import axios from 'axios';
 import toast from '../utils/notifications';
+import configService from './configService';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1';
+// Función para obtener la URL base del API dinámicamente
+const getApiBaseUrl = async () => {
+  try {
+    const config = await configService.loadConfig();
+    return config.api_base_url;
+  } catch (error) {
+    console.error('Error obteniendo URL base:', error);
+    return process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1';
+  }
+};
 
 // Crear instancia de axios para autenticación
 const authAPI = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// Función para inicializar la configuración dinámica
+let configInitialized = false;
+
+const initializeConfig = async () => {
+  if (configInitialized) return;
+  
+  try {
+    console.log('🔄 [authService] Inicializando configuración dinámica...');
+    const config = await configService.loadConfig();
+    
+    // Actualizar la baseURL de axios con la configuración dinámica
+    authAPI.defaults.baseURL = config.api_base_url;
+    configInitialized = true;
+    
+    console.log('✅ [authService] Configuración dinámica inicializada:', {
+      baseURL: authAPI.defaults.baseURL,
+      environment: config.environment,
+      version: config.version
+    });
+  } catch (error) {
+    console.error('❌ [authService] Error inicializando configuración:', error);
+    // Mantener la configuración por defecto
+  }
+};
+
+// Inicializar configuración al cargar el módulo
+initializeConfig();
 
 // Claves para localStorage
 const TOKEN_KEY = 'auth_token';
@@ -58,7 +96,12 @@ class AuthService {
   setupAuthInterceptor() {
     // Interceptor para requests
     authAPI.interceptors.request.use(
-      (config) => {
+      async (config) => {
+        // Asegurar que la configuración esté inicializada antes de cada request
+        if (!configInitialized) {
+          await initializeConfig();
+        }
+        
         if (this.token && this.isTokenValid()) {
           config.headers.Authorization = `Bearer ${this.token}`;
         }
