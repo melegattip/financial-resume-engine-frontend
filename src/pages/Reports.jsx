@@ -99,7 +99,7 @@ const Reports = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="spinner"></div>
-        <span className="ml-2 text-fr-gray-600">Generando reporte...</span>
+        <span className="ml-2 text-fr-gray-600 dark:text-gray-400">Generando reporte...</span>
       </div>
     );
   }
@@ -111,7 +111,7 @@ const Reports = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
             <div>
-              <label className="block text-sm font-medium text-fr-gray-700 mb-2">
+              <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
                 Fecha inicio
               </label>
               <input
@@ -122,7 +122,7 @@ const Reports = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-fr-gray-700 mb-2">
+              <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
                 Fecha fin
               </label>
               <input
@@ -155,13 +155,13 @@ const Reports = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-fr-gray-600">Total Ingresos</p>
-              <p className="text-2xl font-bold text-fr-secondary">
+              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Total Ingresos</p>
+              <p className="text-2xl font-bold text-fr-secondary dark:text-green-400">
                 {formatAmount(reportData?.total_income || 0)}
               </p>
             </div>
-            <div className="p-3 rounded-fr bg-green-100">
-                              <FaArrowUp className="w-6 h-6 text-fr-secondary" />
+            <div className="p-3 rounded-fr bg-green-100 dark:bg-green-900/30">
+              <FaArrowUp className="w-6 h-6 text-fr-secondary dark:text-green-400" />
             </div>
           </div>
         </div>
@@ -169,13 +169,13 @@ const Reports = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-fr-gray-600">Total Gastos</p>
-              <p className="text-2xl font-bold text-fr-gray-900">
+              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Total Gastos</p>
+              <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">
                 {formatAmount(reportData?.total_expenses || 0)}
               </p>
             </div>
-            <div className="p-3 rounded-fr bg-gray-100">
-              <FaArrowDown className="w-6 h-6 text-fr-gray-900" />
+            <div className="p-3 rounded-fr bg-gray-100 dark:bg-gray-700">
+              <FaArrowDown className="w-6 h-6 text-fr-gray-900 dark:text-gray-300" />
             </div>
           </div>
         </div>
@@ -183,13 +183,13 @@ const Reports = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-fr-gray-600">Balance</p>
-              <p className="text-2xl font-bold text-fr-secondary">
+              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Balance</p>
+              <p className="text-2xl font-bold text-fr-secondary dark:text-green-400">
                 {formatAmount((reportData?.total_income || 0) - (reportData?.total_expenses || 0))}
               </p>
             </div>
-            <div className="p-3 rounded-fr bg-blue-100">
-              <FaChartBar className="w-6 h-6 text-fr-primary" />
+            <div className="p-3 rounded-fr bg-blue-100 dark:bg-blue-900/30">
+              <FaChartBar className="w-6 h-6 text-fr-primary dark:text-blue-400" />
             </div>
           </div>
         </div>
@@ -197,13 +197,13 @@ const Reports = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-fr-gray-600">Transacciones</p>
-              <p className="text-2xl font-bold text-fr-gray-900">
+              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Transacciones</p>
+              <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">
                 {reportData?.transactions?.length || 0}
               </p>
             </div>
-            <div className="p-3 rounded-fr bg-gray-100">
-              <FaCalendar className="w-6 h-6 text-fr-gray-600" />
+            <div className="p-3 rounded-fr bg-gray-100 dark:bg-gray-700">
+              <FaCalendar className="w-6 h-6 text-fr-gray-600 dark:text-gray-400" />
             </div>
           </div>
         </div>
@@ -213,7 +213,7 @@ const Reports = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Tendencia mensual */}
         <div className="card">
-          <h3 className="text-lg font-semibold text-fr-gray-900 mb-6">Tendencia Mensual</h3>
+          <h3 className="text-lg font-semibold text-fr-gray-900 dark:text-gray-100 mb-6">Tendencia Mensual</h3>
           {monthlyData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={monthlyData}>
@@ -248,8 +248,8 @@ const Reports = () => {
           ) : (
             <div className="flex flex-col items-center justify-center h-64 text-center">
               <FaChartBar className="w-12 h-12 text-fr-gray-400 mb-4" />
-              <h4 className="text-lg font-medium text-fr-gray-600 mb-2">No hay datos para el período</h4>
-              <p className="text-sm text-fr-gray-500">
+              <h4 className="text-lg font-medium text-fr-gray-600 dark:text-gray-400 mb-2">No hay datos para el período</h4>
+              <p className="text-sm text-fr-gray-500 dark:text-gray-500">
                 Selecciona un rango de fechas con transacciones para ver la tendencia
               </p>
             </div>
@@ -258,7 +258,7 @@ const Reports = () => {
 
         {/* Gastos por categoría */}
         <div className="card">
-          <h3 className="text-lg font-semibold text-fr-gray-900 mb-6">Gastos por Categoría</h3>
+          <h3 className="text-lg font-semibold text-fr-gray-900 dark:text-gray-100 mb-6">Gastos por Categoría</h3>
           {categoryData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={categoryData}>
@@ -280,8 +280,8 @@ const Reports = () => {
           ) : (
             <div className="flex flex-col items-center justify-center h-64 text-center">
               <FaChartBar className="w-12 h-12 text-fr-gray-400 mb-4" />
-              <h4 className="text-lg font-medium text-fr-gray-600 mb-2">No hay gastos por categorías</h4>
-              <p className="text-sm text-fr-gray-500">
+              <h4 className="text-lg font-medium text-fr-gray-600 dark:text-gray-400 mb-2">No hay gastos por categorías</h4>
+              <p className="text-sm text-fr-gray-500 dark:text-gray-500">
                 Los gastos con categorías aparecerán aquí una vez que generes el reporte
               </p>
             </div>
@@ -291,29 +291,29 @@ const Reports = () => {
 
       {/* Tabla de transacciones por categoría */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-fr-gray-900 mb-6">Detalle por Categoría</h3>
+        <h3 className="text-lg font-semibold text-fr-gray-900 dark:text-gray-100 mb-6">Detalle por Categoría</h3>
         {categoryData.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-fr-gray-200">
-                  <th className="text-left py-3 px-4 font-medium text-fr-gray-900">Categoría</th>
-                  <th className="text-right py-3 px-4 font-medium text-fr-gray-900">Monto</th>
-                  <th className="text-right py-3 px-4 font-medium text-fr-gray-900">Porcentaje</th>
-                  <th className="text-right py-3 px-4 font-medium text-fr-gray-900">Transacciones</th>
+                <tr className="border-b border-fr-gray-200 dark:border-gray-700">
+                  <th className="text-left py-3 px-4 font-medium text-fr-gray-900 dark:text-gray-100">Categoría</th>
+                  <th className="text-right py-3 px-4 font-medium text-fr-gray-900 dark:text-gray-100">Monto</th>
+                  <th className="text-right py-3 px-4 font-medium text-fr-gray-900 dark:text-gray-100">Porcentaje</th>
+                  <th className="text-right py-3 px-4 font-medium text-fr-gray-900 dark:text-gray-100">Transacciones</th>
                 </tr>
               </thead>
               <tbody>
                 {categoryData.map((item, index) => (
-                  <tr key={index} className="border-b border-fr-gray-100 hover:bg-fr-gray-50">
-                    <td className="py-3 px-4 text-fr-gray-900">{item.category}</td>
-                    <td className="py-3 px-4 text-right font-medium text-fr-gray-900">
+                  <tr key={index} className="border-b border-fr-gray-100 dark:border-gray-700 hover:bg-fr-gray-50 dark:hover:bg-gray-700">
+                    <td className="py-3 px-4 text-fr-gray-900 dark:text-gray-100">{item.category}</td>
+                    <td className="py-3 px-4 text-right font-medium text-fr-gray-900 dark:text-gray-100">
                       {formatAmount(item.amount)}
                     </td>
-                    <td className="py-3 px-4 text-right text-fr-gray-600">
+                    <td className="py-3 px-4 text-right text-fr-gray-600 dark:text-gray-400">
                       {item.percentage}%
                     </td>
-                    <td className="py-3 px-4 text-right text-fr-gray-600">
+                    <td className="py-3 px-4 text-right text-fr-gray-600 dark:text-gray-400">
                       {item.transactions}
                     </td>
                   </tr>
@@ -323,8 +323,8 @@ const Reports = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-32 text-center">
-            <h4 className="text-lg font-medium text-fr-gray-600 mb-2">No hay datos de categorías</h4>
-            <p className="text-sm text-fr-gray-500">
+            <h4 className="text-lg font-medium text-fr-gray-600 dark:text-gray-400 mb-2">No hay datos de categorías</h4>
+            <p className="text-sm text-fr-gray-500 dark:text-gray-500">
               El detalle aparecerá cuando haya gastos con categorías en el período seleccionado
             </p>
           </div>
