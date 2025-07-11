@@ -38,10 +38,12 @@ class ConfigService {
     try {
       // Intentar cargar desde diferentes URLs posibles
       const possibleUrls = [
-        // Si estamos en producción, usar la URL actual
-        window.location.origin,
-        // Si hay una variable de entorno, usarla como fallback
+        // URL estable del backend (prioritaria)
+        'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app',
+        // URL del backend desde variable de entorno
         process.env.REACT_APP_API_URL?.replace('/api/v1', '') || '',
+        // URL dinámica del backend
+        'https://financial-resume-engine-ncf3kbolwa-rj.a.run.app',
         // Localhost como último recurso
         'http://localhost:8080'
       ].filter(Boolean);

@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Script para deployment del frontend en GCP Cloud Run
-# Autor: AI Assistant
-# Fecha: $(date)
+# Script mejorado para deployment del frontend en GCP Cloud Run
+# Configuración actualizada con URLs estables
 
 set -e
 
@@ -19,31 +18,31 @@ REGION="southamerica-east1"
 SERVICE_NAME="financial-resume-frontend"
 IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
 
-echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] Iniciando deployment del frontend en GCP...${NC}"
+echo -e "${BLUE}🚀 Iniciando deployment del frontend en GCP Cloud Run${NC}"
 
 # Verificar autenticación con GCP
-echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] Verificando autenticación con GCP...${NC}"
+echo -e "${BLUE}🔐 Verificando autenticación con GCP...${NC}"
 if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q "@"; then
     echo -e "${RED}❌ No hay una cuenta activa de GCP. Ejecuta 'gcloud auth login' primero${NC}"
     exit 1
 fi
 
 # Configurar proyecto
-echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] Configurando proyecto GCP: ${PROJECT_ID}${NC}"
+echo -e "${BLUE}⚙️ Configurando proyecto GCP: ${PROJECT_ID}${NC}"
 gcloud config set project ${PROJECT_ID}
 
 # Habilitar APIs necesarias
-echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] Habilitando APIs necesarias...${NC}"
+echo -e "${BLUE}🔧 Habilitando APIs necesarias...${NC}"
 gcloud services enable cloudbuild.googleapis.com
 gcloud services enable run.googleapis.com
 
 # Configurar Docker para GCR
-echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] Configurando Docker para GCR...${NC}"
+echo -e "${BLUE}🐳 Configurando Docker para GCR...${NC}"
 gcloud auth configure-docker
 
-# Construir imagen Docker con arquitectura específica para Cloud Run
-echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] Construyendo imagen Docker...${NC}"
-docker build --platform linux/amd64 -t ${IMAGE_NAME}:latest .
+# Construir imagen Docker
+echo -e "${BLUE}🏗️ Construyendo imagen Docker...${NC}"
+docker build -t ${IMAGE_NAME}:latest .
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Imagen construida exitosamente${NC}"
@@ -53,7 +52,7 @@ else
 fi
 
 # Subir imagen a Google Container Registry
-echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] Subiendo imagen a Google Container Registry...${NC}"
+echo -e "${BLUE}📤 Subiendo imagen a Google Container Registry...${NC}"
 docker push ${IMAGE_NAME}:latest
 
 if [ $? -eq 0 ]; then
@@ -64,7 +63,7 @@ else
 fi
 
 # Desplegar servicio en Cloud Run
-echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] Desplegando servicio en Cloud Run...${NC}"
+echo -e "${BLUE}🚀 Desplegando servicio en Cloud Run...${NC}"
 gcloud run deploy ${SERVICE_NAME} \
     --image ${IMAGE_NAME}:latest \
     --platform managed \
@@ -75,6 +74,7 @@ gcloud run deploy ${SERVICE_NAME} \
     --min-instances 0 \
     --max-instances 10 \
     --timeout 300 \
+    --port 8080 \
     --set-env-vars="NODE_ENV=production"
 
 if [ $? -eq 0 ]; then
@@ -86,32 +86,29 @@ fi
 
 # Obtener URL del servicio
 SERVICE_URL=$(gcloud run services describe ${SERVICE_NAME} --region=${REGION} --format="value(status.url)")
-echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] URL del servicio: ${SERVICE_URL}${NC}"
+echo -e "${BLUE}🌐 URL del servicio: ${SERVICE_URL}${NC}"
 
 # Probar el servicio
-echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] Probando el servicio...${NC}"
+echo -e "${BLUE}🧪 Probando el servicio...${NC}"
+sleep 10  # Esperar un poco para que el servicio esté listo
 HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${SERVICE_URL}")
 
 if [ "$HTTP_STATUS" -eq 200 ]; then
     echo -e "${GREEN}✅ Servicio funcionando correctamente (HTTP ${HTTP_STATUS})${NC}"
 else
-    echo -e "${YELLOW}⚠️  Servicio responde con HTTP ${HTTP_STATUS}${NC}"
+    echo -e "${YELLOW}⚠️ Servicio responde con HTTP ${HTTP_STATUS}${NC}"
 fi
 
-# Configurar tag estable y dirigir tráfico principal a URL estable
-echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] Configurando tag estable...${NC}"
+# Configurar tag estable
+echo -e "${BLUE}🏷️ Configurando tag estable...${NC}"
 LATEST_REVISION=$(gcloud run services describe ${SERVICE_NAME} --region=${REGION} --format="value(status.latestReadyRevisionName)")
 gcloud run services update-traffic ${SERVICE_NAME} --set-tags=stable=${LATEST_REVISION} --region=${REGION}
 
-# Dirigir 100% del tráfico a la URL estable
-echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] Dirigiendo tráfico a URL estable...${NC}"
-gcloud run services update-traffic ${SERVICE_NAME} --to-tags=stable=100 --region=${REGION}
-
 STABLE_URL="https://stable---${SERVICE_NAME}-ncf3kbolwa-rj.a.run.app"
-echo -e "${GREEN}✅ Tag estable configurado y tráfico dirigido: ${STABLE_URL}${NC}"
+echo -e "${GREEN}✅ Tag estable configurado: ${STABLE_URL}${NC}"
 
 # Información del deployment
-echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] Información del deployment:${NC}"
+echo -e "${BLUE}📊 Información del deployment:${NC}"
 echo "  - Proyecto: ${PROJECT_ID}"
 echo "  - Región: ${REGION}"
 echo "  - Servicio: ${SERVICE_NAME}"
@@ -120,9 +117,11 @@ echo "  - URL Estable: ${STABLE_URL}"
 echo "  - Imagen: ${IMAGE_NAME}:latest"
 
 # Comandos útiles
-echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] Comandos útiles:${NC}"
+echo -e "${BLUE}🛠️ Comandos útiles:${NC}"
 echo "  - Ver logs: gcloud run logs read ${SERVICE_NAME} --region ${REGION}"
 echo "  - Ver servicio: gcloud run services describe ${SERVICE_NAME} --region ${REGION}"
-echo "  - Actualizar: ./scripts/deploy-gcp.sh"
+echo "  - Actualizar: ./deploy-frontend.sh"
 
-echo -e "${GREEN}✅ Deployment completado exitosamente! 🎉${NC}" 
+echo -e "${GREEN}🎉 Deployment completado exitosamente!${NC}"
+echo -e "${GREEN}🔗 Frontend disponible en: ${SERVICE_URL}${NC}"
+echo -e "${GREEN}🔗 URL estable: ${STABLE_URL}${NC}" 
