@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FaPlus, FaSearch, FaTag, FaEdit, FaTrash } from 'react-icons/fa';
 import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
+import ValidatedInput from '../components/ValidatedInput';
+import { validateCategoryName, validateDescription } from '../utils/validation';
+import toast from 'react-hot-toast';
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
@@ -12,6 +15,10 @@ const Categories = () => {
     name: '',
     description: '',
   });
+
+  // Estados para validación del formulario
+  const [formErrors, setFormErrors] = useState({});
+  const [isFormValid, setIsFormValid] = useState(false);
 
   // Usar el hook optimizado para operaciones API
   const { 
@@ -41,8 +48,50 @@ const Categories = () => {
     loadCategories();
   }, [loadCategories]);
 
+  // Validar formulario completo
+  const validateForm = useCallback(() => {
+    const errors = {};
+    let valid = true;
+
+    // Validar nombre
+    const nameValidation = validateCategoryName(formData.name);
+    if (!nameValidation.isValid) {
+      errors.name = nameValidation.error;
+      valid = false;
+    }
+
+    // Validar descripción (opcional)
+    if (formData.description.trim()) {
+      const descriptionValidation = validateDescription(formData.description, { 
+        required: false, 
+        maxLength: 500,
+        fieldName: 'descripción'
+      });
+      if (!descriptionValidation.isValid) {
+        errors.description = descriptionValidation.error;
+        valid = false;
+      }
+    }
+
+    setFormErrors(errors);
+    setIsFormValid(valid);
+    return valid;
+  }, [formData]);
+
+  // Validar formulario cuando cambien los datos
+  useEffect(() => {
+    validateForm();
+  }, [validateForm]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validar antes de enviar
+    if (!validateForm()) {
+      toast.error('Por favor corrige los errores en el formulario');
+      return;
+    }
+
     try {
       if (editingCategory) {
         await categoriesAPI.update(editingCategory.id, formData);
@@ -55,6 +104,7 @@ const Categories = () => {
       setShowModal(false);
       setEditingCategory(null);
       setFormData({ name: '', description: '' });
+      setFormErrors({});
       await loadCategories();
     } catch (error) {
       // useOptimizedAPI ya maneja el error
@@ -94,7 +144,7 @@ const Categories = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="spinner"></div>
-        <span className="ml-2 text-fr-gray-600">Cargando categorías...</span>
+        <span className="ml-2 text-fr-gray-600 dark:text-gray-400">Cargando categorías...</span>
       </div>
     );
   }
@@ -130,21 +180,21 @@ const Categories = () => {
         {filteredCategories.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <FaTag className="w-12 h-12 text-fr-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-fr-gray-900 mb-2">No hay categorías</h3>
-            <p className="text-fr-gray-500">Comienza creando tu primera categoría</p>
+            <h3 className="text-lg font-medium text-fr-gray-900 dark:text-gray-100 mb-2">No hay categorías</h3>
+            <p className="text-fr-gray-500 dark:text-gray-400">Comienza creando tu primera categoría</p>
           </div>
         ) : (
           filteredCategories.map((category) => (
             <div key={category.id} className="card-hover">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 rounded-fr bg-blue-100">
-                    <FaTag className="w-5 h-5 text-fr-primary" />
+                  <div className="p-2 rounded-fr bg-blue-100 dark:bg-blue-900/30">
+                    <FaTag className="w-5 h-5 text-fr-primary dark:text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="font-medium text-fr-gray-900">{category.name}</h3>
+                    <h3 className="font-medium text-fr-gray-900 dark:text-gray-100">{category.name}</h3>
                     {category.description && (
-                      <p className="text-sm text-fr-gray-500 mt-1">{category.description}</p>
+                      <p className="text-sm text-fr-gray-500 dark:text-gray-400 mt-1">{category.description}</p>
                     )}
                   </div>
                 </div>
@@ -152,13 +202,13 @@ const Categories = () => {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => handleEdit(category)}
-                    className="p-2 rounded-fr text-fr-gray-600 hover:bg-fr-gray-200 transition-colors"
+                    className="p-2 rounded-fr text-fr-gray-600 dark:text-gray-400 hover:bg-fr-gray-200 dark:hover:bg-gray-700 transition-colors"
                   >
                     <FaEdit className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(category)}
-                    className="p-2 rounded-fr text-fr-error hover:bg-red-100 transition-colors"
+                    className="p-2 rounded-fr text-fr-error dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                   >
                     <FaTrash className="w-4 h-4" />
                   </button>
@@ -172,35 +222,41 @@ const Categories = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-fr-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-fr-gray-900 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-fr-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-fr-gray-900 dark:text-gray-100 mb-6">
               {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-2">
-                  Nombre
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="input"
-                  required
-                />
-              </div>
+              <ValidatedInput
+                type="text"
+                name="name"
+                label="Nombre"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                validator={validateCategoryName}
+                validateOnChange={true}
+                required={true}
+                placeholder="Ej: Alimentación, Transporte, Entretenimiento"
+                helpText="Nombre único para identificar la categoría"
+                maxLength={50}
+              />
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
                   Descripción
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="input"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 transition-colors duration-200"
                   rows="3"
+                  placeholder="Descripción opcional de la categoría"
+                  maxLength={500}
                 />
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Opcional - Describe el propósito de esta categoría
+                </p>
               </div>
 
               <div className="flex space-x-4 pt-4">
@@ -210,12 +266,17 @@ const Categories = () => {
                     setShowModal(false);
                     setEditingCategory(null);
                     setFormData({ name: '', description: '' });
+                    setFormErrors({});
                   }}
                   className="btn-outline flex-1"
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary flex-1">
+                <button 
+                  type="submit" 
+                  className={`btn-primary flex-1 ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={!isFormValid}
+                >
                   {editingCategory ? 'Actualizar' : 'Crear'}
                 </button>
               </div>

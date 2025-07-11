@@ -64,7 +64,7 @@ const Header = () => {
       },
     };
     return routes[pathname] || { 
-      title: 'Financial Resume', 
+      title: 'Niloft', 
       subtitle: 'Gestión financiera inteligente',
       icon: FaHome
     };
@@ -113,11 +113,12 @@ const Header = () => {
             {/* Theme Toggle */}
             <ThemeToggle />
 
-            {/* Notifications */}
+            {/* Notifications - Temporalmente oculto hasta implementar la funcionalidad 
             <button className="relative p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
               <FaBell className="w-5 h-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
+            */}
 
             {/* User menu */}
             <div className="flex items-center space-x-3">

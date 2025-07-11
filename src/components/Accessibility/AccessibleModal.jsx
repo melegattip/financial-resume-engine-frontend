@@ -72,7 +72,7 @@ const AccessibleModal = ({
         <div
           ref={modalRef}
           className={`
-            bg-white rounded-lg shadow-xl w-full
+            bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full
             ${sizeClasses[size]}
             max-h-[90vh] overflow-y-auto
             transform transition-all duration-300 ease-out
@@ -81,12 +81,12 @@ const AccessibleModal = ({
           role="document"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex-1">
               {title && (
                 <h2 
                   id="modal-title" 
-                  className="text-xl font-semibold text-gray-900"
+                  className="text-xl font-semibold text-gray-900 dark:text-gray-100"
                 >
                   {title}
                 </h2>
@@ -94,7 +94,7 @@ const AccessibleModal = ({
               {description && (
                 <p 
                   id="modal-description" 
-                  className="mt-1 text-sm text-gray-600"
+                  className="mt-1 text-sm text-gray-600 dark:text-gray-400"
                 >
                   {description}
                 </p>
@@ -104,8 +104,8 @@ const AccessibleModal = ({
             <button
               onClick={onClose}
               className="
-                ml-4 p-2 text-gray-400 hover:text-gray-600
-                rounded-md hover:bg-gray-100 transition-colors
+                ml-4 p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300
+                rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors
                 focus:outline-none focus:ring-2 focus:ring-fr-primary
               "
               aria-label="Cerrar modal"

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock, FaSignInAlt, FaSpinner } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
-import { validateAndSanitize } from '../utils/validation';
+import { validateEmail, sanitizeText } from '../utils/validation';
+import Logo from '../components/Logo';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -46,37 +47,20 @@ const Login = () => {
 
   // Validar formulario
   const validateForm = () => {
-    const loginSchema = {
-      email: [
-        (value) => ({ isValid: !!value, message: 'El email es requerido' }),
-        (value) => ({ 
-          isValid: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value), 
-          message: 'Formato de email inválido' 
-        })
-      ],
-      password: [
-        (value) => ({ isValid: !!value, message: 'La contraseña es requerida' }),
-        (value) => ({ 
-          isValid: value.length >= 6, 
-          message: 'La contraseña debe tener al menos 6 caracteres' 
-        })
-      ]
-    };
-
-    const validation = validateAndSanitize(formData, 'user');
-    
-    // Validaciones específicas para login
     const loginErrors = {};
-    Object.keys(loginSchema).forEach(field => {
-      const rules = loginSchema[field];
-      for (const rule of rules) {
-        const result = rule(formData[field]);
-        if (!result.isValid) {
-          loginErrors[field] = result.message;
-          break;
-        }
-      }
-    });
+    
+    // Validar email
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.isValid) {
+      loginErrors.email = emailValidation.error;
+    }
+    
+    // Validar contraseña
+    if (!formData.password) {
+      loginErrors.password = 'La contraseña es requerida';
+    } else if (formData.password.length < 6) {
+      loginErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+    }
 
     setErrors(loginErrors);
     return Object.keys(loginErrors).length === 0;
@@ -95,7 +79,7 @@ const Login = () => {
 
     try {
       await login({
-        email: formData.email.trim().toLowerCase(),
+        email: sanitizeText(formData.email.trim().toLowerCase()),
         password: formData.password
       });
       
@@ -127,7 +111,7 @@ const Login = () => {
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-fr-primary to-fr-secondary flex-col justify-center px-12">
         <div className="max-w-md">
           <h1 className="text-4xl font-bold text-white mb-6">
-            Bienvenido de vuelta
+            Bienvenido
           </h1>
           <p className="text-fr-primary-light text-lg mb-8">
             Gestiona tus finanzas personales de manera inteligente. 
@@ -154,9 +138,7 @@ const Login = () => {
       <div className="flex-1 flex flex-col justify-center px-6 py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="flex justify-center mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-fr-primary to-fr-secondary rounded-fr flex items-center justify-center">
-              <FaSignInAlt className="w-6 h-6 text-white" />
-            </div>
+            <Logo size="lg" showText={false} />
           </div>
 
           <h2 className="text-center text-3xl font-bold text-fr-gray-900 mb-2">

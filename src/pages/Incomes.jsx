@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { FaPlus, FaSearch, FaArrowUp, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaArrowUp, FaEdit, FaTrash, FaDollarSign } from 'react-icons/fa';
 import { formatCurrency } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
 import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
 import useDataRefresh from '../hooks/useDataRefresh';
 import toast from 'react-hot-toast';
 import ConfirmationModal from '../components/ConfirmationModal';
+import ValidatedInput from '../components/ValidatedInput';
+import { validateAmount, validateDescription } from '../utils/validation';
 
 const Incomes = () => {
   const [incomes, setIncomes] = useState([]);
@@ -23,6 +25,10 @@ const Incomes = () => {
     amount: '',
     category_id: '',
   });
+
+  // Estados para validación del formulario
+  const [formErrors, setFormErrors] = useState({});
+  const [isFormValid, setIsFormValid] = useState(false);
 
   // Usar el contexto global de período
   const {
@@ -88,8 +94,44 @@ const Incomes = () => {
   // Hook para refrescar automáticamente cuando cambian los datos
   useDataRefresh(loadData, ['income', 'recurring_transaction']);
 
+  // Validar formulario completo
+  const validateForm = useCallback(() => {
+    const errors = {};
+    let valid = true;
+
+    // Validar descripción
+    const descriptionValidation = validateDescription(formData.description);
+    if (!descriptionValidation.isValid) {
+      errors.description = descriptionValidation.error;
+      valid = false;
+    }
+
+    // Validar monto
+    const amountValidation = validateAmount(formData.amount, { fieldName: 'monto' });
+    if (!amountValidation.isValid) {
+      errors.amount = amountValidation.error;
+      valid = false;
+    }
+
+    setFormErrors(errors);
+    setIsFormValid(valid);
+    return valid;
+  }, [formData]);
+
+  // Validar formulario cuando cambien los datos
+  useEffect(() => {
+    validateForm();
+  }, [validateForm]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validar antes de enviar
+    if (!validateForm()) {
+      toast.error('Por favor corrige los errores en el formulario');
+      return;
+    }
+
     try {
       // Convertir amount a número antes de enviar
       const dataToSend = {
@@ -108,6 +150,7 @@ const Incomes = () => {
       setShowModal(false);
       setEditingIncome(null);
       setFormData({ description: '', amount: '', category_id: '' });
+      setFormErrors({});
       await loadData();
     } catch (error) {
       // useOptimizedAPI ya maneja el error
@@ -306,32 +349,36 @@ const Incomes = () => {
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
-                    Descripción
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="input"
-                    required
-                  />
-                </div>
+                <ValidatedInput
+                  type="text"
+                  name="description"
+                  label="Descripción"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  validator={validateDescription}
+                  validateOnChange={true}
+                  required={true}
+                  placeholder="Ej: Salario mensual, Freelance, etc."
+                  helpText="Describe brevemente el ingreso"
+                  maxLength={255}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
-                    Monto
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                    className="input"
-                    required
-                  />
-                </div>
+                <ValidatedInput
+                  type="currency"
+                  name="amount"
+                  label="Monto"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  validator={(value) => validateAmount(value, { fieldName: 'monto' })}
+                  validateOnChange={true}
+                  required={true}
+                  placeholder="0.00"
+                  helpText="Ingresa el monto del ingreso"
+                  icon={<FaDollarSign />}
+                  iconPosition="left"
+                  allowNegative={false}
+                  maxDecimals={2}
+                />
 
                 <div>
                   <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
@@ -358,12 +405,17 @@ const Incomes = () => {
                       setShowModal(false);
                       setEditingIncome(null);
                       setFormData({ description: '', amount: '', category_id: '' });
+                      setFormErrors({});
                     }}
                     className="btn-outline flex-1"
                   >
                     Cancelar
                   </button>
-                  <button type="submit" className="btn-secondary flex-1">
+                  <button 
+                    type="submit" 
+                    className={`btn-secondary flex-1 ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={!isFormValid}
+                  >
                     {editingIncome ? 'Actualizar' : 'Crear'}
                   </button>
                 </div>
