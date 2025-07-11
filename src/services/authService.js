@@ -1,6 +1,7 @@
 import axios from 'axios';
 import toast from '../utils/notifications';
 import configService from './configService';
+import dataService from './dataService';
 
 // Función para obtener la URL base del API dinámicamente
 const getApiBaseUrl = async () => {
@@ -298,16 +299,33 @@ class AuthService {
   }
 
   /**
-   * Limpia todos los datos de autenticación
+   * Limpia todos los datos de autenticación y cache del usuario
    */
   clearAuthData() {
     this.token = null;
     this.user = null;
     this.expiresAt = null;
     
+    // Limpiar datos de autenticación
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(EXPIRES_AT_KEY);
+    
+    // Limpiar cache de datos del usuario
+    localStorage.removeItem('dataChanged');
+    localStorage.removeItem('financial_gamification');
+    localStorage.removeItem('gamification_analytics');
+    localStorage.removeItem('ai_insights_cache');
+    localStorage.removeItem('health_score_cache');
+    
+    // Limpiar cache del dataService
+    try {
+      dataService.clearCache();
+    } catch (error) {
+      console.warn('Error limpiando cache del dataService:', error);
+    }
+    
+    console.log('🧹 Cache y datos del usuario limpiados completamente');
   }
 
   /**

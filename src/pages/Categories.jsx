@@ -13,7 +13,6 @@ const Categories = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
   });
 
   // Estados para validación del formulario
@@ -94,17 +93,24 @@ const Categories = () => {
 
     try {
       if (editingCategory) {
-        await categoriesAPI.update(editingCategory.id, formData);
+        // Para actualización, el backend espera el campo "new_name"
+        const updateData = {
+          new_name: formData.name
+        };
+        await categoriesAPI.update(editingCategory.id, updateData);
         // useOptimizedAPI ya muestra el toast de éxito
       } else {
-        await categoriesAPI.create(formData);
+        // Para creación, enviar solo el nombre (sin descripción por ahora)
+        const createData = {
+          name: formData.name
+        };
+        await categoriesAPI.create(createData);
         // useOptimizedAPI ya muestra el toast de éxito
       }
       
       setShowModal(false);
       setEditingCategory(null);
-      setFormData({ name: '', description: '' });
-      setFormErrors({});
+      setFormData({ name: '' });
       await loadCategories();
     } catch (error) {
       // useOptimizedAPI ya maneja el error
@@ -116,7 +122,6 @@ const Categories = () => {
     setEditingCategory(category);
     setFormData({
       name: category.name,
-      description: category.description || '',
     });
     setShowModal(true);
   };
@@ -193,9 +198,6 @@ const Categories = () => {
                   </div>
                   <div>
                     <h3 className="font-medium text-fr-gray-900 dark:text-gray-100">{category.name}</h3>
-                    {category.description && (
-                      <p className="text-sm text-fr-gray-500 dark:text-gray-400 mt-1">{category.description}</p>
-                    )}
                   </div>
                 </div>
 
@@ -242,22 +244,7 @@ const Categories = () => {
                 maxLength={50}
               />
 
-              <div>
-                <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
-                  Descripción
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 transition-colors duration-200"
-                  rows="3"
-                  placeholder="Descripción opcional de la categoría"
-                  maxLength={500}
-                />
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Opcional - Describe el propósito de esta categoría
-                </p>
-              </div>
+
 
               <div className="flex space-x-4 pt-4">
                 <button
@@ -265,8 +252,7 @@ const Categories = () => {
                   onClick={() => {
                     setShowModal(false);
                     setEditingCategory(null);
-                    setFormData({ name: '', description: '' });
-                    setFormErrors({});
+                    setFormData({ name: '' });
                   }}
                   className="btn-outline flex-1"
                 >

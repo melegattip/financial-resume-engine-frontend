@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaArrowUp, FaArrowDown, FaDollarSign, FaChartPie, FaCalendar, FaCheckCircle, FaTimesCircle, FaChartBar, FaBullseye, FaExclamationCircle, FaRedo } from 'react-icons/fa';
 import { 
   ResponsiveContainer,
@@ -16,6 +17,7 @@ import useDataRefresh from '../hooks/useDataRefresh';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('fecha');
   const [data, setData] = useState({
@@ -969,7 +971,12 @@ const Dashboard = () => {
       <div className="card">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-fr-gray-900 dark:text-gray-100">Transacciones Recientes</h3>
-          <button className="btn-ghost">Ver todas</button>
+          <button 
+            onClick={() => navigate('/expenses')} 
+            className="btn-ghost"
+          >
+            Ver todas
+          </button>
         </div>
         <div className="space-y-4">
           {(() => {

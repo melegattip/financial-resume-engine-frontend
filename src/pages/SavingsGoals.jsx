@@ -431,7 +431,7 @@ const SavingsGoals = () => {
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    placeholder="Smiles, Seguro Santander"
+                    placeholder="Ej: Viaje a Europa, Auto nuevo, Casa propia"
                     required
                   />
                 </div>
@@ -772,7 +772,7 @@ const SavingsGoals = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  placeholder="Smiles, Seguro Santander"
+                  placeholder="Ej: Viaje a Europa, Auto nuevo, Casa propia"
                   required
                 />
               </div>
