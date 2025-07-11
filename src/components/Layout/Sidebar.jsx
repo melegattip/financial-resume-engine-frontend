@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FaPlusCircle, FaMinusCircle, FaFolderOpen, FaBrain, FaFileAlt, FaCog, FaBars, FaTimes, FaHome, FaArrowUp, FaStar, FaChartPie, FaBullseye, FaRedo } from 'react-icons/fa';
+import Brand from '../Brand';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -105,15 +106,7 @@ const Sidebar = () => {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-500 rounded-lg">
-                <FaArrowUp className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">Financial Resume</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Tu asistente financiero</p>
-              </div>
-            </div>
+            <Brand size="sm" showTagline={true} />
           </div>
 
           {/* Navigation */}

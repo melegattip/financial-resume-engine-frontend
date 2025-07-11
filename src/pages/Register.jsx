@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock, FaUser, FaUserPlus, FaSpinner, FaCheckCircle } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
-import { validateAndSanitize } from '../utils/validation';
+import { validateEmail, sanitizeText } from '../utils/validation';
+import Logo from '../components/Logo';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -107,70 +108,47 @@ const Register = () => {
 
   // Validar formulario
   const validateForm = () => {
-    const registerSchema = {
-      firstName: [
-        (value) => ({ isValid: !!value.trim(), message: 'El nombre es requerido' }),
-        (value) => ({ 
-          isValid: value.trim().length >= 2, 
-          message: 'El nombre debe tener al menos 2 caracteres' 
-        }),
-        (value) => ({ 
-          isValid: /^[a-zA-ZÀ-ÿ\s]+$/.test(value), 
-          message: 'El nombre solo puede contener letras' 
-        })
-      ],
-      lastName: [
-        (value) => ({ isValid: !!value.trim(), message: 'El apellido es requerido' }),
-        (value) => ({ 
-          isValid: value.trim().length >= 2, 
-          message: 'El apellido debe tener al menos 2 caracteres' 
-        }),
-        (value) => ({ 
-          isValid: /^[a-zA-ZÀ-ÿ\s]+$/.test(value), 
-          message: 'El apellido solo puede contener letras' 
-        })
-      ],
-      email: [
-        (value) => ({ isValid: !!value, message: 'El email es requerido' }),
-        (value) => ({ 
-          isValid: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value), 
-          message: 'Formato de email inválido' 
-        })
-      ],
-      password: [
-        (value) => ({ isValid: !!value, message: 'La contraseña es requerida' }),
-        (value) => ({ 
-          isValid: value.length >= 8, 
-          message: 'La contraseña debe tener al menos 8 caracteres' 
-        }),
-        (value) => ({ 
-          isValid: passwordStrength.score >= 3, 
-          message: 'La contraseña debe ser al menos moderada' 
-        })
-      ],
-      confirmPassword: [
-        (value) => ({ isValid: !!value, message: 'Confirma tu contraseña' }),
-        (value) => ({ 
-          isValid: value === formData.password, 
-          message: 'Las contraseñas no coinciden' 
-        })
-      ]
-    };
-
-    const validation = validateAndSanitize(formData, 'user');
-    
-    // Validaciones específicas para registro
     const registerErrors = {};
-    Object.keys(registerSchema).forEach(field => {
-      const rules = registerSchema[field];
-      for (const rule of rules) {
-        const result = rule(formData[field]);
-        if (!result.isValid) {
-          registerErrors[field] = result.message;
-          break;
-        }
-      }
-    });
+    
+    // Validar nombre
+    if (!formData.firstName.trim()) {
+      registerErrors.firstName = 'El nombre es requerido';
+    } else if (formData.firstName.trim().length < 2) {
+      registerErrors.firstName = 'El nombre debe tener al menos 2 caracteres';
+    } else if (!/^[a-zA-ZÀ-ÿ\s]+$/.test(formData.firstName)) {
+      registerErrors.firstName = 'El nombre solo puede contener letras';
+    }
+    
+    // Validar apellido
+    if (!formData.lastName.trim()) {
+      registerErrors.lastName = 'El apellido es requerido';
+    } else if (formData.lastName.trim().length < 2) {
+      registerErrors.lastName = 'El apellido debe tener al menos 2 caracteres';
+    } else if (!/^[a-zA-ZÀ-ÿ\s]+$/.test(formData.lastName)) {
+      registerErrors.lastName = 'El apellido solo puede contener letras';
+    }
+    
+    // Validar email
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.isValid) {
+      registerErrors.email = emailValidation.error;
+    }
+    
+    // Validar contraseña
+    if (!formData.password) {
+      registerErrors.password = 'La contraseña es requerida';
+    } else if (formData.password.length < 8) {
+      registerErrors.password = 'La contraseña debe tener al menos 8 caracteres';
+    } else if (passwordStrength.score < 3) {
+      registerErrors.password = 'La contraseña debe ser al menos moderada';
+    }
+    
+    // Validar confirmación de contraseña
+    if (!formData.confirmPassword) {
+      registerErrors.confirmPassword = 'Confirma tu contraseña';
+    } else if (formData.confirmPassword !== formData.password) {
+      registerErrors.confirmPassword = 'Las contraseñas no coinciden';
+    }
 
     setErrors(registerErrors);
     return Object.keys(registerErrors).length === 0;
@@ -189,9 +167,9 @@ const Register = () => {
 
     try {
       await register({
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-        email: formData.email.trim().toLowerCase(),
+        firstName: sanitizeText(formData.firstName.trim()),
+        lastName: sanitizeText(formData.lastName.trim()),
+        email: sanitizeText(formData.email.trim().toLowerCase()),
         password: formData.password
       });
       
@@ -254,9 +232,7 @@ const Register = () => {
       <div className="flex-1 flex flex-col justify-center px-6 py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="flex justify-center mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-fr-secondary to-fr-primary rounded-fr flex items-center justify-center">
-              <FaUserPlus className="w-6 h-6 text-white" />
-            </div>
+            <Logo size="lg" showText={false} />
           </div>
 
           <h2 className="text-center text-3xl font-bold text-fr-gray-900 mb-2">
