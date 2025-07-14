@@ -37,7 +37,12 @@ class ConfigService {
 
     try {
       // Intentar cargar desde diferentes URLs posibles
+      // Importar configuración dinámica
+      const envConfig = (await import('../config/environments')).default;
+      
       const possibleUrls = [
+        // URL del ambiente actual
+        envConfig.API_BASE_URL.replace('/api/v1', ''),
         // URL estable del backend (prioritaria)
         'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app',
         // URL del backend desde variable de entorno
