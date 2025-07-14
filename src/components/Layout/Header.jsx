@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import PeriodFilter from './PeriodFilter';
 import ThemeToggle from '../ThemeToggle';
-import { FaUser, FaSignOutAlt, FaBell, FaHome, FaBrain, FaPlusCircle, FaMinusCircle, FaFolderOpen, FaFileAlt, FaCog, FaChartPie, FaBullseye, FaRedo } from 'react-icons/fa';
+import { FaUser, FaSignOutAlt, FaHome, FaBrain, FaPlusCircle, FaMinusCircle, FaFolderOpen, FaFileAlt, FaCog, FaChartPie, FaBullseye, FaRedo } from 'react-icons/fa';
 
 const Header = () => {
   const { user, logout } = useAuth();
