@@ -14,6 +14,15 @@ class GamificationService {
    */
   async recordInsightViewed(insightId, insightTitle) {
     try {
+      // En desarrollo, verificar si el servicio está disponible antes de intentar
+      const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      
+      if (isDevelopment) {
+        // No hacer la llamada si el servicio probablemente no está corriendo
+        console.debug('⚠️ Gamification deshabilitado en desarrollo - servicios no corriendo');
+        return null;
+      }
+      
       const result = await this.api.recordAction(
         'view_insight',
         'insight', 
@@ -39,6 +48,14 @@ class GamificationService {
    */
   async recordInsightUnderstood(insightId, insightTitle) {
     try {
+      // En desarrollo, deshabilitar gamification
+      const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      
+      if (isDevelopment) {
+        console.debug('⚠️ Gamification deshabilitado en desarrollo - servicios no corriendo');
+        return null;
+      }
+      
       const result = await this.api.recordAction(
         'understand_insight',
         'insight',
@@ -63,6 +80,14 @@ class GamificationService {
    */
   async recordActionCompleted(actionType, description) {
     try {
+      // En desarrollo, deshabilitar gamification
+      const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      
+      if (isDevelopment) {
+        console.debug('⚠️ Gamification deshabilitado en desarrollo - servicios no corriendo');
+        return null;
+      }
+      
       const result = await this.api.recordAction(
         'complete_action',
         'suggestion',

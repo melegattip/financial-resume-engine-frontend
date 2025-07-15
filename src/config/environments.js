@@ -7,7 +7,11 @@ const environments = {
     AI_API_URL: 'http://localhost:8082/api/v1',
     REDIS_URL: 'redis://localhost:6379',
     WEBSOCKET_URL: 'ws://localhost:8080/ws',
-    CORS_ORIGIN: 'http://localhost:3000'
+    CORS_ORIGIN: 'http://localhost:3000',
+    // Configuración específica para desarrollo
+    RATE_LIMIT_DISABLED: true,
+    REQUEST_THROTTLE_MS: 100,  // Throttle mínimo entre requests
+    CONFIG_CACHE_DISABLED: true  // Deshabilitar cache de configuración
   },
   
   render: {

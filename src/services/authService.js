@@ -127,8 +127,11 @@ class AuthService {
     // Interceptor para requests
     authAPI.interceptors.request.use(
       async (config) => {
-        // Asegurar que la configuración esté inicializada antes de cada request
-        if (!configInitialized) {
+        // En desarrollo, evitar múltiples inicializaciones de configuración
+        const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        
+        if (!configInitialized && !isDevelopment) {
+          // Solo en producción intentar reconfigurar en cada request
           await initializeConfig();
         }
         

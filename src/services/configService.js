@@ -6,6 +6,7 @@ class ConfigService {
     this.config = null;
     this.loading = false;
     this.error = null;
+    this.loadPromise = null;  // Para evitar cargas múltiples simultáneas
   }
 
   /**
@@ -14,24 +15,29 @@ class ConfigService {
    * @returns {Promise<Object>} - Configuración cargada
    */
   async loadConfig(fallbackUrl = null) {
-    if (this.loading) {
-      // Si ya está cargando, esperar a que termine
-      return new Promise((resolve) => {
-        const checkLoading = () => {
-          if (!this.loading) {
-            resolve(this.config);
-          } else {
-            setTimeout(checkLoading, 100);
-          }
-        };
-        checkLoading();
-      });
+    // Si ya hay una promesa de carga en curso, reutilizarla
+    if (this.loadPromise) {
+      return this.loadPromise;
     }
 
     if (this.config) {
       return this.config;
     }
 
+    // Crear y almacenar la promesa de carga
+    this.loadPromise = this._performLoad(fallbackUrl);
+    
+    try {
+      const result = await this.loadPromise;
+      this.loadPromise = null;  // Limpiar la promesa
+      return result;
+    } catch (error) {
+      this.loadPromise = null;  // Limpiar la promesa en caso de error
+      throw error;
+    }
+  }
+
+  async _performLoad(fallbackUrl = null) {
     this.loading = true;
     this.error = null;
 
@@ -40,15 +46,41 @@ class ConfigService {
       // Importar configuración dinámica
       const envConfig = (await import('../config/environments')).default;
       
-      const possibleUrls = [
-        // URL del ambiente actual (prioritaria)
-        envConfig.API_BASE_URL,
-        // URL del backend desde variable de entorno
-        process.env.REACT_APP_API_URL || '',
-        // URLs específicas por ambiente
-        'https://financial-resume-engine.onrender.com/api/v1',  // Render
-        'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1'  // GCP
-      ].filter(Boolean);
+      // Determinar URLs según ambiente actual para evitar intentos innecesarios
+      const currentEnv = envConfig.ENVIRONMENT;
+      let possibleUrls = [];
+      
+      console.log(`🔍 [configService] Ambiente detectado: ${currentEnv}`);
+      
+      if (currentEnv === 'development') {
+        possibleUrls = [
+          process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1'
+        ];
+      } else if (currentEnv === 'render') {
+        possibleUrls = [
+          'https://financial-resume-engine.onrender.com/api/v1'
+        ];
+      } else if (currentEnv === 'gcp') {
+        possibleUrls = [
+          'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1'
+        ];
+      } else {
+        // Fallback: probar todas
+        console.warn(`⚠️ [configService] Ambiente desconocido: ${currentEnv}, probando todas las URLs`);
+        possibleUrls = [
+          envConfig.API_BASE_URL,
+          process.env.REACT_APP_API_URL || '',
+          'https://financial-resume-engine.onrender.com/api/v1',
+          'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1'
+        ].filter(Boolean);
+      }
+      
+      console.log(`🎯 [configService] URLs a probar: ${possibleUrls.length}`);
+      
+      // Si solo hay una URL, ir directo sin intentos adicionales
+      if (possibleUrls.length === 1) {
+        console.log(`⚡ [configService] Una sola URL detectada: ${possibleUrls[0]}`);
+      }
 
       let config = null;
       let lastError = null;
@@ -62,7 +94,7 @@ class ConfigService {
             headers: {
               'Content-Type': 'application/json',
             },
-            timeout: 5000,
+            signal: AbortSignal.timeout(3000),  // 3 segundos en lugar de 5
           });
 
           if (!response.ok) {
