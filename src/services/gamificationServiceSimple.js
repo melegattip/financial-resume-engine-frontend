@@ -14,21 +14,6 @@ class GamificationService {
    */
   async recordInsightViewed(insightId, insightTitle) {
     try {
-      // Temporalmente deshabilitar gamificación hasta que el servicio esté completo
-      const hostname = window.location.hostname;
-      const isDevelopment = hostname === 'localhost' || hostname === '127.0.0.1';
-      const isProduction = hostname === 'financial.niloft.com' || hostname.includes('onrender.com') || hostname.includes('run.app');
-      
-      if (isDevelopment) {
-        console.debug('⚠️ Gamification deshabilitado en desarrollo - servicios no corriendo');
-        return null;
-      }
-      
-      if (isProduction) {
-        console.debug('⚠️ Gamification temporalmente deshabilitado en producción - servicio en desarrollo');
-        return null;
-      }
-      
       const result = await this.api.recordAction(
         'view_insight',
         'insight', 
@@ -54,21 +39,6 @@ class GamificationService {
    */
   async recordInsightUnderstood(insightId, insightTitle) {
     try {
-      // Temporalmente deshabilitar gamificación hasta que el servicio esté completo
-      const hostname = window.location.hostname;
-      const isDevelopment = hostname === 'localhost' || hostname === '127.0.0.1';
-      const isProduction = hostname === 'financial.niloft.com' || hostname.includes('onrender.com') || hostname.includes('run.app');
-      
-      if (isDevelopment) {
-        console.debug('⚠️ Gamification deshabilitado en desarrollo - servicios no corriendo');
-        return null;
-      }
-      
-      if (isProduction) {
-        console.debug('⚠️ Gamification temporalmente deshabilitado en producción - servicio en desarrollo');
-        return null;
-      }
-      
       const result = await this.api.recordAction(
         'understand_insight',
         'insight',
@@ -93,21 +63,6 @@ class GamificationService {
    */
   async recordActionCompleted(actionType, description) {
     try {
-      // Temporalmente deshabilitar gamificación hasta que el servicio esté completo
-      const hostname = window.location.hostname;
-      const isDevelopment = hostname === 'localhost' || hostname === '127.0.0.1';
-      const isProduction = hostname === 'financial.niloft.com' || hostname.includes('onrender.com') || hostname.includes('run.app');
-      
-      if (isDevelopment) {
-        console.debug('⚠️ Gamification deshabilitado en desarrollo - servicios no corriendo');
-        return null;
-      }
-      
-      if (isProduction) {
-        console.debug('⚠️ Gamification temporalmente deshabilitado en producción - servicio en desarrollo');
-        return null;
-      }
-      
       const result = await this.api.recordAction(
         'complete_action',
         'suggestion',
