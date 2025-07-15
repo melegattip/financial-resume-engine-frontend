@@ -3,11 +3,12 @@ import { FaBrain, FaSpinner, FaRedo, FaLightbulb, FaShoppingCart, FaCheck, FaChe
 import { aiAPI, savingsGoalsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { usePeriod } from '../contexts/PeriodContext';
-import gamificationService from '../services/gamificationServiceSimple';
+import { useGamification } from '../contexts/GamificationContext';
 
 const AIInsights = () => {
   const { user, isAuthenticated } = useAuth();
   const { updateAvailableData } = usePeriod();
+  const { recordInsightViewed, recordInsightUnderstood, recordSuggestionUsed } = useGamification();
   const [insights, setInsights] = useState([]);
   const [purchaseAnalysis, setPurchaseAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -336,9 +337,9 @@ const AIInsights = () => {
       setPurchaseAnalysis(response);
       
       // 🎮 Registrar acción de gamificación
-      await gamificationService.recordPurchaseAnalysisUsed(
-        purchaseForm.itemName, 
-        purchaseForm.amount
+      await recordSuggestionUsed(
+        `purchase-analysis-${Date.now()}`,
+        `Purchase analysis: ${purchaseForm.itemName}`
       );
       
     } catch (err) {
@@ -362,8 +363,8 @@ const AIInsights = () => {
     if (!viewedInsights.has(insightId)) {
       setViewedInsights(prev => new Set([...prev, insightId]));
       
-      // Registrar en gamificación - convertir ID a string
-      await gamificationService.recordInsightViewed(String(insightId), insightTitle);
+      // Registrar en gamificación
+      await recordInsightViewed(String(insightId), insightTitle);
     }
   };
 
@@ -371,8 +372,8 @@ const AIInsights = () => {
     if (!understoodInsights.has(insightId)) {
       setUnderstoodInsights(prev => new Set([...prev, insightId]));
       
-      // Registrar en gamificación - convertir ID a string
-      await gamificationService.recordInsightUnderstood(String(insightId), insightTitle);
+      // Registrar en gamificación
+      await recordInsightUnderstood(String(insightId), insightTitle);
     }
   };
 

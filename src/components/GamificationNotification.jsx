@@ -47,7 +47,7 @@ const GamificationNotification = ({
     switch (type) {
       case 'achievement':
         return {
-          icon: Trophy,
+          icon: FaTrophy,
           bgColor: 'bg-gradient-to-r from-yellow-400 to-orange-500',
           iconColor: 'text-white',
           title: achievement?.name || 'Logro Desbloqueado',
@@ -55,7 +55,7 @@ const GamificationNotification = ({
         };
       case 'level_up':
         return {
-          icon: Star,
+          icon: FaStar,
           bgColor: 'bg-gradient-to-r from-purple-500 to-pink-500',
           iconColor: 'text-white',
           title: title || 'Nivel Subido',
@@ -64,7 +64,7 @@ const GamificationNotification = ({
       case 'xp':
       default:
         return {
-          icon: Zap,
+          icon: FaBolt,
           bgColor: 'bg-gradient-to-r from-blue-500 to-green-500',
           iconColor: 'text-white',
           title: title || 'XP Ganado',
