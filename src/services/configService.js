@@ -40,14 +40,6 @@ class ConfigService {
       // Importar configuración dinámica
       const envConfig = (await import('../config/environments')).default;
       
-      // Debug temporal para verificar detección del ambiente
-      console.log('🔍 ConfigService Debug:', {
-        hostname: window.location.hostname,
-        environment: envConfig.ENVIRONMENT,
-        configApiUrl: envConfig.API_BASE_URL,
-        debug: envConfig.debug
-      });
-      
       const possibleUrls = [
         // URL del ambiente actual (prioritaria)
         envConfig.API_BASE_URL,

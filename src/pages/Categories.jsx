@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { FaPlus, FaSearch, FaTag, FaEdit, FaTrash } from 'react-icons/fa';
 import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
 import ValidatedInput from '../components/ValidatedInput';
-import { validateCategoryName, validateDescription } from '../utils/validation';
+import { validateCategoryName } from '../utils/validation';
 import toast from 'react-hot-toast';
 
 const Categories = () => {
@@ -59,18 +59,7 @@ const Categories = () => {
       valid = false;
     }
 
-    // Validar descripción (opcional)
-    if (formData.description.trim()) {
-      const descriptionValidation = validateDescription(formData.description, { 
-        required: false, 
-        maxLength: 500,
-        fieldName: 'descripción'
-      });
-      if (!descriptionValidation.isValid) {
-        errors.description = descriptionValidation.error;
-        valid = false;
-      }
-    }
+
 
     setFormErrors(errors);
     setIsFormValid(valid);
