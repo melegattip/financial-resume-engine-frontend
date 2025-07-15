@@ -37,7 +37,7 @@ const detectEnvironment = () => {
   
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'development';
-  } else if (hostname.includes('onrender.com')) {
+  } else if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
     return 'render';
   } else if (hostname.includes('run.app')) {
     return 'gcp';
