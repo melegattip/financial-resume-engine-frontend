@@ -1,3 +1,7 @@
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getGamificationAPI } from '../services/gamificationAPI';
+import { useGamificationNotifications } from '../components/GamificationNotification';
+
 /**
  * 🎮 GAMIFICATION CONTEXT
  * 
@@ -47,10 +51,6 @@ const LEVEL_SYSTEM = {
   9: { name: 'Money Mentor', minXP: 4000, color: '#84CC16' },
   10: { name: 'Financial Magnate', minXP: 5500, color: '#F97316' }
 };
-
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getGamificationAPI } from '../services/gamificationAPI';
-import { useGamificationNotifications } from '../components/GamificationNotification';
 
 const GamificationContext = createContext();
 
