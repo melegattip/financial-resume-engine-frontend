@@ -14,12 +14,18 @@ class GamificationService {
    */
   async recordInsightViewed(insightId, insightTitle) {
     try {
-      // En desarrollo, verificar si el servicio está disponible antes de intentar
-      const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      // Temporalmente deshabilitar gamificación hasta que el servicio esté completo
+      const hostname = window.location.hostname;
+      const isDevelopment = hostname === 'localhost' || hostname === '127.0.0.1';
+      const isProduction = hostname === 'financial.niloft.com' || hostname.includes('onrender.com') || hostname.includes('run.app');
       
       if (isDevelopment) {
-        // No hacer la llamada si el servicio probablemente no está corriendo
         console.debug('⚠️ Gamification deshabilitado en desarrollo - servicios no corriendo');
+        return null;
+      }
+      
+      if (isProduction) {
+        console.debug('⚠️ Gamification temporalmente deshabilitado en producción - servicio en desarrollo');
         return null;
       }
       
@@ -48,11 +54,18 @@ class GamificationService {
    */
   async recordInsightUnderstood(insightId, insightTitle) {
     try {
-      // En desarrollo, deshabilitar gamification
-      const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      // Temporalmente deshabilitar gamificación hasta que el servicio esté completo
+      const hostname = window.location.hostname;
+      const isDevelopment = hostname === 'localhost' || hostname === '127.0.0.1';
+      const isProduction = hostname === 'financial.niloft.com' || hostname.includes('onrender.com') || hostname.includes('run.app');
       
       if (isDevelopment) {
         console.debug('⚠️ Gamification deshabilitado en desarrollo - servicios no corriendo');
+        return null;
+      }
+      
+      if (isProduction) {
+        console.debug('⚠️ Gamification temporalmente deshabilitado en producción - servicio en desarrollo');
         return null;
       }
       
@@ -80,11 +93,18 @@ class GamificationService {
    */
   async recordActionCompleted(actionType, description) {
     try {
-      // En desarrollo, deshabilitar gamification
-      const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      // Temporalmente deshabilitar gamificación hasta que el servicio esté completo
+      const hostname = window.location.hostname;
+      const isDevelopment = hostname === 'localhost' || hostname === '127.0.0.1';
+      const isProduction = hostname === 'financial.niloft.com' || hostname.includes('onrender.com') || hostname.includes('run.app');
       
       if (isDevelopment) {
         console.debug('⚠️ Gamification deshabilitado en desarrollo - servicios no corriendo');
+        return null;
+      }
+      
+      if (isProduction) {
+        console.debug('⚠️ Gamification temporalmente deshabilitado en producción - servicio en desarrollo');
         return null;
       }
       
