@@ -98,13 +98,21 @@ export const validateDescription = (value, options = {}) => {
     fieldName = 'descripción'
   } = options;
 
+  // Verificar si value es undefined o null
+  if (!value || typeof value !== 'string') {
+    if (required) {
+      return { isValid: false, error: `La ${fieldName} es requerida` };
+    }
+    return { isValid: true, error: null };
+  }
+
   // Verificar si es requerido
-  if (required && (!value || value.trim() === '')) {
+  if (required && value.trim() === '') {
     return { isValid: false, error: `La ${fieldName} es requerida` };
   }
 
   // Si no es requerido y está vacío, es válido
-  if (!required && (!value || value.trim() === '')) {
+  if (!required && value.trim() === '') {
     return { isValid: true, error: null };
   }
 
@@ -150,13 +158,21 @@ export const validateCategoryName = (value, options = {}) => {
     maxLength = 50
   } = options;
 
+  // Verificar si value es undefined o null
+  if (!value || typeof value !== 'string') {
+    if (required) {
+      return { isValid: false, error: 'El nombre de la categoría es requerido' };
+    }
+    return { isValid: true, error: null };
+  }
+
   // Verificar si es requerido
-  if (required && (!value || value.trim() === '')) {
+  if (required && value.trim() === '') {
     return { isValid: false, error: 'El nombre de la categoría es requerido' };
   }
 
   // Si no es requerido y está vacío, es válido
-  if (!required && (!value || value.trim() === '')) {
+  if (!required && value.trim() === '') {
     return { isValid: true, error: null };
   }
 
@@ -203,13 +219,21 @@ export const validateDate = (value, options = {}) => {
     fieldName = 'fecha'
   } = options;
 
+  // Verificar si value es undefined o null
+  if (!value || typeof value !== 'string') {
+    if (required) {
+      return { isValid: false, error: `La ${fieldName} es requerida` };
+    }
+    return { isValid: true, error: null };
+  }
+
   // Verificar si es requerido
-  if (required && (!value || value.trim() === '')) {
+  if (required && value.trim() === '') {
     return { isValid: false, error: `La ${fieldName} es requerida` };
   }
 
   // Si no es requerido y está vacío, es válido
-  if (!required && (!value || value.trim() === '')) {
+  if (!required && value.trim() === '') {
     return { isValid: true, error: null };
   }
 
@@ -266,13 +290,21 @@ export const validateDate = (value, options = {}) => {
 export const validateEmail = (value, options = {}) => {
   const { required = true } = options;
 
+  // Verificar si value es undefined o null
+  if (!value || typeof value !== 'string') {
+    if (required) {
+      return { isValid: false, error: 'El email es requerido' };
+    }
+    return { isValid: true, error: null };
+  }
+
   // Verificar si es requerido
-  if (required && (!value || value.trim() === '')) {
+  if (required && value.trim() === '') {
     return { isValid: false, error: 'El email es requerido' };
   }
 
   // Si no es requerido y está vacío, es válido
-  if (!required && (!value || value.trim() === '')) {
+  if (!required && value.trim() === '') {
     return { isValid: true, error: null };
   }
 

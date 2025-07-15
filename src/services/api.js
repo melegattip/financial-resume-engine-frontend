@@ -1,10 +1,11 @@
 import axios from 'axios';
 import toast from '../utils/notifications';
 import configService from './configService';
+import envConfig from '../config/environments';
 
-// Configuración base de axios - se actualizará dinámicamente
+// Configuración base de axios - usa configuración dinámica
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1',
+  baseURL: envConfig.API_BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
