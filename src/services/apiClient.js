@@ -2,8 +2,26 @@ import axios from 'axios';
 import configService from './configService';
 
 // Configuración base de axios - SOLO comunicación HTTP
+// Función para determinar baseURL inicial por ambiente
+const getInitialBaseURL = () => {
+  // Variable de entorno tiene prioridad
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  // Detección por hostname
+  const hostname = window.location.hostname;
+  if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
+    return 'https://financial-resume-engine.onrender.com/api/v1';  // Render
+  } else if (hostname.includes('run.app')) {
+    return 'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1';  // GCP
+  } else {
+    return 'http://localhost:8080/api/v1';  // Development
+  }
+};
+
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1',
+  baseURL: getInitialBaseURL(),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

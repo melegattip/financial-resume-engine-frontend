@@ -10,13 +10,42 @@ const getApiBaseUrl = async () => {
     return config.api_base_url;
   } catch (error) {
     console.error('Error obteniendo URL base:', error);
-    return process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1';
+    
+    // Fallback con detección de ambiente
+    if (process.env.REACT_APP_API_URL) {
+      return process.env.REACT_APP_API_URL;
+    }
+    
+    const hostname = window.location.hostname;
+    if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
+      return 'https://financial-resume-engine.onrender.com/api/v1';  // Render
+    } else if (hostname.includes('run.app')) {
+      return 'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1';  // GCP
+    } else {
+      return 'http://localhost:8080/api/v1';  // Development
+    }
+  }
+};
+
+// Función para determinar baseURL inicial por ambiente
+const getInitialAuthBaseURL = () => {
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  const hostname = window.location.hostname;
+  if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
+    return 'https://financial-resume-engine.onrender.com/api/v1';  // Render
+  } else if (hostname.includes('run.app')) {
+    return 'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1';  // GCP
+  } else {
+    return 'http://localhost:8080/api/v1';  // Development
   }
 };
 
 // Crear instancia de axios para autenticación
 const authAPI = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1',
+  baseURL: getInitialAuthBaseURL(),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
