@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FaPlusCircle, FaMinusCircle, FaFolderOpen, FaBrain, FaFileAlt, FaCog, FaBars, FaTimes, FaHome, FaStar, FaChartPie, FaBullseye, FaRedo } from 'react-icons/fa';
+import { FaPlusCircle, FaMinusCircle, FaFolderOpen, FaBrain, FaFileAlt, FaCog, FaBars, FaTimes, FaHome, FaStar, FaChartPie, FaBullseye, FaRedo, FaTrophy } from 'react-icons/fa';
 import Brand from '../Brand';
 
 const Sidebar = () => {
@@ -21,6 +21,7 @@ const Sidebar = () => {
     { path: '/insights', icon: FaBrain, label: 'IA Financiero', hasSparkles: true },
           { path: '/budgets', icon: FaChartPie, label: 'Presupuestos', subtitle: 'Controla tus límites' },
       { path: '/savings-goals', icon: FaBullseye, label: 'Metas de Ahorro', subtitle: 'Objetivos financieros' },
+      { path: '/achievements', icon: FaTrophy, label: 'Logros', subtitle: 'Progreso y gamificación' },
           { path: '/reports', icon: FaFileAlt, label: 'Reportes' }
   ];
 

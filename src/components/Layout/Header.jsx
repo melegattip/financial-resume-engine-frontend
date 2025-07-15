@@ -3,7 +3,8 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import PeriodFilter from './PeriodFilter';
 import ThemeToggle from '../ThemeToggle';
-import { FaUser, FaSignOutAlt, FaHome, FaBrain, FaPlusCircle, FaMinusCircle, FaFolderOpen, FaFileAlt, FaCog, FaChartPie, FaBullseye, FaRedo } from 'react-icons/fa';
+import GamificationWidget from '../GamificationWidget';
+import { FaUser, FaSignOutAlt, FaHome, FaBrain, FaPlusCircle, FaMinusCircle, FaFolderOpen, FaFileAlt, FaCog, FaChartPie, FaBullseye, FaRedo, FaTrophy } from 'react-icons/fa';
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -57,6 +58,11 @@ const Header = () => {
         subtitle: 'Automatiza tus transacciones',
         icon: FaRedo
       },
+      '/achievements': { 
+        title: 'Logros y Progreso', 
+        subtitle: 'Tu evolución en el manejo financiero inteligente',
+        icon: FaTrophy
+      },
       '/settings': { 
         title: 'Configuración', 
         subtitle: 'Ajustes de tu cuenta',
@@ -109,6 +115,11 @@ const Header = () => {
           <div className="flex items-center space-x-3 lg:space-x-4">
             {/* Period Filter */}
             <PeriodFilter />
+
+            {/* Gamification Widget */}
+            <div className="hidden lg:block">
+              <GamificationWidget />
+            </div>
 
             {/* Theme Toggle */}
             <ThemeToggle />

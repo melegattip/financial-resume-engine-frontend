@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import { PeriodProvider } from './contexts/PeriodContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { GamificationProvider } from './contexts/GamificationContext';
 import ProtectedRoute, { PublicOnlyRoute } from './components/ProtectedRoute';
 
 // Páginas principales
@@ -18,6 +19,7 @@ import Settings from './pages/Settings';
 import Budgets from './pages/Budgets';
 import SavingsGoals from './pages/SavingsGoals';
 import RecurringTransactions from './pages/RecurringTransactions';
+import Achievements from './pages/Achievements';
 
 // Páginas de autenticación
 import Login from './pages/Login';
@@ -73,6 +75,7 @@ export function AppContent() {
           <Route path="budgets" element={<Budgets />} />
           <Route path="savings-goals" element={<SavingsGoals />} />
           <Route path="recurring-transactions" element={<RecurringTransactions />} />
+          <Route path="achievements" element={<Achievements />} />
           <Route path="settings" element={<Settings />} />
           <Route index element={<Navigate to="/dashboard" replace />} />
         </Route>
@@ -113,7 +116,9 @@ function App() {
       <ThemeProvider>
         <AuthProvider>
           <PeriodProvider>
-            <AppContent />
+            <GamificationProvider>
+              <AppContent />
+            </GamificationProvider>
           </PeriodProvider>
         </AuthProvider>
       </ThemeProvider>
