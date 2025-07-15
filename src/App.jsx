@@ -25,7 +25,7 @@ import Register from './pages/Register';
 
 // Layout components
 import Layout from './components/Layout/Layout';
-import EnvironmentDebugger from './components/EnvironmentDebugger';
+
 
 // Estilos
 import './index.css';
@@ -99,8 +99,7 @@ export function AppContent() {
         />
       </Routes>
       
-      {/* Debugger de ambiente flotante */}
-      <EnvironmentDebugger />
+      
     </>
   );
 }

@@ -7,17 +7,21 @@ const environments = {
     AI_API_URL: 'http://localhost:8082/api/v1',
     REDIS_URL: 'redis://localhost:6379',
     WEBSOCKET_URL: 'ws://localhost:8080/ws',
-    CORS_ORIGIN: 'http://localhost:3000'
+    CORS_ORIGIN: 'http://localhost:3000',
+    // Configuración específica para desarrollo
+    RATE_LIMIT_DISABLED: true,
+    REQUEST_THROTTLE_MS: 100,  // Throttle mínimo entre requests
+    CONFIG_CACHE_DISABLED: true  // Deshabilitar cache de configuración
   },
   
   render: {
     name: 'Render.com',
     API_BASE_URL: 'https://financial-resume-engine.onrender.com/api/v1',
     GAMIFICATION_API_URL: 'https://financial-gamification-service.onrender.com/api/v1',
-    AI_API_URL: 'https://financial-ai-service.onrender.com/api/v1',
+    AI_API_URL: 'https://financial-ai-servicefinancial-ai-service.onrender.com/api/v1',
     REDIS_URL: 'redis://red-d1qmg0juibrs73esqdfg:6379',
     WEBSOCKET_URL: 'wss://financial-resume-engine.onrender.com/ws',
-    CORS_ORIGIN: 'https://financial-resume-frontend.onrender.com'
+    CORS_ORIGIN: 'https://financial-resume-engine-frontend.onrender.com'
   },
   
   gcp: {

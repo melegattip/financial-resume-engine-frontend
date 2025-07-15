@@ -19,11 +19,11 @@ const mimeTypes = {
 const server = http.createServer((req, res) => {
   console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
   
-  let filePath = path.join(__dirname, 'public', req.url === '/' ? 'index.html' : req.url);
+  let filePath = path.join(__dirname, 'build', req.url === '/' ? 'index.html' : req.url);
   
   // Para SPA routing, servir index.html para rutas que no son archivos
   if (!path.extname(filePath) && !fs.existsSync(filePath)) {
-    filePath = path.join(__dirname, 'public', 'index.html');
+    filePath = path.join(__dirname, 'build', 'index.html');
   }
   
   // Health check
@@ -37,7 +37,7 @@ const server = http.createServer((req, res) => {
     if (err) {
       if (err.code === 'ENOENT') {
         // Si el archivo no existe, servir index.html (SPA routing)
-        fs.readFile(path.join(__dirname, 'public', 'index.html'), (err, content) => {
+        fs.readFile(path.join(__dirname, 'build', 'index.html'), (err, content) => {
           if (err) {
             res.writeHead(500);
             res.end('Server Error');
@@ -62,4 +62,4 @@ const server = http.createServer((req, res) => {
 // CRÍTICO: Escuchar en 0.0.0.0, no en localhost
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
-}); 
+});

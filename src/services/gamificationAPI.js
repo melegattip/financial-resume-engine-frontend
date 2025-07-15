@@ -19,9 +19,8 @@ class GamificationAPI {
    */
   async getActionTypes() {
     try {
-      const response = await fetch(`${this.baseURL}/action-types`);
-      if (!response.ok) throw new Error('Failed to fetch action types');
-      return await response.json();
+      const response = await apiClient.get(`${this.baseURL}/action-types`);
+      return response.data;
     } catch (error) {
       console.error('Error fetching action types:', error);
       throw error;
@@ -33,9 +32,8 @@ class GamificationAPI {
    */
   async getLevels() {
     try {
-      const response = await fetch(`${this.baseURL}/levels`);
-      if (!response.ok) throw new Error('Failed to fetch levels');
-      return await response.json();
+      const response = await apiClient.get(`${this.baseURL}/levels`);
+      return response.data;
     } catch (error) {
       console.error('Error fetching levels:', error);
       throw error;
