@@ -5,6 +5,7 @@ import { PeriodProvider } from './contexts/PeriodContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { GamificationProvider } from './contexts/GamificationContext';
 import ProtectedRoute, { PublicOnlyRoute } from './components/ProtectedRoute';
+import FeatureGuard from './components/FeatureGuard';
 
 // Páginas principales
 import Dashboard from './pages/Dashboard';
@@ -67,13 +68,34 @@ export function AppContent() {
           }
         >
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="insights" element={<FinancialInsights />} />
+          <Route 
+            path="insights" 
+            element={
+              <FeatureGuard feature="AI_INSIGHTS" mode="preview">
+                <FinancialInsights />
+              </FeatureGuard>
+            } 
+          />
           <Route path="expenses" element={<Expenses />} />
           <Route path="incomes" element={<Incomes />} />
           <Route path="categories" element={<Categories />} />
           <Route path="reports" element={<Reports />} />
-          <Route path="budgets" element={<Budgets />} />
-          <Route path="savings-goals" element={<SavingsGoals />} />
+          <Route 
+            path="budgets" 
+            element={
+              <FeatureGuard feature="BUDGETS" mode="preview">
+                <Budgets />
+              </FeatureGuard>
+            } 
+          />
+          <Route 
+            path="savings-goals" 
+            element={
+              <FeatureGuard feature="SAVINGS_GOALS" mode="preview">
+                <SavingsGoals />
+              </FeatureGuard>
+            } 
+          />
           <Route path="recurring-transactions" element={<RecurringTransactions />} />
           <Route path="achievements" element={<Achievements />} />
           <Route path="settings" element={<Settings />} />

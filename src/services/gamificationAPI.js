@@ -81,6 +81,87 @@ class GamificationAPI {
     }
   }
 
+  // 🔒 FEATURE GATES ENDPOINTS
+
+  /**
+   * Obtiene todas las features del usuario (desbloqueadas y bloqueadas)
+   */
+  async getUserFeatures() {
+    try {
+      const response = await apiClient.get(`${this.baseURL}/features`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user features:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Verifica acceso a una feature específica
+   * @param {string} featureKey - Clave de la feature (SAVINGS_GOALS, BUDGETS, AI_INSIGHTS)
+   */
+  async checkFeatureAccess(featureKey) {
+    try {
+      const response = await apiClient.get(`${this.baseURL}/features/${featureKey}/access`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error checking access to feature ${featureKey}:`, error);
+      throw error;
+    }
+  }
+
+  // 🏆 CHALLENGES ENDPOINTS
+
+  /**
+   * Obtiene los challenges diarios del usuario y su progreso
+   */
+  async getDailyChallenges() {
+    try {
+      const response = await apiClient.get(`${this.baseURL}/challenges/daily`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching daily challenges:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtiene los challenges semanales del usuario y su progreso
+   */
+  async getWeeklyChallenges() {
+    try {
+      const response = await apiClient.get(`${this.baseURL}/challenges/weekly`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching weekly challenges:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Procesa el progreso de challenges para una acción específica
+   * @param {string} actionType - Tipo de acción
+   * @param {string} entityType - Tipo de entidad (opcional)
+   * @param {string} entityId - ID de la entidad (opcional)
+   * @param {number} xpEarned - XP ganado por la acción
+   * @param {string} description - Descripción de la acción
+   */
+  async processChallengeProgress(actionType, entityType = '', entityId = '', xpEarned = 0, description = '') {
+    try {
+      const response = await apiClient.post(`${this.baseURL}/challenges/progress`, {
+        action_type: actionType,
+        entity_type: entityType,
+        entity_id: entityId,
+        xp_earned: xpEarned,
+        description
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error processing challenge progress:', error);
+      throw error;
+    }
+  }
+
   /**
    * Registra una acción del usuario y otorga XP
    * @param {string} actionType - Tipo de acción (view_insight, understand_insight, etc.)
@@ -144,27 +225,198 @@ class GamificationAPI {
     return this.recordAction('use_suggestion', 'suggestion', suggestionId, description);
   }
 
-  // 📊 ACCIONES DE NAVEGACIÓN (para el widget de IA)
+  // 📊 ACCIONES DE NAVEGACIÓN Y TRANSACCIONES (Sistema Actualizado)
 
   /**
    * Registra navegación al dashboard
    */
   async recordViewDashboard() {
-    return this.recordAction('view_insight', 'dashboard', 'main-dashboard', 'User viewed dashboard');
+    return this.recordAction('view_dashboard', 'dashboard', 'main-dashboard', 'User viewed dashboard');
   }
 
   /**
    * Registra visualización de gastos
    */
   async recordViewExpenses() {
-    return this.recordAction('view_insight', 'expense', 'expense-list', 'User viewed expenses');
+    return this.recordAction('view_expenses', 'expense', 'expense-list', 'User viewed expenses');
+  }
+
+  /**
+   * Registra visualización de ingresos
+   */
+  async recordViewIncomes() {
+    return this.recordAction('view_incomes', 'income', 'income-list', 'User viewed incomes');
+  }
+
+  /**
+   * Registra visualización de categorías
+   */
+  async recordViewCategories() {
+    return this.recordAction('view_categories', 'category', 'category-list', 'User viewed categories');
   }
 
   /**
    * Registra visualización de analytics
    */
   async recordViewAnalytics(analyticsType = 'general') {
-    return this.recordAction('view_pattern', 'analytics', analyticsType, `User viewed ${analyticsType} analytics`);
+    return this.recordAction('view_analytics', 'analytics', analyticsType, `User viewed ${analyticsType} analytics`);
+  }
+
+  // 💰 ACCIONES DE TRANSACCIONES (Motor Principal de XP)
+
+  /**
+   * Registra creación de gasto
+   */
+  async recordCreateExpense(expenseId, description = 'User created expense') {
+    return this.recordAction('create_expense', 'expense', expenseId, description);
+  }
+
+  /**
+   * Registra creación de ingreso
+   */
+  async recordCreateIncome(incomeId, description = 'User created income') {
+    return this.recordAction('create_income', 'income', incomeId, description);
+  }
+
+  /**
+   * Registra actualización de gasto
+   */
+  async recordUpdateExpense(expenseId, description = 'User updated expense') {
+    return this.recordAction('update_expense', 'expense', expenseId, description);
+  }
+
+  /**
+   * Registra actualización de ingreso
+   */
+  async recordUpdateIncome(incomeId, description = 'User updated income') {
+    return this.recordAction('update_income', 'income', incomeId, description);
+  }
+
+  /**
+   * Registra eliminación de gasto
+   */
+  async recordDeleteExpense(expenseId, description = 'User deleted expense') {
+    return this.recordAction('delete_expense', 'expense', expenseId, description);
+  }
+
+  /**
+   * Registra eliminación de ingreso
+   */
+  async recordDeleteIncome(incomeId, description = 'User deleted income') {
+    return this.recordAction('delete_income', 'income', incomeId, description);
+  }
+
+  // 🏷️ ACCIONES DE ORGANIZACIÓN
+
+  /**
+   * Registra creación de categoría
+   */
+  async recordCreateCategory(categoryId, description = 'User created category') {
+    return this.recordAction('create_category', 'category', categoryId, description);
+  }
+
+  /**
+   * Registra actualización de categoría
+   */
+  async recordUpdateCategory(categoryId, description = 'User updated category') {
+    return this.recordAction('update_category', 'category', categoryId, description);
+  }
+
+  /**
+   * Registra asignación de categoría a transacción
+   */
+  async recordAssignCategory(transactionId, categoryId, description = 'User assigned category') {
+    return this.recordAction('assign_category', 'transaction', transactionId, `${description} - Category: ${categoryId}`);
+  }
+
+  // 🎯 ACCIONES DE ENGAGEMENT
+
+  /**
+   * Registra login diario
+   */
+  async recordDailyLogin() {
+    return this.recordAction('daily_login', 'user', 'daily-login', 'User daily login');
+  }
+
+  /**
+   * Registra racha semanal
+   */
+  async recordWeeklyStreak() {
+    return this.recordAction('weekly_streak', 'user', 'weekly-streak', 'User maintained weekly streak');
+  }
+
+  /**
+   * Registra racha mensual
+   */
+  async recordMonthlyStreak() {
+    return this.recordAction('monthly_streak', 'user', 'monthly-streak', 'User maintained monthly streak');
+  }
+
+  /**
+   * Registra completar perfil
+   */
+  async recordCompleteProfile() {
+    return this.recordAction('complete_profile', 'user', 'profile-complete', 'User completed profile');
+  }
+
+  // 🏆 ACCIONES DE CHALLENGES
+
+  /**
+   * Registra completar challenge diario
+   */
+  async recordDailyChallengeComplete(challengeId, description = 'User completed daily challenge') {
+    return this.recordAction('daily_challenge_complete', 'challenge', challengeId, description);
+  }
+
+  /**
+   * Registra completar challenge semanal
+   */
+  async recordWeeklyChallengeComplete(challengeId, description = 'User completed weekly challenge') {
+    return this.recordAction('weekly_challenge_complete', 'challenge', challengeId, description);
+  }
+
+  // 🔓 ACCIONES DE FEATURES DESBLOQUEABLES
+
+  /**
+   * Registra creación de meta de ahorro (Nivel 3+)
+   */
+  async recordCreateSavingsGoal(goalId, description = 'User created savings goal') {
+    return this.recordAction('create_savings_goal', 'savings_goal', goalId, description);
+  }
+
+  /**
+   * Registra depósito en meta de ahorro
+   */
+  async recordDepositSavings(goalId, amount, description = 'User deposited in savings goal') {
+    return this.recordAction('deposit_savings', 'savings_goal', goalId, `${description} - Amount: ${amount}`);
+  }
+
+  /**
+   * Registra creación de presupuesto (Nivel 5+)
+   */
+  async recordCreateBudget(budgetId, description = 'User created budget') {
+    return this.recordAction('create_budget', 'budget', budgetId, description);
+  }
+
+  /**
+   * Registra mantenerse dentro del presupuesto
+   */
+  async recordStayWithinBudget(budgetId, description = 'User stayed within budget') {
+    return this.recordAction('stay_within_budget', 'budget', budgetId, description);
+  }
+
+  /**
+   * Registra uso de análisis IA (Nivel 7+)
+   */
+  async recordUseAIAnalysis(analysisId, description = 'User used AI analysis') {
+    return this.recordAction('use_ai_analysis', 'ai_analysis', analysisId, description);
+  }
+
+  /**
+   * Registra aplicar sugerencia de IA
+   */
+  async recordApplyAISuggestion(suggestionId, description = 'User applied AI suggestion') {
+    return this.recordAction('apply_ai_suggestion', 'ai_suggestion', suggestionId, description);
   }
 }
 
