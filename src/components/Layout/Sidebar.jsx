@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FaPlusCircle, FaMinusCircle, FaFolderOpen, FaBrain, FaFileAlt, FaCog, FaBars, FaTimes, FaHome, FaStar, FaChartPie, FaBullseye, FaRedo, FaTrophy } from 'react-icons/fa';
 import Brand from '../Brand';
+import FeatureProgressIndicator from '../FeatureProgressIndicator';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -18,9 +19,9 @@ const Sidebar = () => {
 
   // Grupo 2: Análisis y planificación
   const analysisMenuItems = [
-    { path: '/insights', icon: FaBrain, label: 'IA Financiero', hasSparkles: true },
-          { path: '/budgets', icon: FaChartPie, label: 'Presupuestos', subtitle: 'Controla tus límites' },
-      { path: '/savings-goals', icon: FaBullseye, label: 'Metas de Ahorro', subtitle: 'Objetivos financieros' },
+    { path: '/insights', icon: FaBrain, label: 'IA Financiero', hasSparkles: true, feature: 'AI_INSIGHTS' },
+          { path: '/budgets', icon: FaChartPie, label: 'Presupuestos', subtitle: 'Controla tus límites', feature: 'BUDGETS' },
+      { path: '/savings-goals', icon: FaBullseye, label: 'Metas de Ahorro', subtitle: 'Objetivos financieros', feature: 'SAVINGS_GOALS' },
       { path: '/achievements', icon: FaTrophy, label: 'Logros', subtitle: 'Progreso y gamificación' },
           { path: '/reports', icon: FaFileAlt, label: 'Reportes' }
   ];
@@ -40,7 +41,7 @@ const Sidebar = () => {
     const Icon = item.icon;
     const active = isActive(item.path);
     
-    return (
+    const menuItem = (
       <Link
         key={item.path}
         to={item.path}
@@ -73,6 +74,17 @@ const Sidebar = () => {
         )}
       </Link>
     );
+
+    // Si la item tiene una feature, envolverla con FeatureProgressIndicator
+    if (item.feature) {
+      return (
+        <FeatureProgressIndicator key={item.path} feature={item.feature}>
+          {menuItem}
+        </FeatureProgressIndicator>
+      );
+    }
+
+    return menuItem;
   };
 
   const renderSeparator = () => (
