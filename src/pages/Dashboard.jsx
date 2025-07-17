@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowUp, FaArrowDown, FaDollarSign, FaChartPie, FaCalendar, FaCheckCircle, FaTimesCircle, FaChartBar, FaBullseye, FaExclamationCircle, FaRedo } from 'react-icons/fa';
+import { FaArrowUp, FaArrowDown, FaDollarSign, FaChartPie, FaCalendar, FaCheckCircle, FaTimesCircle, FaChartBar, FaBullseye, FaExclamationCircle, FaRedo, FaBrain } from 'react-icons/fa';
 import { 
   ResponsiveContainer,
   PieChart as RechartsPieChart,
@@ -11,8 +11,10 @@ import {
 import { formatCurrency, formatDate, formatPercentage as formatPercentageUtil, budgetsAPI, savingsGoalsAPI, recurringTransactionsAPI } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useGamification } from '../contexts/GamificationContext';
 import dataService from '../services/dataService';
 import useDataRefresh from '../hooks/useDataRefresh';
+import LockedWidget from '../components/LockedWidget';
 
 
 import toast from 'react-hot-toast';
@@ -48,6 +50,9 @@ const Dashboard = () => {
 
   // Usar el contexto de autenticación
   const { user, isAuthenticated } = useAuth();
+
+  // Usar el contexto de gamificación para niveles
+  const { userProfile, isFeatureUnlocked, FEATURE_GATES } = useGamification();
 
   // Debug de autenticación
   useEffect(() => {
@@ -469,10 +474,10 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Widgets de nuevas funcionalidades */}
+      {/* Widgets de funcionalidades activas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-        {/* Widget de Presupuestos */}
-        {budgetsSummary && (
+        {/* Widget de Presupuestos (Nivel 5 requerido) */}
+        {isFeatureUnlocked('BUDGETS') && budgetsSummary && (
           <div className="card">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
@@ -503,8 +508,8 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Widget de Metas de Ahorro */}
-        {savingsGoalsSummary && (
+        {/* Widget de Metas de Ahorro (Nivel 3 requerido) */}
+        {isFeatureUnlocked('SAVINGS_GOALS') && savingsGoalsSummary && (
           <div className="card">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
@@ -525,6 +530,30 @@ const Dashboard = () => {
               </span>
               <span className="text-sm text-fr-gray-500 dark:text-gray-400">
                 Meta: {formatAmount(savingsGoalsSummary.summary?.total_target || 0)}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Widget de IA Financiera (Nivel 7 requerido) */}
+        {isFeatureUnlocked('AI_INSIGHTS') && (
+          <div className="card cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/insights')}>
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
+                  IA Financiera
+                </p>
+                <p className="text-xl lg:text-2xl font-bold text-purple-600 dark:text-purple-400 break-words">
+                  Activa
+                </p>
+              </div>
+              <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-purple-100 dark:bg-purple-900/30 ml-2">
+                <FaBrain className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600 dark:text-purple-400" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <span className="text-sm text-fr-gray-500 dark:text-gray-400">
+                🤖 Análisis inteligente disponible
               </span>
             </div>
           </div>
@@ -555,6 +584,54 @@ const Dashboard = () => {
               </span>
             </div>
           </div>
+        )}
+      </div>
+
+      {/* Widgets bloqueados */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+        {/* Widget de Presupuestos (Nivel 5 requerido) */}
+        {!isFeatureUnlocked('BUDGETS') && (
+          <LockedWidget
+            mode="minimal"
+            featureName="Presupuestos"
+            featureIcon={<FaChartPie className="w-4 h-4" />}
+            description="Controla tus gastos con límites inteligentes por categoría"
+            requiredLevel={FEATURE_GATES.BUDGETS.requiredLevel}
+            currentLevel={userProfile?.current_level || 0}
+            currentXP={userProfile?.total_xp || 0}
+            requiredXP={FEATURE_GATES.BUDGETS.xpThreshold}
+            benefits={FEATURE_GATES.BUDGETS.benefits}
+          />
+        )}
+
+        {/* Widget de Metas de Ahorro (Nivel 3 requerido) */}
+        {!isFeatureUnlocked('SAVINGS_GOALS') && (
+          <LockedWidget
+            mode="minimal"
+            featureName="Metas de Ahorro"
+            featureIcon={<FaBullseye className="w-4 h-4" />}
+            description="Crea y gestiona objetivos de ahorro personalizados"
+            requiredLevel={FEATURE_GATES.SAVINGS_GOALS.requiredLevel}
+            currentLevel={userProfile?.current_level || 0}
+            currentXP={userProfile?.total_xp || 0}
+            requiredXP={FEATURE_GATES.SAVINGS_GOALS.xpThreshold}
+            benefits={FEATURE_GATES.SAVINGS_GOALS.benefits}
+          />
+        )}
+
+        {/* Widget de IA Financiera (Nivel 7 requerido) */}
+        {!isFeatureUnlocked('AI_INSIGHTS') && (
+          <LockedWidget
+            mode="minimal"
+            featureName="IA Financiera"
+            featureIcon={<FaBrain className="w-4 h-4" />}
+            description="Análisis inteligente con IA para decisiones financieras"
+            requiredLevel={FEATURE_GATES.AI_INSIGHTS.requiredLevel}
+            currentLevel={userProfile?.current_level || 0}
+            currentXP={userProfile?.total_xp || 0}
+            requiredXP={FEATURE_GATES.AI_INSIGHTS.xpThreshold}
+            benefits={FEATURE_GATES.AI_INSIGHTS.benefits}
+          />
         )}
       </div>
 

@@ -122,6 +122,17 @@ api.interceptors.response.use(
       console.error('🔍 Error setting up request:', error.message);
     }
     
+    // ⚠️ NO manejar errores de endpoints de auth - los maneja authService
+    const isAuthEndpoint = error.config?.url?.includes('/auth/login') || 
+                           error.config?.url?.includes('/auth/register') ||
+                           error.config?.url?.includes('/auth/refresh') ||
+                           error.config?.url?.includes('/auth/logout');
+    
+    if (isAuthEndpoint) {
+      // Los errores de auth los maneja authService, solo pasar el error
+      return Promise.reject(error);
+    }
+    
     const message = error.response?.data?.error || error.message || 'Error desconocido';
     
     if (error.response?.status === 401) {

@@ -68,7 +68,7 @@ const GamificationNotification = ({
           bgColor: 'bg-gradient-to-r from-blue-500 to-green-500',
           iconColor: 'text-white',
           title: title || 'XP Ganado',
-          description: description || `Has ganado ${points} puntos de experiencia`
+          description: `Has ganado ${points} puntos de experiencia`
         };
     }
   };
@@ -139,6 +139,7 @@ export const useGamificationNotifications = () => {
   const [notification, setNotification] = useState(null);
 
   const showNotification = (notificationData) => {
+    console.log(`📢 [GamificationNotification] setNotification called with:`, notificationData);
     setNotification(notificationData);
   };
 
@@ -148,6 +149,8 @@ export const useGamificationNotifications = () => {
 
   // Métodos de conveniencia
   const showXPGained = (xp, message = '') => {
+    console.log(`🎮 [GamificationNotification] showXPGained llamado con:`, { xp, message });
+    
     showNotification({
       type: 'xp',
       points: xp,
@@ -183,8 +186,9 @@ export const useGamificationNotifications = () => {
     showAchievementUnlocked,
     GamificationNotification: (props) => (
       <GamificationNotification
-        isVisible={notification}
+        isVisible={!!notification}
         onClose={hideNotification}
+        {...notification}
         {...props}
       />
     )
