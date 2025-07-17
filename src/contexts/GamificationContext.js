@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getGamificationAPI } from '../services/gamificationAPI';
 import { useGamificationNotifications } from '../components/GamificationNotification';
+import { useAuth } from './AuthContext';
 /**
  * 🎮 GAMIFICATION CONTEXT
  * 
@@ -69,13 +70,16 @@ export const GamificationProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [achievements, setAchievements] = useState([]);
   const [stats, setStats] = useState(null);
-  const [features, setFeatures] = useState(null); // 🔒 Feature Gates State
+  const [features, setFeatures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Cache para evitar llamadas innecesarias
   const [lastUpdate, setLastUpdate] = useState(null);
   const [pendingActions, setPendingActions] = useState([]);
+
+  // Contexto de autenticación
+  const auth = useAuth();
 
   // Notificaciones
   const {
@@ -87,10 +91,21 @@ export const GamificationProvider = ({ children }) => {
 
   const api = getGamificationAPI();
 
-  // Cargar datos iniciales
+  // Cargar datos iniciales solo cuando el usuario esté autenticado
   useEffect(() => {
-    loadGamificationData();
-  }, []);
+    // Solo cargar si el usuario está autenticado y la auth está inicializada
+    if (auth.authState === 'authenticated' && auth.isInitialized) {
+      loadGamificationData();
+    } else if (auth.authState === 'unauthenticated') {
+      // Limpiar datos si el usuario no está autenticado
+      setUserProfile(null);
+      setAchievements([]);
+      setStats(null);
+      setFeatures([]);
+      setError(null);
+      setLoading(false);
+    }
+  }, [auth.authState, auth.isInitialized]);
 
   const loadGamificationData = async () => {
     try {
@@ -124,20 +139,32 @@ export const GamificationProvider = ({ children }) => {
     
     try {
       if (pendingActions.includes(actionKey)) {
+        console.log(`⚠️ [GamificationContext] Acción duplicada ignorada: ${actionKey}`);
         return null;
       }
 
-      setPendingActions(prev => [...prev, actionKey]);
-
-      const result = await api.recordAction({
-        action_type: actionType,
-        entity_type: entityType,
-        entity_id: entityId,
+      console.log(`🎯 [GamificationContext] Registrando acción:`, {
+        actionType,
+        entityType,
+        entityId,
         description: description || `User ${actionType} ${entityType}`
       });
 
+      setPendingActions(prev => [...prev, actionKey]);
+
+      const result = await api.recordAction(
+        actionType,
+        entityType,
+        entityId,
+        description || `User ${actionType} ${entityType}`
+      );
+
+      console.log(`✅ [GamificationContext] Resultado de la acción:`, result);
+
       // Actualizar datos locales
       if (result.xp_earned > 0) {
+        console.log(`🏆 [GamificationContext] XP ganado: ${result.xp_earned}`);
+        
         setUserProfile(prev => ({
           ...prev,
           total_xp: result.total_xp,
@@ -152,16 +179,20 @@ export const GamificationProvider = ({ children }) => {
 
         // Mostrar notificación de XP ganado
         showXPGained(result.xp_earned, `¡Has ganado ${result.xp_earned} XP!`);
+      } else {
+        console.log(`⚠️ [GamificationContext] No se ganó XP para la acción ${actionType}`);
       }
 
       // Mostrar notificación de subida de nivel
       if (result.level_up) {
+        console.log(`🎉 [GamificationContext] ¡Subida de nivel! Nuevo nivel: ${result.new_level}`);
         const levelInfo = getLevelInfo(result.new_level);
         showLevelUp(result.new_level, levelInfo.name);
       }
 
       // Mostrar notificaciones de nuevos logros
       if (result.new_achievements && result.new_achievements.length > 0) {
+        console.log(`🏅 [GamificationContext] Nuevos logros desbloqueados:`, result.new_achievements);
         result.new_achievements.forEach(achievement => {
           showAchievementUnlocked(achievement.name, achievement.description);
         });
@@ -180,7 +211,7 @@ export const GamificationProvider = ({ children }) => {
 
       return result;
     } catch (err) {
-      console.error('Error recording gamification action:', err);
+      console.error('❌ [GamificationContext] Error recording gamification action:', err);
       setPendingActions(prev => prev.filter(p => p !== actionKey));
       return null;
     }
@@ -354,7 +385,7 @@ export const GamificationProvider = ({ children }) => {
     userProfile,
     achievements,
     stats,
-    features, // 🔒 Features del usuario (desbloqueadas y bloqueadas)
+    features,
     loading,
     error,
 
