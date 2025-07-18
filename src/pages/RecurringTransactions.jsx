@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { recurringTransactionsAPI, categoriesAPI, formatCurrency } from '../services/api';
 import toast from '../utils/notifications';
 import dataService from '../services/dataService';
+import ResponsiveTable from '../components/ResponsiveTable';
 
 const RecurringTransactions = () => {
   const [transactions, setTransactions] = useState([]);
@@ -395,6 +396,276 @@ const RecurringTransactions = () => {
     }
   };
 
+  // Configuración de columnas para ResponsiveTable
+  const tableColumns = [
+    {
+      header: 'Transacción',
+      accessor: 'description',
+      render: (value) => (
+        <div className="font-medium text-gray-900 dark:text-gray-100">
+          {value}
+        </div>
+      )
+    },
+    {
+      header: 'Tipo',
+      accessor: 'type',
+      hideOnTablet: true,
+      render: (value) => (
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(value)}`}>
+          {getTypeText(value)}
+        </span>
+      )
+    },
+    {
+      header: 'Monto',
+      accessor: 'amount',
+      align: 'right',
+      render: (value) => formatCurrency(value)
+    },
+    {
+      header: 'Frecuencia',
+      accessor: 'frequency',
+      hideOnMobile: true,
+      render: (value) => getFrequencyText(value)
+    },
+    {
+      header: 'Categoría',
+      accessor: 'category_id',
+      hideOnTablet: true,
+      render: (value) => getCategoryName(value)
+    },
+    {
+      header: 'Próxima Ejecución',
+      accessor: 'next_date',
+      render: (value, item) => (
+        <div>
+          <div className="text-sm text-gray-900 dark:text-gray-100">
+            {formatDate(value)}
+          </div>
+          <div className={`text-xs font-medium ${
+            isTransactionOverdue(value) 
+              ? 'text-red-600 dark:text-red-400' 
+              : 'text-gray-500 dark:text-gray-400'
+          }`}>
+            {isTransactionOverdue(value) && '⚠️ '}
+            {getDaysUntilNext(value)}
+          </div>
+        </div>
+      )
+    },
+    {
+      header: 'Estado',
+      accessor: 'is_active',
+      hideOnTablet: true,
+      render: (value) => (
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+          value 
+            ? 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30' 
+            : 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30'
+        }`}>
+          {value ? 'Activa' : 'Pausada'}
+        </span>
+      )
+    },
+    {
+      header: 'Acciones',
+      accessor: 'actions',
+      align: 'right',
+      render: (_, transaction) => (
+        <div className="flex justify-end space-x-2">
+          {/* Botón de ejecutar para transacciones vencidas y activas */}
+          {transaction.is_active && isTransactionOverdue(transaction.next_date) && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleExecuteTransaction(transaction.id);
+              }}
+              className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 p-1"
+              title="Ejecutar ahora (vencida)"
+            >
+              ⚡
+            </button>
+          )}
+          {transaction.is_active ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePause(transaction.id);
+              }}
+              className="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300 p-1"
+              title="Pausar"
+            >
+              ⏸️
+            </button>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleResume(transaction.id);
+              }}
+              className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 p-1"
+              title="Reanudar"
+            >
+              ▶️
+            </button>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEdit(transaction);
+            }}
+            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1"
+            title="Editar"
+          >
+            ⚙️
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(transaction);
+            }}
+            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1"
+            title="Eliminar"
+          >
+            🗑️
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  // Renderizado personalizado para cards móviles
+  const renderMobileCard = (transaction, index) => (
+    <div 
+      key={index}
+      className="card border-l-4 border-fr-primary transition-all duration-200 hover:shadow-lg"
+    >
+      <div className="space-y-3">
+        {/* Header de la card */}
+        <div className="flex justify-between items-start">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+              {transaction.description}
+            </h3>
+            <div className="flex items-center space-x-2 mt-1">
+              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(transaction.type)}`}>
+                {getTypeText(transaction.type)}
+              </span>
+              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                transaction.is_active 
+                  ? 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30' 
+                  : 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30'
+              }`}>
+                {transaction.is_active ? 'Activa' : 'Pausada'}
+              </span>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+              {formatCurrency(transaction.amount)}
+            </div>
+          </div>
+        </div>
+
+        {/* Detalles */}
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <span className="text-gray-600 dark:text-gray-400">Frecuencia:</span>
+            <div className="font-medium text-gray-900 dark:text-gray-100">
+              {getFrequencyText(transaction.frequency)}
+            </div>
+          </div>
+          <div>
+            <span className="text-gray-600 dark:text-gray-400">Categoría:</span>
+            <div className="font-medium text-gray-900 dark:text-gray-100">
+              {getCategoryName(transaction.category_id)}
+            </div>
+          </div>
+        </div>
+
+        {/* Próxima ejecución */}
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+          <div className="flex justify-between items-center">
+            <div>
+              <span className="text-xs text-gray-600 dark:text-gray-400">Próxima ejecución:</span>
+              <div className="font-medium text-gray-900 dark:text-gray-100">
+                {formatDate(transaction.next_date)}
+              </div>
+            </div>
+            <div className={`text-xs font-medium ${
+              isTransactionOverdue(transaction.next_date) 
+                ? 'text-red-600 dark:text-red-400' 
+                : 'text-gray-500 dark:text-gray-400'
+            }`}>
+              {isTransactionOverdue(transaction.next_date) && '⚠️ '}
+              {getDaysUntilNext(transaction.next_date)}
+            </div>
+          </div>
+        </div>
+
+        {/* Acciones */}
+        <div className="flex justify-end space-x-3 pt-2 border-t border-gray-200 dark:border-gray-600">
+          {transaction.is_active && isTransactionOverdue(transaction.next_date) && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleExecuteTransaction(transaction.id);
+              }}
+              className="flex items-center space-x-1 px-3 py-1 text-xs font-medium text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 bg-purple-50 dark:bg-purple-900/20 rounded-full transition-colors"
+            >
+              <span>⚡</span>
+              <span>Ejecutar</span>
+            </button>
+          )}
+          {transaction.is_active ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePause(transaction.id);
+              }}
+              className="flex items-center space-x-1 px-3 py-1 text-xs font-medium text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 rounded-full transition-colors"
+            >
+              <span>⏸️</span>
+              <span>Pausar</span>
+            </button>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleResume(transaction.id);
+              }}
+              className="flex items-center space-x-1 px-3 py-1 text-xs font-medium text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 bg-green-50 dark:bg-green-900/20 rounded-full transition-colors"
+            >
+              <span>▶️</span>
+              <span>Reanudar</span>
+            </button>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEdit(transaction);
+            }}
+            className="flex items-center space-x-1 px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 rounded-full transition-colors"
+          >
+            <span>⚙️</span>
+            <span>Editar</span>
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(transaction);
+            }}
+            className="flex items-center space-x-1 px-3 py-1 text-xs font-medium text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 bg-red-50 dark:bg-red-900/20 rounded-full transition-colors"
+          >
+            <span>🗑️</span>
+            <span>Eliminar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -537,147 +808,25 @@ const RecurringTransactions = () => {
       </div>
 
       {/* Transactions List */}
-      <div className="card overflow-hidden">
-        {transactions.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-400 dark:text-gray-500 mb-4">
-              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No hay transacciones recurrentes</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">Crea tu primera transacción recurrente para automatizar tus finanzas</p>
+      <div className="space-y-4">
+        <ResponsiveTable
+          data={transactions}
+          columns={tableColumns}
+          renderMobileCard={renderMobileCard}
+          loading={loading}
+          emptyMessage="No hay transacciones recurrentes. Crea tu primera transacción recurrente para automatizar tus finanzas."
+          className="card"
+        />
+        
+        {/* Botón para crear transacción cuando no hay datos */}
+        {transactions.length === 0 && !loading && (
+          <div className="text-center">
             <button
               onClick={() => setShowModal(true)}
               className="btn-primary"
             >
               Crear Transacción
             </button>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Transacción
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Tipo
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Monto
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Frecuencia
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Categoría
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Próxima Ejecución
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {transactions.map((transaction) => (
-                  <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{transaction.description}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(transaction.type)}`}>
-                        {getTypeText(transaction.type)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                      {formatCurrency(transaction.amount)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                      {getFrequencyText(transaction.frequency)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                      {getCategoryName(transaction.category_id)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-gray-100">
-                        {formatDate(transaction.next_date)}
-                      </div>
-                      <div className={`text-xs font-medium ${
-                        isTransactionOverdue(transaction.next_date) 
-                          ? 'text-red-600 dark:text-red-400' 
-                          : 'text-gray-500 dark:text-gray-400'
-                      }`}>
-                        {isTransactionOverdue(transaction.next_date) && '⚠️ '}
-                        {getDaysUntilNext(transaction.next_date)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        transaction.is_active 
-                          ? 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30' 
-                          : 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30'
-                      }`}>
-                        {transaction.is_active ? 'Activa' : 'Pausada'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-2">
-                        {/* Botón de ejecutar para transacciones vencidas y activas */}
-                        {transaction.is_active && isTransactionOverdue(transaction.next_date) && (
-                          <button
-                            onClick={() => handleExecuteTransaction(transaction.id)}
-                            className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
-                            title="Ejecutar ahora (vencida)"
-                          >
-                            ⚡
-                          </button>
-                        )}
-                        {transaction.is_active ? (
-                          <button
-                            onClick={() => handlePause(transaction.id)}
-                            className="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300"
-                            title="Pausar"
-                          >
-                            ⏸️
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleResume(transaction.id)}
-                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                            title="Reanudar"
-                          >
-                            ▶️
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleEdit(transaction)}
-                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                          title="Editar"
-                        >
-                          ⚙️
-                        </button>
-                        <button
-                          onClick={() => handleDelete(transaction)}
-                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                          title="Eliminar"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         )}
       </div>
