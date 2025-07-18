@@ -375,31 +375,31 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Métricas principales */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         {/* Balance total */}
-        <div className="card">
+        <div className="card p-4 sm:p-5">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
+              <p className="text-xs sm:text-sm font-medium text-fr-gray-600 dark:text-gray-400 mb-1">
                 Balance Total
               </p>
-              <p className={`text-xl lg:text-2xl font-bold ${data.balance >= 0 ? 'text-fr-secondary' : 'text-fr-error'} break-words`}>
+              <p className={`text-lg sm:text-xl lg:text-2xl font-bold ${data.balance >= 0 ? 'text-fr-secondary' : 'text-fr-error'} break-words leading-tight`}>
                 {formatAmount(data.balance)}
               </p>
             </div>
-            <div className={`flex-shrink-0 p-2 lg:p-3 rounded-fr ${data.balance >= 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'} ml-2`}>
-              <FaDollarSign className={`w-5 h-5 lg:w-6 lg:h-6 ${data.balance >= 0 ? 'text-fr-secondary' : 'text-fr-error'}`} />
+            <div className={`flex-shrink-0 p-2 sm:p-3 rounded-fr ${data.balance >= 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'} ml-2 sm:ml-3`}>
+              <FaDollarSign className={`w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 ${data.balance >= 0 ? 'text-fr-secondary' : 'text-fr-error'}`} />
             </div>
           </div>
-          <div className="mt-3 flex items-center">
+          <div className="mt-2 sm:mt-3 flex items-center">
             {data.balance >= 0 ? (
-              <FaArrowUp className="w-4 h-4 text-fr-secondary mr-1 flex-shrink-0" />
+              <FaArrowUp className="w-3 h-3 sm:w-4 sm:h-4 text-fr-secondary mr-1 flex-shrink-0" />
             ) : (
-              <FaArrowDown className="w-4 h-4 text-fr-error mr-1 flex-shrink-0" />
+              <FaArrowDown className="w-3 h-3 sm:w-4 sm:h-4 text-fr-error mr-1 flex-shrink-0" />
             )}
-            <span className={`text-sm ${data.balance >= 0 ? 'text-fr-secondary' : 'text-fr-error'}`}>
+            <span className={`text-xs sm:text-sm ${data.balance >= 0 ? 'text-fr-secondary' : 'text-fr-error'} font-medium`}>
               {data.balance >= 0 ? 'Positivo' : 'Negativo'}
             </span>
           </div>
