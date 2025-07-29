@@ -42,108 +42,82 @@ class ConfigService {
     this.error = null;
 
     try {
-      // Intentar cargar desde diferentes URLs posibles
       // Importar configuración dinámica
       const envConfig = (await import('../config/environments')).default;
       
-      // Determinar URLs según ambiente actual para evitar intentos innecesarios
+      // Determinar ambiente actual
       const currentEnv = envConfig.ENVIRONMENT;
-      let possibleUrls = [];
       
       console.log(`🔍 [configService] Ambiente detectado: ${currentEnv}`);
+      console.log(`🔍 [configService] Variables de entorno:`, {
+        REACT_APP_ENVIRONMENT: process.env.REACT_APP_ENVIRONMENT,
+        REACT_APP_API_URL: process.env.REACT_APP_API_URL,
+        NODE_ENV: process.env.NODE_ENV
+      });
       
+      // En desarrollo, usar directamente las variables de entorno sin intentar cargar desde API
       if (currentEnv === 'development') {
-        possibleUrls = [
-          process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1'
-        ];
-      } else if (currentEnv === 'render') {
-        possibleUrls = [
-          'https://financial-resume-engine.onrender.com/api/v1'
-        ];
-      } else if (currentEnv === 'gcp') {
-        possibleUrls = [
-          'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1'
-        ];
-      } else {
-        // Fallback: probar todas
-        console.warn(`⚠️ [configService] Ambiente desconocido: ${currentEnv}, probando todas las URLs`);
-        possibleUrls = [
-          envConfig.API_BASE_URL,
-          process.env.REACT_APP_API_URL || '',
-          'https://financial-resume-engine.onrender.com/api/v1',
-          'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1'
-        ].filter(Boolean);
+        console.log(`🔧 [configService] Ambiente development detectado, usando configuración local`);
+        
+        const config = {
+          api_base_url: process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1',
+          gamification_url: process.env.REACT_APP_GAMIFICATION_URL || 'http://localhost:8085/api/v1',
+          ai_service_url: process.env.REACT_APP_AI_SERVICE_URL || 'http://localhost:8082/api/v1',
+          users_service_url: process.env.REACT_APP_USERS_SERVICE_URL || 'http://localhost:8083/api/v1',
+          environment: 'development',
+          version: '1.0.0'
+        };
+        
+        console.log('✅ Configuración de desarrollo cargada:', config);
+        this.config = config;
+        return config;
       }
       
-      console.log(`🎯 [configService] URLs a probar: ${possibleUrls.length}`);
-      
-      // Si solo hay una URL, ir directo sin intentos adicionales
-      if (possibleUrls.length === 1) {
-        console.log(`⚡ [configService] Una sola URL detectada: ${possibleUrls[0]}`);
-      }
-
-      let config = null;
-      let lastError = null;
-
-      for (const baseUrl of possibleUrls) {
+      // En producción, intentar cargar desde la API
+      if (currentEnv === 'render') {
+        console.log(`🔧 [configService] Ambiente render detectado, intentando cargar desde API`);
+        
         try {
-          console.log(`🔄 Intentando cargar configuración desde: ${baseUrl}/config`);
-          
-          const response = await fetch(`${baseUrl}/config`, {
+          const response = await fetch('https://financial-resume-engine.onrender.com/api/v1/config', {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
             },
-            signal: AbortSignal.timeout(3000),  // 3 segundos en lugar de 5
+            signal: AbortSignal.timeout(3000),
           });
 
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-
-          const data = await response.json();
-          
-          if (data.success && data.data) {
-            config = data.data;
-            console.log('✅ Configuración cargada exitosamente:', config);
-            break;
-          } else {
-            throw new Error('Respuesta inválida del servidor');
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data) {
+              console.log('✅ Configuración cargada desde producción:', data.data);
+              this.config = data.data;
+              return data.data;
+            }
           }
         } catch (error) {
-          console.warn(`⚠️ Error cargando configuración desde ${baseUrl}:`, error.message);
-          lastError = error;
-          continue;
-        }
-      }
-
-      if (!config) {
-        // Si no se pudo cargar desde ninguna URL, usar configuración de fallback
-        console.warn('⚠️ No se pudo cargar configuración, usando fallback');
-        
-        // Determinar URL de fallback basada en ambiente
-        const hostname = window.location.hostname;
-        let fallbackApiUrl;
-        let environment = 'development';
-        
-        if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
-          fallbackApiUrl = 'https://financial-resume-engine.onrender.com/api/v1';
-          environment = 'render';
-        } else if (hostname.includes('run.app')) {
-          fallbackApiUrl = 'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1';
-          environment = 'gcp';
-        } else {
-          fallbackApiUrl = fallbackUrl || 'http://localhost:8080/api/v1';
-          environment = 'development';
+          console.warn(`⚠️ Error cargando configuración desde producción:`, error.message);
         }
         
-        config = {
-          api_base_url: fallbackApiUrl,
-          environment: environment,
+        // Fallback para producción
+        const config = {
+          api_base_url: 'https://financial-resume-engine.onrender.com/api/v1',
+          environment: 'render',
           version: '1.0.0'
         };
+        
+        console.log('✅ Configuración de producción (fallback):', config);
+        this.config = config;
+        return config;
       }
-
+      
+      // Fallback general
+      console.warn('⚠️ Ambiente desconocido, usando configuración de fallback');
+      const config = {
+        api_base_url: fallbackUrl || 'http://localhost:8080/api/v1',
+        environment: 'development',
+        version: '1.0.0'
+      };
+      
       this.config = config;
       return config;
 
@@ -184,8 +158,6 @@ class ConfigService {
     const hostname = window.location.hostname;
     if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
       return 'https://financial-resume-engine.onrender.com/api/v1';  // Render
-    } else if (hostname.includes('run.app')) {
-      return 'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1';  // GCP
     } else {
       return 'http://localhost:8080/api/v1';  // Development
     }

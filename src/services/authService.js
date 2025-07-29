@@ -19,8 +19,6 @@ const getApiBaseUrl = async () => {
     const hostname = window.location.hostname;
     if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
       return 'https://financial-resume-engine.onrender.com/api/v1';  // Render
-    } else if (hostname.includes('run.app')) {
-      return 'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1';  // GCP
     } else {
       return 'http://localhost:8080/api/v1';  // Development
     }
@@ -36,8 +34,6 @@ const getInitialAuthBaseURL = () => {
   const hostname = window.location.hostname;
   if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
     return 'https://financial-resume-engine.onrender.com/api/v1';  // Render
-  } else if (hostname.includes('run.app')) {
-    return 'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1';  // GCP
   } else {
     return 'http://localhost:8080/api/v1';  // Development
   }
@@ -211,12 +207,19 @@ class AuthService {
       console.log('🔧 Enviando datos de registro:', backendData);
       
       const response = await authAPI.post('/auth/register', backendData);
-      const { data } = response.data;
+      const authData = response.data;
       
-      this.saveAuthData(data);
+      // Verificar que la respuesta tenga la estructura esperada
+      if (!authData.access_token || !authData.user) {
+        console.error('❌ [authService] Respuesta inválida del servidor:', authData);
+        throw new Error('Respuesta inválida del servidor');
+      }
       
+      this.saveAuthData(authData);
+      
+      console.log('✅ [authService] Registro exitoso para usuario:', authData.user.first_name);
       toast.success('¡Registro exitoso! Bienvenido');
-      return { success: true, data };
+      return { success: true, data: authData };
     } catch (error) {
       console.error('❌ Error en registro:', error.response?.data || error.message);
       const message = error.response?.data?.error || error.response?.data?.message || 'Error en el registro';
@@ -231,14 +234,37 @@ class AuthService {
    */
   async login(credentials) {
     try {
+      console.log('🔧 [authService] Intentando login con credenciales:', { email: credentials.email });
       const response = await authAPI.post('/auth/login', credentials);
-      const { data } = response.data;
+      console.log('🔧 [authService] Respuesta del servidor:', response.data);
       
-      this.saveAuthData(data);
+      const authData = response.data;
       
-      toast.success(`¡Bienvenido de vuelta, ${data.user.first_name}!`);
-      return { success: true, data };
+      // Verificar si el servidor requiere 2FA
+      if (authData.error === '2FA code required') {
+        console.log('🔧 [authService] 2FA requerido para el usuario');
+        throw new Error('2FA code required');
+      }
+      
+      // Verificar que la respuesta tenga la estructura esperada
+      if (!authData.access_token || !authData.user) {
+        console.error('❌ [authService] Respuesta inválida del servidor:', authData);
+        throw new Error('Respuesta inválida del servidor');
+      }
+      
+      this.saveAuthData(authData);
+      
+      console.log('✅ [authService] Login exitoso para usuario:', authData.user.first_name);
+      toast.success(`¡Bienvenido de vuelta, ${authData.user.first_name}!`);
+      return { success: true, data: authData };
     } catch (error) {
+      console.error('❌ [authService] Error en login:', error);
+      
+      // Si es un error de 2FA, re-lanzar el error específico
+      if (error.message === '2FA code required') {
+        throw error;
+      }
+      
       const message = error.response?.data?.error || 'Error en el login';
       toast.error(message);
       throw new Error(message);
@@ -269,10 +295,10 @@ class AuthService {
   async refreshToken() {
     try {
       const response = await authAPI.post('/auth/refresh');
-      const { data } = response.data;
+      const authData = response.data;
       
-      this.saveAuthData(data);
-      return data;
+      this.saveAuthData(authData);
+      return authData;
     } catch (error) {
       this.clearAuthData();
       throw new Error('Error renovando token');
@@ -285,13 +311,13 @@ class AuthService {
   async getProfile() {
     try {
       const response = await authAPI.get('/auth/profile');
-      const { data } = response.data;
+      const userData = response.data;
       
       // Actualizar datos del usuario en memoria y storage
-      this.user = data;
-      localStorage.setItem(USER_KEY, JSON.stringify(data));
+      this.user = userData;
+      localStorage.setItem(USER_KEY, JSON.stringify(userData));
       
-      return data;
+      return userData;
     } catch (error) {
       const message = error.response?.data?.error || 'Error obteniendo perfil';
       throw new Error(message);
@@ -304,11 +330,43 @@ class AuthService {
    */
   async changePassword(passwordData) {
     try {
-      await authAPI.put('/auth/change-password', passwordData);
+      console.log('🔧 [authService] Cambiando contraseña:', passwordData);
+      
+      // Usar el endpoint correcto del users-service
+      const response = await authAPI.put('/users/security/change-password', passwordData);
+      console.log('✅ [authService] Contraseña cambiada exitosamente');
+      
       toast.success('Contraseña cambiada exitosamente');
       return { success: true };
     } catch (error) {
+      console.error('❌ [authService] Error cambiando contraseña:', error);
       const message = error.response?.data?.error || 'Error cambiando contraseña';
+      toast.error(message);
+      throw new Error(message);
+    }
+  }
+
+  /**
+   * Actualiza el perfil del usuario autenticado
+   * @param {Object} profileData - { first_name, last_name, phone }
+   */
+  async updateProfile(profileData) {
+    try {
+      console.log('🔧 [authService] Actualizando perfil con datos:', profileData);
+      const response = await authAPI.put('/users/profile', profileData);
+      const user = response.data.user;
+      console.log('🔧 [authService] Respuesta del backend:', user);
+      
+      // Actualizar storage local con los datos reales del backend
+      this.user = user;
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      console.log('✅ [authService] Usuario actualizado en localStorage:', user);
+      
+      toast.success('Perfil actualizado correctamente');
+      return user;
+    } catch (error) {
+      console.error('❌ [authService] Error actualizando perfil:', error);
+      const message = error.response?.data?.error || 'Error actualizando perfil';
       toast.error(message);
       throw new Error(message);
     }
@@ -319,15 +377,29 @@ class AuthService {
    * @param {Object} authData - Datos de autenticación del servidor
    */
   saveAuthData(authData) {
-    const { token, expires_at, user } = authData;
+    console.log('🔧 [authService] Guardando datos de autenticación:', authData);
     
-    this.token = token;
+    const { access_token, expires_at, user } = authData;
+    
+    if (!access_token) {
+      console.error('❌ [authService] No se encontró access_token en la respuesta');
+      throw new Error('Token de acceso no encontrado en la respuesta');
+    }
+    
+    if (!user) {
+      console.error('❌ [authService] No se encontró user en la respuesta');
+      throw new Error('Datos de usuario no encontrados en la respuesta');
+    }
+    
+    this.token = access_token;
     this.user = user;
     this.expiresAt = expires_at;
     
-    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(TOKEN_KEY, access_token);
     localStorage.setItem(USER_KEY, JSON.stringify(user));
     localStorage.setItem(EXPIRES_AT_KEY, expires_at.toString());
+    
+    console.log('✅ [authService] Datos de autenticación guardados correctamente');
   }
 
   /**

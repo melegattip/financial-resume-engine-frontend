@@ -13,8 +13,6 @@ const getInitialBaseURL = () => {
   const hostname = window.location.hostname;
   if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
     return 'https://financial-resume-engine.onrender.com/api/v1';  // Render
-  } else if (hostname.includes('run.app')) {
-    return 'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1';  // GCP
   } else {
     return 'http://localhost:8080/api/v1';  // Development
   }

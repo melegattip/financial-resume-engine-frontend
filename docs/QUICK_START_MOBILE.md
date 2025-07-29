@@ -31,7 +31,6 @@ Financial Resume Ecosystem
 
 **URLs de Producción Funcionales:**
 - **Render**: `https://financial-resume-engine.onrender.com/api/v1`
-- **GCP**: `https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1`
 
 ---
 

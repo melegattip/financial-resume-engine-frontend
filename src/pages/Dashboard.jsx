@@ -459,7 +459,7 @@ const Dashboard = () => {
                 Gastos Pendientes
               </p>
               <p className="text-xl lg:text-2xl font-bold text-fr-gray-900 dark:text-gray-100">
-                {data.expenses.filter(e => !e.paid).length}
+                {data.expenses?.filter(e => !e.paid)?.length || 0}
               </p>
             </div>
             <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-gray-100 dark:bg-gray-700 ml-2">
@@ -468,7 +468,7 @@ const Dashboard = () => {
           </div>
           <div className="mt-3">
             <span className="text-sm text-fr-gray-500 dark:text-gray-400">
-              {formatAmount(data.expenses.filter(e => !e.paid).reduce((sum, e) => sum + e.amount, 0))} por pagar
+              {formatAmount(data.expenses?.filter(e => !e.paid)?.reduce((sum, e) => sum + e.amount, 0) || 0)} por pagar
             </span>
           </div>
         </div>
@@ -958,7 +958,7 @@ const Dashboard = () => {
                 <div>
                   <p className="text-sm text-fr-gray-600 dark:text-gray-400">Pendientes</p>
                   <p className="text-xl font-bold text-red-600 dark:text-red-400">
-                    {data.expenses.filter(exp => !exp.paid).length}
+                    {data.expenses?.filter(exp => !exp.paid)?.length || 0}
                   </p>
                 </div>
               </div>

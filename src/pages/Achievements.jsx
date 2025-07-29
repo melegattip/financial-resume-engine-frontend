@@ -122,8 +122,8 @@ const Achievements = () => {
 
   const currentLevel = getLevelInfo(gamificationData?.current_level || 0);
   const nextLevel = getLevelInfo((gamificationData?.current_level || 0) + 1);
-  const completedAchievements = achievements.filter(a => a.completed);
-  const pendingAchievements = achievements.filter(a => !a.completed);
+  const completedAchievements = achievements?.filter(a => a.completed) || [];
+  const pendingAchievements = achievements?.filter(a => !a.completed) || [];
 
   return (
     <div className="space-y-6">

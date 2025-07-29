@@ -3,8 +3,9 @@ const environments = {
   development: {
     name: 'Development',
     API_BASE_URL: 'http://localhost:8080/api/v1',
-    GAMIFICATION_API_URL: 'http://localhost:8081/api/v1',
+    GAMIFICATION_API_URL: 'http://localhost:8085/api/v1',
     AI_API_URL: 'http://localhost:8082/api/v1',
+    USERS_API_URL: 'http://localhost:8083/api/v1',
     REDIS_URL: 'redis://localhost:6379',
     WEBSOCKET_URL: 'ws://localhost:8080/ws',
     CORS_ORIGIN: 'http://localhost:3000',
@@ -24,32 +25,35 @@ const environments = {
     CORS_ORIGIN: 'https://financial-resume-engine-frontend.onrender.com'
   },
   
-  gcp: {
-    name: 'Google Cloud Platform',
-    API_BASE_URL: 'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1',
-    GAMIFICATION_API_URL: 'https://stable---financial-gamification-service-ncf3kbolwa-rj.a.run.app/api/v1',
-    AI_API_URL: 'https://stable---financial-ai-service-ncf3kbolwa-rj.a.run.app/api/v1',
-    REDIS_URL: 'redis://redis-memory-store:6379',
-    WEBSOCKET_URL: 'wss://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/ws',
-    CORS_ORIGIN: 'https://stable---financial-resume-frontend-ncf3kbolwa-rj.a.run.app'
-  }
 };
 
 // Detectar ambiente automáticamente
 const detectEnvironment = () => {
   const hostname = window.location.hostname;
+  const port = window.location.port;
   
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'development';
-  } else if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
-    return 'render';
-  } else if (hostname.includes('run.app')) {
-    return 'gcp';
+  // Si hay variable de entorno específica, usarla (prioridad máxima)
+  const envFromVar = process.env.REACT_APP_ENVIRONMENT;
+  if (envFromVar) {
+    console.log(`🔧 [environments] Ambiente forzado por variable de entorno: ${envFromVar}`);
+    return envFromVar;
   }
   
-  // Fallback basado en variables de entorno
-  const envFromVar = process.env.REACT_APP_ENVIRONMENT;
-  return envFromVar || 'development';
+  // Si estamos en localhost, es desarrollo
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    console.log(`🔧 [environments] Ambiente detectado por hostname: development (${hostname}:${port})`);
+    return 'development';
+  }
+  
+  // Solo usar render si realmente estamos en onrender.com
+  if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
+    console.log(`🔧 [environments] Ambiente detectado por hostname: render (${hostname})`);
+    return 'render';
+  }
+  
+  // Por defecto, desarrollo
+  console.log(`🔧 [environments] Ambiente por defecto: development (${hostname}:${port})`);
+  return 'development';
 };
 
 // Configuración actual basada en el ambiente
@@ -58,14 +62,30 @@ const config = environments[currentEnvironment];
 
 // Función para obtener configuración con fallback
 const getConfig = (key, fallback = null) => {
+  // Mapeo de claves a variables de entorno
+  const envKeyMap = {
+    'API_BASE_URL': 'REACT_APP_API_URL',
+    'GAMIFICATION_API_URL': 'REACT_APP_GAMIFICATION_URL',
+    'AI_API_URL': 'REACT_APP_AI_SERVICE_URL',
+    'USERS_API_URL': 'REACT_APP_USERS_SERVICE_URL'
+  };
+  
   // Primero intentar variable de entorno específica
-  const envVar = process.env[`REACT_APP_${key}`];
-  if (envVar) return envVar;
+  const envKey = envKeyMap[key] || `REACT_APP_${key}`;
+  const envVar = process.env[envKey];
+  if (envVar) {
+    console.log(`🔧 [environments] Usando variable de entorno ${envKey}: ${envVar}`);
+    return envVar;
+  }
   
   // Luego usar configuración del ambiente
-  if (config && config[key]) return config[key];
+  if (config && config[key]) {
+    console.log(`🔧 [environments] Usando configuración del ambiente ${activeEnvironment}: ${config[key]}`);
+    return config[key];
+  }
   
   // Finalmente usar fallback
+  console.log(`🔧 [environments] Usando fallback para ${key}: ${fallback}`);
   return fallback;
 };
 
@@ -98,6 +118,7 @@ export default {
   API_BASE_URL: getConfig('API_BASE_URL', activeConfig.API_BASE_URL),
   GAMIFICATION_API_URL: getConfig('GAMIFICATION_API_URL', activeConfig.GAMIFICATION_API_URL),
   AI_API_URL: getConfig('AI_API_URL', activeConfig.AI_API_URL),
+  USERS_API_URL: getConfig('USERS_API_URL', activeConfig.USERS_API_URL),
   REDIS_URL: getConfig('REDIS_URL', activeConfig.REDIS_URL),
   WEBSOCKET_URL: getConfig('WEBSOCKET_URL', activeConfig.WEBSOCKET_URL),
   CORS_ORIGIN: getConfig('CORS_ORIGIN', activeConfig.CORS_ORIGIN),

@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
-import { FaUser, FaBell, FaLock, FaPalette, FaDownload, FaTrash } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaUser, FaBell, FaLock, FaPalette, FaDownload, FaTrash, FaShieldAlt } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import TwoFASetup from '../components/TwoFASetup';
+import ChangePasswordModal from '../components/ChangePasswordModal';
+import { useAuth } from '../contexts/AuthContext';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('profile');
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const { user, updateProfile } = useAuth();
+  const [loading, setLoading] = useState(false);
+  
+  // Usar datos reales del usuario autenticado
   const [settings, setSettings] = useState({
     profile: {
-      name: 'Usuario Demo',
-      email: 'user123@example.com',
-      phone: '+54 11 1234-5678',
+      name: user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : '',
+      email: user?.email || '',
+      phone: user?.phone || '',
     },
     notifications: {
       emailNotifications: true,
@@ -24,6 +33,20 @@ const Settings = () => {
     },
   });
 
+  // Actualizar settings cuando cambie el usuario
+  useEffect(() => {
+    if (user) {
+      setSettings(prev => ({
+        ...prev,
+        profile: {
+          name: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+          email: user.email || '',
+          phone: user.phone || '',
+        }
+      }));
+    }
+  }, [user]);
+
   const tabs = [
     { id: 'profile', label: 'Perfil', icon: FaUser },
     { id: 'notifications', label: 'Notificaciones', icon: FaBell },
@@ -31,8 +54,36 @@ const Settings = () => {
     { id: 'security', label: 'Seguridad', icon: FaLock },
   ];
 
-  const handleSave = () => {
-    toast.success('Configuración guardada correctamente');
+  const handleSave = async () => {
+    // Validación mínima
+    if (!settings.profile.name.trim()) {
+      toast.error('El nombre es obligatorio');
+      return;
+    }
+    setLoading(true);
+    try {
+      // Separar nombre completo en first_name y last_name
+      const [first_name, ...rest] = settings.profile.name.trim().split(' ');
+      const last_name = rest.join(' ');
+      // Tomar datos actuales del usuario
+      const profileData = {
+        id: user?.id,
+        email: user?.email,
+        first_name,
+        last_name,
+        phone: settings.profile.phone,
+      };
+      const result = await updateProfile(profileData);
+      if (result.success) {
+        toast.success('Perfil actualizado');
+      } else {
+        toast.error(result.error || 'Error actualizando perfil');
+      }
+    } catch (e) {
+      toast.error('Error actualizando perfil');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleExportData = () => {
@@ -125,8 +176,8 @@ const Settings = () => {
             </div>
 
             <div className="flex justify-end">
-              <button onClick={handleSave} className="btn-primary">
-                Guardar Cambios
+              <button onClick={handleSave} className="btn-primary" disabled={loading}>
+                {loading ? 'Guardando...' : 'Guardar Cambios'}
               </button>
             </div>
           </div>
@@ -294,7 +345,10 @@ const Settings = () => {
                 <p className="text-sm text-fr-gray-500 mb-4">
                   Actualiza tu contraseña regularmente para mantener tu cuenta segura
                 </p>
-                <button className="btn-outline">
+                <button 
+                  onClick={() => setShowChangePasswordModal(true)}
+                  className="btn-outline"
+                >
                   Cambiar Contraseña
                 </button>
               </div>
@@ -304,8 +358,12 @@ const Settings = () => {
                 <p className="text-sm text-fr-gray-500 mb-4">
                   Agrega una capa extra de seguridad a tu cuenta
                 </p>
-                <button className="btn-outline">
-                  Configurar 2FA
+                <button 
+                  onClick={() => setShow2FAModal(true)}
+                  className="btn-outline flex items-center space-x-2"
+                >
+                  <FaShieldAlt className="w-4 h-4" />
+                  <span>Configurar 2FA</span>
                 </button>
               </div>
 
@@ -337,6 +395,20 @@ const Settings = () => {
           </div>
         )}
       </div>
+
+      {/* Modal de configuración 2FA */}
+      {show2FAModal && (
+        <TwoFASetup
+          isOpen={show2FAModal}
+          onClose={() => setShow2FAModal(false)}
+        />
+      )}
+
+      {/* Modal de cambio de contraseña */}
+      <ChangePasswordModal
+        isOpen={showChangePasswordModal}
+        onClose={() => setShowChangePasswordModal(false)}
+      />
     </div>
   );
 };
