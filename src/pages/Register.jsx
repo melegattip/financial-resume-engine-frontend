@@ -24,7 +24,8 @@ const Register = () => {
   const [passwordStrength, setPasswordStrength] = useState({
     score: 0,
     message: '',
-    color: 'gray'
+    color: 'gray',
+    isValid: false
   });
 
   // Redireccionar si ya está autenticado
@@ -67,43 +68,70 @@ const Register = () => {
     let score = 0;
     let message = '';
     let color = 'red';
+    let isValid = true;
+    let errors = [];
 
-    // Criterios de evaluación
+    // Criterios de evaluación del backend
     if (password.length >= 8) score += 1;
     if (/[a-z]/.test(password)) score += 1;
     if (/[A-Z]/.test(password)) score += 1;
     if (/[0-9]/.test(password)) score += 1;
     if (/[^A-Za-z0-9]/.test(password)) score += 1;
 
-    // Determinar mensaje y color
-    switch (score) {
-      case 0:
-      case 1:
-        message = 'Muy débil';
-        color = 'red';
-        break;
-      case 2:
-        message = 'Débil';
-        color = 'orange';
-        break;
-      case 3:
-        message = 'Moderada';
-        color = 'yellow';
-        break;
-      case 4:
-        message = 'Fuerte';
-        color = 'green';
-        break;
-      case 5:
-        message = 'Muy fuerte';
-        color = 'green';
-        break;
-      default:
-        message = 'Muy débil';
-        color = 'red';
+    // Validaciones específicas del backend
+    if (!/[A-Z]/.test(password)) {
+      errors.push('Debe contener al menos una letra mayúscula');
+      isValid = false;
+    }
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      errors.push('Debe contener al menos un carácter especial');
+      isValid = false;
+    }
+    
+    // Verificar caracteres secuenciales (123, abc, etc.)
+    const sequentialPatterns = ['123', 'abc', 'ABC', 'qwe', 'QWE'];
+    const hasSequential = sequentialPatterns.some(pattern => 
+      password.toLowerCase().includes(pattern)
+    );
+    if (hasSequential) {
+      errors.push('No puede contener caracteres secuenciales');
+      isValid = false;
     }
 
-    setPasswordStrength({ score, message, color });
+    // Determinar mensaje y color
+    if (!isValid) {
+      message = errors.join(', ');
+      color = 'red';
+    } else {
+      switch (score) {
+        case 0:
+        case 1:
+          message = 'Muy débil';
+          color = 'red';
+          break;
+        case 2:
+          message = 'Débil';
+          color = 'orange';
+          break;
+        case 3:
+          message = 'Moderada';
+          color = 'yellow';
+          break;
+        case 4:
+          message = 'Fuerte';
+          color = 'green';
+          break;
+        case 5:
+          message = 'Muy fuerte';
+          color = 'green';
+          break;
+        default:
+          message = 'Muy débil';
+          color = 'red';
+      }
+    }
+
+    setPasswordStrength({ score, message, color, isValid });
   };
 
   // Validar formulario
@@ -139,8 +167,8 @@ const Register = () => {
       registerErrors.password = 'La contraseña es requerida';
     } else if (formData.password.length < 8) {
       registerErrors.password = 'La contraseña debe tener al menos 8 caracteres';
-    } else if (passwordStrength.score < 3) {
-      registerErrors.password = 'La contraseña debe ser al menos moderada';
+    } else if (!passwordStrength.isValid) {
+      registerErrors.password = passwordStrength.message;
     }
     
     // Validar confirmación de contraseña

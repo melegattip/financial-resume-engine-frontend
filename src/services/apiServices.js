@@ -54,5 +54,5 @@ export const authService = {
   logout: () => apiClient.post('/auth/logout'),
   getProfile: () => apiClient.get('/auth/profile'),
   refreshToken: () => apiClient.post('/auth/refresh'),
-  changePassword: (passwordData) => apiClient.put('/auth/change-password', passwordData),
+  changePassword: (passwordData) => apiClient.put('/users/security/change-password', passwordData),
 }; 

@@ -112,21 +112,38 @@ export const GamificationProvider = ({ children }) => {
       setLoading(true);
       
       const [profileData, achievementsData, statsData, featuresData] = await Promise.all([
-        api.getUserProfile(),
-        api.getUserAchievements(),
-        api.getUserStats(),
-        api.getUserFeatures() // 🔒 Cargar feature gates
+        api.getUserProfile().catch(err => {
+          console.warn('Error loading user profile:', err);
+          return null;
+        }),
+        api.getUserAchievements().catch(err => {
+          console.warn('Error loading achievements:', err);
+          return [];
+        }),
+        api.getUserStats().catch(err => {
+          console.warn('Error loading stats:', err);
+          return null;
+        }),
+        api.getUserFeatures().catch(err => {
+          console.warn('Error loading features:', err);
+          return { unlocked_features: [], locked_features: [] };
+        })
       ]);
 
       setUserProfile(profileData);
-      setAchievements(achievementsData);
+      setAchievements(achievementsData || []);
       setStats(statsData);
-      setFeatures(featuresData); // 🔒 Guardar feature gates
+      setFeatures(featuresData || { unlocked_features: [], locked_features: [] });
       setLastUpdate(Date.now());
       setError(null);
     } catch (err) {
       console.error('Error loading gamification data:', err);
       setError(err.message);
+      // Establecer valores por defecto en caso de error
+      setUserProfile(null);
+      setAchievements([]);
+      setStats(null);
+      setFeatures({ unlocked_features: [], locked_features: [] });
     } finally {
       setLoading(false);
     }
@@ -323,7 +340,7 @@ export const GamificationProvider = ({ children }) => {
     if (!userProfile) return false;
     
     // Usar datos del backend si están disponibles
-    if (features && features.unlocked_features) {
+    if (features && features.unlocked_features && Array.isArray(features.unlocked_features)) {
       return features.unlocked_features.includes(featureKey);
     }
     
@@ -337,7 +354,7 @@ export const GamificationProvider = ({ children }) => {
 
   const getFeatureAccess = useCallback(async (featureKey) => {
     // Si tenemos datos del backend, usar esos
-    if (features && features.locked_features) {
+    if (features && features.locked_features && Array.isArray(features.locked_features)) {
       const lockedFeature = features.locked_features.find(f => f.feature_key === featureKey);
       if (lockedFeature) {
         return {

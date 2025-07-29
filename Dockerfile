@@ -4,8 +4,10 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --legacy-peer-deps --force
 COPY . .
-ENV REACT_APP_API_URL=https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1
-ENV REACT_APP_ENV=production
+
+# Las variables de entorno se pasan desde docker-compose.yml
+# ENV REACT_APP_API_URL=http://localhost:8080/api/v1
+# ENV REACT_APP_ENVIRONMENT=development
 ENV GENERATE_SOURCEMAP=false
 RUN npm run build
 

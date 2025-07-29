@@ -129,12 +129,18 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = useCallback(async (profileData) => {
     try {
-      // Por ahora solo simulamos la actualización
-      setUser(prev => ({ ...prev, ...profileData }));
-      return { success: true };
+      console.log('🔧 [AuthContext] Actualizando perfil:', profileData);
+      const updatedUser = await authService.updateProfile(profileData);
+      console.log('🔧 [AuthContext] Usuario actualizado del backend:', updatedUser);
+      
+      // Actualizar el estado global con los datos reales del backend
+      setUser(updatedUser);
+      console.log('✅ [AuthContext] Estado global actualizado:', updatedUser);
+      
+      return { success: true, user: updatedUser };
     } catch (error) {
-      console.error('❌ Error actualizando perfil:', error);
-      throw error;
+      console.error('❌ [AuthContext] Error actualizando perfil:', error);
+      return { success: false, error: error.message };
     }
   }, []);
 

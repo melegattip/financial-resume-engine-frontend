@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FaEye, FaEyeSlash, FaEnvelope, FaLock, FaSignInAlt, FaSpinner } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaEnvelope, FaLock, FaSignInAlt, FaSpinner, FaShieldAlt } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import { validateEmail, sanitizeText } from '../utils/validation';
 import Logo from '../components/Logo';
+import TwoFALogin from '../components/TwoFALogin';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -18,6 +19,8 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [twoFACredentials, setTwoFACredentials] = useState(null);
 
   // Redireccionar si ya está autenticado
   useEffect(() => {
@@ -78,19 +81,51 @@ const Login = () => {
     setErrors({});
 
     try {
-      await login({
+      const credentials = {
         email: sanitizeText(formData.email.trim().toLowerCase()),
         password: formData.password
-      });
+      };
+
+      const result = await login(credentials);
       
       // La navegación se maneja en el useEffect
     } catch (error) {
-      setErrors({
-        general: error.message || 'Error al iniciar sesión'
-      });
+      // Verificar si el error es por 2FA requerido
+      if (error.message === '2FA code required') {
+        setRequires2FA(true);
+        setTwoFACredentials({
+          email: sanitizeText(formData.email.trim().toLowerCase()),
+          password: formData.password
+        });
+      } else {
+        setErrors({
+          general: error.message || 'Error al iniciar sesión'
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Manejar verificación de 2FA
+  const handle2FAVerification = async (code, isBackupCode = false) => {
+    try {
+      await login({
+        ...twoFACredentials,
+        twofa_code: code
+      });
+      
+      setRequires2FA(false);
+      setTwoFACredentials(null);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // Manejar cancelación de 2FA
+  const handle2FACancel = () => {
+    setRequires2FA(false);
+    setTwoFACredentials(null);
   };
 
   // Mostrar loading si está inicializando
@@ -100,6 +135,24 @@ const Login = () => {
         <div className="flex flex-col items-center space-y-4">
           <FaSpinner className="w-8 h-8 animate-spin text-fr-primary" />
           <p className="text-fr-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Si requiere 2FA, mostrar componente de verificación
+  if (requires2FA) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-fr-gray-50">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <Logo />
+          </div>
+          <TwoFALogin
+            onVerify={handle2FAVerification}
+            onCancel={handle2FACancel}
+            userEmail={twoFACredentials?.email}
+          />
         </div>
       </div>
     );

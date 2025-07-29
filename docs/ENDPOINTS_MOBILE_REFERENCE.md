@@ -14,7 +14,6 @@
 **URLs de Producción:**
 - **Desarrollo**: `http://localhost:8080/api/v1`
 - **Render**: `https://financial-resume-engine.onrender.com/api/v1`
-- **GCP**: `https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1`
 
 ---
 
@@ -461,8 +460,6 @@ const getApiBaseUrl = () => {
   
   if (hostname.includes('onrender.com')) {
     return 'https://financial-resume-engine.onrender.com/api/v1';
-  } else if (hostname.includes('run.app')) {
-    return 'https://stable---financial-resume-engine-ncf3kbolwa-rj.a.run.app/api/v1';
   } else {
     return 'http://localhost:8080/api/v1'; // Development
   }
