@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaUser, FaBell, FaLock, FaPalette, FaDownload, FaTrash, FaShieldAlt } from 'react-icons/fa';
+import { FaUser, FaBell, FaLock, FaDownload, FaTrash, FaShieldAlt } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import TwoFASetup from '../components/TwoFASetup';
 import ChangePasswordModal from '../components/ChangePasswordModal';
@@ -25,12 +25,6 @@ const Settings = () => {
       weeklyReports: true,
       expenseAlerts: true,
     },
-    preferences: {
-      currency: 'ARS',
-      language: 'es',
-      theme: 'light',
-      dateFormat: 'DD/MM/YYYY',
-    },
   });
 
   // Actualizar settings cuando cambie el usuario
@@ -50,7 +44,6 @@ const Settings = () => {
   const tabs = [
     { id: 'profile', label: 'Perfil', icon: FaUser },
     { id: 'notifications', label: 'Notificaciones', icon: FaBell },
-    { id: 'preferences', label: 'Preferencias', icon: FaPalette },
     { id: 'security', label: 'Seguridad', icon: FaLock },
   ];
 
@@ -261,79 +254,7 @@ const Settings = () => {
           </div>
         )}
 
-        {activeTab === 'preferences' && (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-fr-gray-900">Preferencias de la Aplicación</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-2">
-                  Moneda
-                </label>
-                <select
-                  value={settings.preferences.currency}
-                  onChange={(e) => updateSetting('preferences', 'currency', e.target.value)}
-                  className="input"
-                >
-                  <option value="ARS">Peso Argentino (ARS)</option>
-                  <option value="USD">Dólar Estadounidense (USD)</option>
-                  <option value="EUR">Euro (EUR)</option>
-                </select>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-2">
-                  Idioma
-                </label>
-                <select
-                  value={settings.preferences.language}
-                  onChange={(e) => updateSetting('preferences', 'language', e.target.value)}
-                  className="input"
-                >
-                  <option value="es">Español</option>
-                  <option value="en">English</option>
-                  <option value="pt">Português</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-2">
-                  Tema
-                </label>
-                <select
-                  value={settings.preferences.theme}
-                  onChange={(e) => updateSetting('preferences', 'theme', e.target.value)}
-                  className="input"
-                >
-                  <option value="light">Claro</option>
-                  <option value="dark">Oscuro</option>
-                  <option value="auto">Automático</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-2">
-                  Formato de fecha
-                </label>
-                <select
-                  value={settings.preferences.dateFormat}
-                  onChange={(e) => updateSetting('preferences', 'dateFormat', e.target.value)}
-                  className="input"
-                >
-                  <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                  <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                  <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <button onClick={handleSave} className="btn-primary">
-                Guardar Cambios
-              </button>
-            </div>
-          </div>
-        )}
 
         {activeTab === 'security' && (
           <div className="space-y-6">
