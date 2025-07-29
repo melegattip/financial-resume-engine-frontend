@@ -21,11 +21,10 @@ ENV REACT_APP_ENVIRONMENT=$REACT_APP_ENVIRONMENT
 ENV GENERATE_SOURCEMAP=false
 RUN npm run build
 
-# Production stage - servidor HTTP simple de Node.js
+# Production stage - usar serve para servir archivos estáticos
 FROM node:18-alpine
 WORKDIR /app
-COPY --from=build /app/build ./public
-COPY server.js ./
-
+COPY --from=build /app/build ./build
+RUN npm install -g serve
 EXPOSE 8080
-CMD ["node", "server.js"] 
+CMD ["serve", "-s", "build", "-l", "8080"] 
