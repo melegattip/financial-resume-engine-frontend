@@ -29,7 +29,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
-    "lint:check": "eslint src --ext .js,.jsx,.ts,.tsx"
+    "lint:check": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "check-env": "node scripts/check-env.js"
   },
   "eslintConfig": {
     "extends": [
