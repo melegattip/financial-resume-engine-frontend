@@ -76,8 +76,8 @@ const initializeConfig = async () => {
 // Inicializar configuración al cargar el módulo
 initializeConfig();
 
-// Claves para localStorage
 const TOKEN_KEY = 'auth_token';
+const REFRESH_TOKEN_KEY = 'auth_refresh_token';
 const USER_KEY = 'auth_user';
 const EXPIRES_AT_KEY = 'auth_expires_at';
 
@@ -87,7 +87,7 @@ const EXPIRES_AT_KEY = 'auth_expires_at';
 class AuthService {
   constructor() {
     this.token = localStorage.getItem(TOKEN_KEY);
-    this.user = null;
+    this.refreshToken_value = localStorage.getItem(REFRESH_TOKEN_KEY);
     this.expiresAt = localStorage.getItem(EXPIRES_AT_KEY);
     
     // Cargar usuario si existe token válido
@@ -95,6 +95,31 @@ class AuthService {
     
     // Configurar interceptor de axios para agregar token automáticamente
     this.setupAuthInterceptor();
+    
+    // Configurar renovación automática de tokens
+    this.setupTokenRenewal();
+  }
+
+  /**
+   * Configura la renovación automática de tokens
+   */
+  setupTokenRenewal() {
+    // Verificar si el token va a expirar en los próximos 10 minutos
+    setInterval(() => {
+      if (this.isAuthenticated() && this.expiresAt) {
+        const now = Math.floor(Date.now() / 1000);
+        const expirationTime = parseInt(this.expiresAt);
+        const timeUntilExpiry = expirationTime - now;
+        
+        // Si el token expira en los próximos 10 minutos, renovarlo automáticamente
+        if (timeUntilExpiry > 0 && timeUntilExpiry < 600) { // 10 minutos
+          console.log('🔄 [authService] Token expira pronto, renovando automáticamente...');
+          this.refreshToken().catch(error => {
+            console.error('❌ [authService] Error en renovación automática:', error);
+          });
+        }
+      }
+    }, 60000); // Verificar cada minuto
   }
 
   /**
@@ -102,50 +127,53 @@ class AuthService {
    */
   loadUserFromStorage() {
     if (this.token && this.isTokenValid()) {
-      try {
-        const userData = localStorage.getItem(USER_KEY);
-        if (userData) {
-          this.user = JSON.parse(userData);
+      const storedUser = localStorage.getItem(USER_KEY);
+      if (storedUser) {
+        try {
+          this.user = JSON.parse(storedUser);
+        } catch (error) {
+          console.error('Error parseando usuario del localStorage:', error);
+          this.clearAuthData();
         }
-      } catch (error) {
-        console.error('Error loading user from storage:', error);
-        this.clearAuthData();
       }
     } else {
-      this.clearAuthData();
+      // Si no hay token válido, limpiar datos
+      if (this.token) {
+        console.log('🧹 [authService] Token inválido, limpiando datos');
+        this.clearAuthData();
+      }
     }
   }
 
   /**
-   * Configura el interceptor de axios para agregar el token automáticamente
+   * Configura el interceptor de Axios para agregar token automáticamente
    */
   setupAuthInterceptor() {
-    // Interceptor para requests
     authAPI.interceptors.request.use(
       async (config) => {
         // En desarrollo, evitar múltiples inicializaciones de configuración
-        const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        
-        if (!configInitialized && !isDevelopment) {
-          // Solo en producción intentar reconfigurar en cada request
-          await initializeConfig();
-        }
+        const isDevelopment = window.location.hostname === 'localhost';
         
         if (this.token && this.isTokenValid()) {
           config.headers.Authorization = `Bearer ${this.token}`;
+          
+          // Agregar X-Caller-ID si tenemos usuario
+          if (this.user?.id) {
+            config.headers['X-Caller-ID'] = this.user.id.toString();
+          }
         }
+        
         return config;
       },
       (error) => Promise.reject(error)
     );
 
-    // Interceptor para responses
     authAPI.interceptors.response.use(
       (response) => response,
       async (error) => {
         const originalRequest = error.config;
 
-        // Solo intentar refresh si es un 401 y no es una petición de login/register
+        // Solo intentar refresh si es un 401 y no es una petición de login/register/refresh
         const isAuthEndpoint = originalRequest.url?.includes('/users/login') || 
                               originalRequest.url?.includes('/users/register') ||
                               originalRequest.url?.includes('/users/refresh');
@@ -153,13 +181,15 @@ class AuthService {
         if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
           originalRequest._retry = true;
 
-          // Solo intentar refresh token si tenemos un token válido almacenado
-          if (this.token && this.isTokenValid()) {
+          // Intentar refresh token si tenemos un refresh token válido
+          if (this.refreshToken_value) {
             try {
+              console.log('🔄 [authService] Intentando renovar token automáticamente...');
               await this.refreshToken();
               originalRequest.headers.Authorization = `Bearer ${this.token}`;
               return authAPI(originalRequest);
             } catch (refreshError) {
+              console.error('❌ [authService] Error renovando token:', refreshError);
               // Solo hacer logout si realmente tenemos una sesión activa
               if (this.isAuthenticated()) {
                 this.logout();
@@ -168,8 +198,8 @@ class AuthService {
               return Promise.reject(refreshError);
             }
           } else {
-            // Si no tenemos token válido, no hacer logout automático
-            // Solo rechazar el error para que se maneje en el componente
+            // Si no tenemos refresh token, limpiar datos y rechazar
+            this.clearAuthData();
             return Promise.reject(error);
           }
         }
@@ -188,8 +218,8 @@ class AuthService {
     const now = Math.floor(Date.now() / 1000); // Tiempo actual en segundos
     const expirationTime = parseInt(this.expiresAt);
     
-    // Considerar token inválido si expira en los próximos 5 minutos
-    return expirationTime > (now + 300);
+    // Considerar token inválido si expira en los próximos 2 minutos
+    return expirationTime > (now + 120);
   }
 
   /**
@@ -296,12 +326,23 @@ class AuthService {
    */
   async refreshToken() {
     try {
-      const response = await authAPI.post('/users/refresh');
+      console.log('🔄 [authService] Renovando token...');
+      
+      if (!this.refreshToken_value) {
+        throw new Error('No hay refresh token disponible');
+      }
+
+      const response = await authAPI.post('/users/refresh', {
+        refresh_token: this.refreshToken_value
+      });
+      
       const authData = response.data;
+      console.log('✅ [authService] Token renovado exitosamente');
       
       this.saveAuthData(authData);
       return authData;
     } catch (error) {
+      console.error('❌ [authService] Error renovando token:', error);
       this.clearAuthData();
       throw new Error('Error renovando token');
     }
@@ -381,7 +422,7 @@ class AuthService {
   saveAuthData(authData) {
     console.log('🔧 [authService] Guardando datos de autenticación:', authData);
     
-    const { access_token, expires_at, user } = authData;
+    const { access_token, refresh_token, expires_at, user } = authData;
     
     if (!access_token) {
       console.error('❌ [authService] No se encontró access_token en la respuesta');
@@ -394,10 +435,14 @@ class AuthService {
     }
     
     this.token = access_token;
+    this.refreshToken_value = refresh_token;
     this.user = user;
     this.expiresAt = expires_at;
     
     localStorage.setItem(TOKEN_KEY, access_token);
+    if (refresh_token) {
+      localStorage.setItem(REFRESH_TOKEN_KEY, refresh_token);
+    }
     localStorage.setItem(USER_KEY, JSON.stringify(user));
     localStorage.setItem(EXPIRES_AT_KEY, expires_at.toString());
     
@@ -409,11 +454,13 @@ class AuthService {
    */
   clearAuthData() {
     this.token = null;
+    this.refreshToken_value = null;
     this.user = null;
     this.expiresAt = null;
     
     // Limpiar datos de autenticación
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(EXPIRES_AT_KEY);
     

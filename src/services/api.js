@@ -94,61 +94,45 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor para manejar errores globalmente
+// Interceptor para responses
 api.interceptors.response.use(
   (response) => {
-    console.log('✅ API Response:', {
-      url: response.config.url,
-      status: response.status,
-    });
+    // Log successful responses
+    if (response.config.url) {
+      console.log(`✅ API Response: {url: '${response.config.url}', status: ${response.status}}`);
+    }
+    
     return response;
   },
   (error) => {
-    console.error('❌ API Error Details:', {
-      url: error.config?.url,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      message: error.response?.data?.error || error.message,
-      responseData: error.response?.data,
-    });
+    console.error(`❌ API Error: {url: '${error.config?.url}', status: ${error.response?.status}, message: '${error.message}'}`);
     
-    // Log adicional para debugging
-    if (error.response) {
-      console.error('🔍 Full response data:', error.response.data);
-      console.error('🔍 Response status:', error.response.status);
-    } else if (error.request) {
-      console.error('🔍 Request made but no response:', error.request);
-    } else {
-      console.error('🔍 Error setting up request:', error.message);
-    }
-    
-    // ⚠️ NO manejar errores de endpoints de auth - los maneja authService
-    const isAuthEndpoint = error.config?.url?.includes('/auth/login') || 
-                           error.config?.url?.includes('/auth/register') ||
-                           error.config?.url?.includes('/auth/refresh') ||
-                           error.config?.url?.includes('/auth/logout');
-    
-    if (isAuthEndpoint) {
-      // Los errores de auth los maneja authService, solo pasar el error
+    // Si es un error de red sin respuesta
+    if (!error.response) {
+      toast.error('Error de conexión - Verifica tu conexión a internet');
       return Promise.reject(error);
     }
     
-    const message = error.response?.data?.error || error.message || 'Error desconocido';
+    const { status, data } = error.response;
+    const message = data?.error || error.message || 'Error desconocido';
     
-    if (error.response?.status === 401) {
-      toast.error('Sesión expirada - Por favor inicia sesión nuevamente');
-      // Limpiar datos de autenticación
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_user');
-      localStorage.removeItem('auth_expires_at');
-      // Redirigir al login
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 1000);
-    } else if (error.response?.status === 404) {
+    if (status === 401) {
+      // Para errores 401, no mostrar toast aquí ya que el authService lo maneja
+      console.log('🔒 Token inválido o expirado, el authService manejará la renovación');
+    } else if (status === 404) {
       toast.error('Recurso no encontrado');
-    } else if (error.response?.status >= 500) {
-      toast.error('Error del servidor');
+    } else if (status === 500) {
+      // Manejar errores 500 de manera más específica
+      if (error.config?.url?.includes('/gamification/')) {
+        console.warn('⚠️ Error 500 en servicio de gamificación, reintentando...');
+        // No mostrar toast para errores de gamificación, ya que son temporales
+      } else {
+        toast.error('Error interno del servidor');
+      }
+    } else if (status >= 400 && status < 500) {
+      toast.error(message);
+    } else if (status >= 500) {
+      toast.error('Error del servidor - Inténtalo de nuevo en unos momentos');
     } else {
       toast.error(message);
     }
