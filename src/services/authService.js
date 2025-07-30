@@ -146,9 +146,9 @@ class AuthService {
         const originalRequest = error.config;
 
         // Solo intentar refresh si es un 401 y no es una petición de login/register
-        const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
-                              originalRequest.url?.includes('/auth/register') ||
-                              originalRequest.url?.includes('/auth/refresh');
+        const isAuthEndpoint = originalRequest.url?.includes('/users/login') || 
+                              originalRequest.url?.includes('/users/register') ||
+                              originalRequest.url?.includes('/users/refresh');
 
         if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
           originalRequest._retry = true;
@@ -160,14 +160,16 @@ class AuthService {
               originalRequest.headers.Authorization = `Bearer ${this.token}`;
               return authAPI(originalRequest);
             } catch (refreshError) {
-              this.logout();
-              window.location.href = '/login';
+              // Solo hacer logout si realmente tenemos una sesión activa
+              if (this.isAuthenticated()) {
+                this.logout();
+                window.location.href = '/login';
+              }
               return Promise.reject(refreshError);
             }
           } else {
-            // Si no tenemos token válido, ir directo al login
-            this.logout();
-            window.location.href = '/login';
+            // Si no tenemos token válido, no hacer logout automático
+            // Solo rechazar el error para que se maneje en el componente
             return Promise.reject(error);
           }
         }
