@@ -101,6 +101,9 @@ class ConfigService {
         // Fallback para producción
         const config = {
           api_base_url: 'https://financial-resume-engine.onrender.com/api/v1',
+          gamification_url: 'https://financial-gamification-service.onrender.com/api/v1',
+          ai_service_url: 'https://financial-ai-service.onrender.com/api/v1',
+          users_service_url: 'https://users-service-mp5p.onrender.com/api/v1',
           environment: 'render',
           version: '1.0.0'
         };
