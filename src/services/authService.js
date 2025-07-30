@@ -3,39 +3,39 @@ import toast from '../utils/notifications';
 import configService from './configService';
 import dataService from './dataService';
 
-// Función para obtener la URL base del API dinámicamente
-const getApiBaseUrl = async () => {
+// Función para obtener la URL del users service dinámicamente
+const getUsersServiceUrl = async () => {
   try {
     const config = await configService.loadConfig();
-    return config.api_base_url;
+    return config.users_service_url;
   } catch (error) {
-    console.error('Error obteniendo URL base:', error);
+    console.error('Error obteniendo URL del users service:', error);
     
     // Fallback con detección de ambiente
-    if (process.env.REACT_APP_API_URL) {
-      return process.env.REACT_APP_API_URL;
+    if (process.env.REACT_APP_USERS_SERVICE_URL) {
+      return process.env.REACT_APP_USERS_SERVICE_URL;
     }
     
     const hostname = window.location.hostname;
     if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
-      return 'https://financial-resume-engine.onrender.com/api/v1';  // Render
+      return 'https://users-service-mp5p.onrender.com/api/v1';  // Render
     } else {
-      return 'http://localhost:8080/api/v1';  // Development
+      return 'http://localhost:8083/api/v1';  // Development
     }
   }
 };
 
-// Función para determinar baseURL inicial por ambiente
+// Función para determinar baseURL inicial del users service por ambiente
 const getInitialAuthBaseURL = () => {
-  if (process.env.REACT_APP_API_URL) {
-    return process.env.REACT_APP_API_URL;
+  if (process.env.REACT_APP_USERS_SERVICE_URL) {
+    return process.env.REACT_APP_USERS_SERVICE_URL;
   }
   
   const hostname = window.location.hostname;
   if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
-    return 'https://financial-resume-engine.onrender.com/api/v1';  // Render
+    return 'https://users-service-mp5p.onrender.com/api/v1';  // Render
   } else {
-    return 'http://localhost:8080/api/v1';  // Development
+    return 'http://localhost:8083/api/v1';  // Development
   }
 };
 
@@ -58,8 +58,8 @@ const initializeConfig = async () => {
     console.log('🔄 [authService] Inicializando configuración dinámica...');
     const config = await configService.loadConfig();
     
-    // Actualizar la baseURL de axios con la configuración dinámica
-    authAPI.defaults.baseURL = config.api_base_url;
+    // Actualizar la baseURL de axios con la configuración del users service
+    authAPI.defaults.baseURL = config.users_service_url;
     configInitialized = true;
     
     console.log('✅ [authService] Configuración dinámica inicializada:', {
@@ -206,7 +206,7 @@ class AuthService {
       
       console.log('🔧 Enviando datos de registro:', backendData);
       
-      const response = await authAPI.post('/auth/register', backendData);
+      const response = await authAPI.post('/users/register', backendData);
       const authData = response.data;
       
       // Verificar que la respuesta tenga la estructura esperada
@@ -235,7 +235,7 @@ class AuthService {
   async login(credentials) {
     try {
       console.log('🔧 [authService] Intentando login con credenciales:', { email: credentials.email });
-      const response = await authAPI.post('/auth/login', credentials);
+      const response = await authAPI.post('/users/login', credentials);
       console.log('🔧 [authService] Respuesta del servidor:', response.data);
       
       const authData = response.data;
@@ -278,7 +278,7 @@ class AuthService {
     try {
       // Intentar notificar al servidor (opcional)
       if (this.isAuthenticated()) {
-        await authAPI.post('/auth/logout');
+        await authAPI.post('/users/logout');
       }
     } catch (error) {
       // No importa si falla, igual limpiaremos el local storage
@@ -294,7 +294,7 @@ class AuthService {
    */
   async refreshToken() {
     try {
-      const response = await authAPI.post('/auth/refresh');
+      const response = await authAPI.post('/users/refresh');
       const authData = response.data;
       
       this.saveAuthData(authData);
@@ -310,7 +310,7 @@ class AuthService {
    */
   async getProfile() {
     try {
-      const response = await authAPI.get('/auth/profile');
+      const response = await authAPI.get('/users/profile');
       const userData = response.data;
       
       // Actualizar datos del usuario en memoria y storage
