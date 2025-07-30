@@ -3,7 +3,7 @@ const environments = {
   development: {
     name: 'Development',
     API_BASE_URL: 'http://localhost:8080/api/v1',
-    GAMIFICATION_API_URL: 'http://localhost:8085/api/v1',
+    GAMIFICATION_API_URL: 'http://localhost:8081/api/v1',
     AI_API_URL: 'http://localhost:8082/api/v1',
     USERS_API_URL: 'http://localhost:8083/api/v1',
     REDIS_URL: 'redis://localhost:6379',
@@ -15,12 +15,27 @@ const environments = {
     CONFIG_CACHE_DISABLED: true  // Deshabilitar cache de configuración
   },
   
+  docker: {
+    name: 'Docker Compose',
+    API_BASE_URL: 'http://financial-resume-engine:8080/api/v1',
+    GAMIFICATION_API_URL: 'http://gamification-service:8081/api/v1',
+    AI_API_URL: 'http://ai-service:8082/api/v1',
+    USERS_API_URL: 'http://users-service:8083/api/v1',
+    REDIS_URL: 'redis://financial_redis:6379',
+    WEBSOCKET_URL: 'ws://financial-resume-engine:8080/ws',
+    CORS_ORIGIN: 'http://localhost:3000',
+    // Configuración específica para Docker
+    RATE_LIMIT_DISABLED: true,
+    REQUEST_THROTTLE_MS: 100,
+    CONFIG_CACHE_DISABLED: true
+  },
+
   render: {
     name: 'Render.com',
     API_BASE_URL: 'https://financial-resume-engine.onrender.com/api/v1',
     GAMIFICATION_API_URL: 'https://financial-gamification-service.onrender.com/api/v1',
-    AI_API_URL: 'https://financial-ai-service.onrender.com/api/v1',
-    USERS_API_URL: 'https://users-service-mp5p.onrender.com',
+    AI_API_URL: 'https://financial-ai-api.niloft.com/api/v1',
+    USERS_API_URL: 'https://users-service-mp5p.onrender.com/api/v1',
     REDIS_URL: 'redis://red-d1qmg0juibrs73esqdfg:6379',
     WEBSOCKET_URL: 'wss://financial-resume-engine.onrender.com/ws',
     CORS_ORIGIN: 'https://financial-resume-engine-frontend.onrender.com'

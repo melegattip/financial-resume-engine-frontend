@@ -18,9 +18,9 @@ const getUsersServiceUrl = async () => {
     
     const hostname = window.location.hostname;
     if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
-      return 'https://users-service-mp5p.onrender.com';  // Render
+      return 'https://users-service-mp5p.onrender.com/api/v1';  // Render
     } else {
-      return 'http://localhost:8083';  // Development
+      return 'http://localhost:8083/api/v1';  // Development
     }
   }
 };
@@ -33,9 +33,9 @@ const getInitialAuthBaseURL = () => {
   
   const hostname = window.location.hostname;
   if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
-    return 'https://users-service-mp5p.onrender.com';  // Render
+    return 'https://users-service-mp5p.onrender.com/api/v1';  // Render
   } else {
-    return 'http://localhost:8083';  // Development
+    return 'http://localhost:8083/api/v1';  // Development
   }
 };
 

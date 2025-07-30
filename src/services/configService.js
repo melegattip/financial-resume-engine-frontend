@@ -55,20 +55,20 @@ class ConfigService {
         NODE_ENV: process.env.NODE_ENV
       });
       
-      // En desarrollo, usar directamente las variables de entorno sin intentar cargar desde API
-      if (currentEnv === 'development') {
-        console.log(`🔧 [configService] Ambiente development detectado, usando configuración local`);
+      // En desarrollo o Docker, usar directamente las variables de entorno sin intentar cargar desde API
+      if (currentEnv === 'development' || currentEnv === 'docker') {
+        console.log(`🔧 [configService] Ambiente ${currentEnv} detectado, usando configuración local`);
         
         const config = {
           api_base_url: process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1',
-          gamification_url: process.env.REACT_APP_GAMIFICATION_URL || 'http://localhost:8085/api/v1',
+          gamification_url: process.env.REACT_APP_GAMIFICATION_URL || 'http://localhost:8081/api/v1',
           ai_service_url: process.env.REACT_APP_AI_SERVICE_URL || 'http://localhost:8082/api/v1',
           users_service_url: process.env.REACT_APP_USERS_SERVICE_URL || 'http://localhost:8083/api/v1',
-          environment: 'development',
+          environment: currentEnv,
           version: '1.0.0'
         };
         
-        console.log('✅ Configuración de desarrollo cargada:', config);
+        console.log(`✅ Configuración de ${currentEnv} cargada:`, config);
         this.config = config;
         return config;
       }
@@ -102,7 +102,7 @@ class ConfigService {
         const config = {
           api_base_url: 'https://financial-resume-engine.onrender.com/api/v1',
           gamification_url: 'https://financial-gamification-service.onrender.com/api/v1',
-          ai_service_url: 'https://financial-ai-service.onrender.com/api/v1',
+          ai_service_url: 'https://financial-ai-api.niloft.com/api/v1',
           users_service_url: 'https://users-service-mp5p.onrender.com',
           environment: 'render',
           version: '1.0.0'
