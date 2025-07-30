@@ -20,6 +20,7 @@ const environments = {
     API_BASE_URL: 'https://financial-resume-engine.onrender.com/api/v1',
     GAMIFICATION_API_URL: 'https://financial-gamification-service.onrender.com/api/v1',
     AI_API_URL: 'https://financial-ai-service.onrender.com/api/v1',
+    USERS_API_URL: 'https://users-service-mp5p.onrender.com',
     REDIS_URL: 'redis://red-d1qmg0juibrs73esqdfg:6379',
     WEBSOCKET_URL: 'wss://financial-resume-engine.onrender.com/ws',
     CORS_ORIGIN: 'https://financial-resume-engine-frontend.onrender.com'
