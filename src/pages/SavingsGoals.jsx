@@ -148,13 +148,14 @@ const SavingsGoals = () => {
       await savingsGoalsAPI.delete(deletingGoal.id);
       toast.success('Meta de ahorro eliminada exitosamente');
       loadData();
-      setShowDeleteModal(false);
-      setDeletingGoal(null);
     } catch (error) {
       console.error('Error deleting goal:', error);
       toast.error('Error eliminando meta de ahorro');
     } finally {
+      // ✅ Siempre cerrar modal y limpiar estado, sin importar si hay errores
       setDeleteLoading(false);
+      setShowDeleteModal(false);
+      setDeletingGoal(null);
     }
   };
 

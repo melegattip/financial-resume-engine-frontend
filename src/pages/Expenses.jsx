@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { FaPlus, FaSearch, FaArrowDown, FaCalendar, FaEdit, FaTrash, FaCheckCircle, FaTimesCircle, FaDollarSign } from 'react-icons/fa';
 import { formatCurrency, formatPercentage } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
+import { useGamification } from '../contexts/GamificationContext';
 import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
 import useDataRefresh from '../hooks/useDataRefresh';
 import toast from 'react-hot-toast';
@@ -49,6 +50,9 @@ const Expenses = () => {
     expenses: expensesAPI, 
     categories: categoriesAPI
   } = useOptimizedAPI();
+
+  // Hook de gamificación para registrar acciones
+  const { recordCreateExpense, recordUpdateExpense, recordDeleteExpense } = useGamification();
 
   const formatAmount = (amount) => {
     if (balancesHidden) return '••••••';
@@ -153,9 +157,18 @@ const Expenses = () => {
       if (editingExpense) {
         await expensesAPI.update(editingExpense.id, dataToSend);
         // useOptimizedAPI ya muestra el toast de éxito
+        
+        // 🎮 Registrar acción de gamificación
+        console.log(`🎯 [Expenses] Registrando actualización de expense: ${editingExpense.id}`);
+        recordUpdateExpense(editingExpense.id, `Gasto actualizado: ${dataToSend.description}`);
       } else {
-        await expensesAPI.create(dataToSend);
+        const result = await expensesAPI.create(dataToSend);
         // useOptimizedAPI ya muestra el toast de éxito
+        
+        // 🎮 Registrar acción de gamificación  
+        const expenseId = result?.data?.id || `expense-${Date.now()}`;
+        console.log(`🎯 [Expenses] Registrando creación de expense: ${expenseId}`);
+        recordCreateExpense(expenseId, `Nuevo gasto: ${dataToSend.description}`);
       }
       
       setShowModal(false);
@@ -202,15 +215,20 @@ const Expenses = () => {
       await expensesAPI.delete(deletingExpense.id);
       // useOptimizedAPI ya muestra el toast de éxito
       
+      // 🎮 Registrar acción de gamificación
+      console.log(`🎯 [Expenses] Registrando eliminación de expense: ${deletingExpense.id}`);
+      recordDeleteExpense(deletingExpense.id, `Gasto eliminado: ${deletingExpense.description}`);
+      
       // Recargar datos para mostrar cambios
       await loadData();
-      setShowDeleteModal(false);
-      setDeletingExpense(null);
     } catch (error) {
       // useOptimizedAPI ya maneja el error
       console.error('Error en confirmDelete:', error);
     } finally {
+      // ✅ Siempre cerrar modal y limpiar estado, sin importar si hay errores
       setDeleteLoading(false);
+      setShowDeleteModal(false);
+      setDeletingExpense(null);
     }
   };
 
