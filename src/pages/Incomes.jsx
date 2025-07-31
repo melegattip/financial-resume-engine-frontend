@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { FaPlus, FaSearch, FaArrowUp, FaEdit, FaTrash, FaDollarSign } from 'react-icons/fa';
 import { formatCurrency } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
+import { useGamification } from '../contexts/GamificationContext';
 import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
 import useDataRefresh from '../hooks/useDataRefresh';
 import toast from 'react-hot-toast';
@@ -43,6 +44,9 @@ const Incomes = () => {
     incomes: incomesAPI, 
     categories: categoriesAPI
   } = useOptimizedAPI();
+
+  // Hook de gamificación para registrar acciones
+  const { recordCreateIncome, recordUpdateIncome, recordDeleteIncome } = useGamification();
 
   const formatAmount = (amount) => {
     if (balancesHidden) return '••••••';
@@ -142,9 +146,18 @@ const Incomes = () => {
       if (editingIncome) {
         await incomesAPI.update(editingIncome.id, dataToSend);
         // useOptimizedAPI ya muestra el toast de éxito
+        
+        // 🎮 Registrar acción de gamificación
+        console.log(`🎯 [Incomes] Registrando actualización de income: ${editingIncome.id}`);
+        recordUpdateIncome(editingIncome.id, `Ingreso actualizado: ${dataToSend.description}`);
       } else {
-        await incomesAPI.create(dataToSend);
+        const result = await incomesAPI.create(dataToSend);
         // useOptimizedAPI ya muestra el toast de éxito
+        
+        // 🎮 Registrar acción de gamificación  
+        const incomeId = result?.data?.id || `income-${Date.now()}`;
+        console.log(`🎯 [Incomes] Registrando creación de income: ${incomeId}`);
+        recordCreateIncome(incomeId, `Nuevo ingreso: ${dataToSend.description}`);
       }
       
       setShowModal(false);
@@ -180,14 +193,20 @@ const Incomes = () => {
       setDeleteLoading(true);
       await incomesAPI.delete(deletingIncome.id);
       // useOptimizedAPI ya muestra el toast de éxito
+      
+      // 🎮 Registrar acción de gamificación
+      console.log(`🎯 [Incomes] Registrando eliminación de income: ${deletingIncome.id}`);
+      recordDeleteIncome(deletingIncome.id, `Ingreso eliminado: ${deletingIncome.description}`);
+      
       await loadData();
-      setShowDeleteModal(false);
-      setDeletingIncome(null);
     } catch (error) {
       // useOptimizedAPI ya maneja el error
       console.error('Error en confirmDelete:', error);
     } finally {
+      // ✅ Siempre cerrar modal y limpiar estado, sin importar si hay errores
       setDeleteLoading(false);
+      setShowDeleteModal(false);
+      setDeletingIncome(null);
     }
   };
 

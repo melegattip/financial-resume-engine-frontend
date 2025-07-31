@@ -7,14 +7,28 @@
  * - Click para ir a página de achievements
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaTrophy, FaStar, FaMedal } from 'react-icons/fa';
 import { useGamification } from '../contexts/GamificationContext';
 
 const GamificationWidget = () => {
   const navigate = useNavigate();
-  const { userProfile, loading, error, getLevelInfo } = useGamification();
+  const { userProfile, loading, error, getLevelInfo, refreshTrigger } = useGamification();
+  const [localXP, setLocalXP] = useState(0);
+  const [localLevel, setLocalLevel] = useState(0);
+
+  // Sincronizar estado local con userProfile (sin dependencias circulares)
+  useEffect(() => {
+    if (userProfile) {
+      const newXP = userProfile.total_xp || 0;
+      const newLevel = userProfile.current_level || 0;
+      
+      console.log(`🎮 [GamificationWidget] Sincronizando: XP=${newXP}, Nivel=${newLevel} (trigger: ${refreshTrigger})`);
+      setLocalXP(newXP);
+      setLocalLevel(newLevel);
+    }
+  }, [userProfile, refreshTrigger]); // Sin incluir localXP/localLevel para evitar loops
 
   const handleClick = () => {
     navigate('/achievements');
@@ -38,9 +52,10 @@ const GamificationWidget = () => {
     );
   }
 
-  const levelInfo = getLevelInfo(userProfile.current_level || 0);
-  const totalXP = userProfile.total_xp || 0;
-  const currentLevel = userProfile.current_level || 0;
+  // Usar valores locales que se actualizan con useEffect para mejor reactividad
+  const totalXP = localXP;
+  const currentLevel = localLevel;
+  const levelInfo = getLevelInfo(currentLevel);
 
   return (
     <div 

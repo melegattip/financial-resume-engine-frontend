@@ -77,6 +77,9 @@ export const GamificationProvider = ({ children }) => {
   // Cache para evitar llamadas innecesarias
   const [lastUpdate, setLastUpdate] = useState(null);
   const [pendingActions, setPendingActions] = useState([]);
+  
+  // Forzar re-render de componentes dependientes
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Contexto de autenticación
   const auth = useAuth();
@@ -177,19 +180,52 @@ export const GamificationProvider = ({ children }) => {
       );
 
       console.log(`✅ [GamificationContext] Resultado de la acción:`, result);
+      console.log(`🔍 [GamificationContext] Campos recibidos:`, {
+        total_xp: result.total_xp,
+        new_level: result.new_level,
+        xp_earned: result.xp_earned,
+        level_up: result.level_up,
+        result_keys: Object.keys(result || {})
+      });
 
-      // Actualizar datos locales inmediatamente
-      setUserProfile(prev => ({
-        ...prev,
-        total_xp: result.total_xp || prev?.total_xp || 0,
-        current_level: result.new_level || prev?.current_level || 0
-      }));
+              // Actualizar datos locales inmediatamente solo si hay cambios reales
+        setUserProfile(prev => {
+          const prevXP = prev?.total_xp || 0;
+          const prevLevel = prev?.current_level || 0;
+          const newXP = result.total_xp || prevXP;
+          const newLevel = result.new_level || prevLevel;
 
-      setStats(prev => ({
-        ...prev,
-        total_xp: result.total_xp || prev?.total_xp || 0,
-        current_level: result.new_level || prev?.current_level || 0
-      }));
+          // Solo actualizar si realmente cambió algo
+          if (newXP !== prevXP || newLevel !== prevLevel) {
+            console.log(`✨ [GamificationContext] Actualizando XP: ${prevXP} → ${newXP}, Nivel: ${prevLevel} → ${newLevel}`);
+            return {
+              ...prev,
+              total_xp: newXP,
+              current_level: newLevel,
+              last_updated: Date.now()
+            };
+          }
+          
+          console.log(`⏭️ [GamificationContext] Sin cambios en XP/Nivel, manteniendo valores actuales`);
+          return prev; // No cambios, no re-render
+        });
+
+        setStats(prev => {
+          const newTotalXP = result.total_xp || prev?.total_xp || 0;
+          const newLevel = result.new_level || prev?.current_level || 0;
+          
+          // Solo actualizar si hay cambios
+          if (newTotalXP !== (prev?.total_xp || 0) || newLevel !== (prev?.current_level || 0)) {
+            return {
+              ...prev,
+              total_xp: newTotalXP,
+              current_level: newLevel,
+              last_updated: Date.now()
+            };
+          }
+          
+          return prev; // No cambios
+        });
 
       if (result.xp_earned > 0) {
         console.log(`🏆 [GamificationContext] XP ganado: ${result.xp_earned}`);
@@ -225,10 +261,12 @@ export const GamificationProvider = ({ children }) => {
       // Limpiar acción pendiente
       setPendingActions(prev => prev.filter(p => p !== actionKey));
 
-      // Recargar datos completos después de una acción exitosa para asegurar sincronización
-      setTimeout(() => {
-        loadGamificationData();
-      }, 500); // Pequeño delay para permitir que el backend procese completamente
+      // Forzar re-render del contexto actualizando el timestamp
+      setLastUpdate(Date.now());
+      setRefreshTrigger(prev => prev + 1); // Forzar re-render de componentes dependientes
+      
+      // ✅ No recargar inmediatamente para evitar flash - los datos del backend ya están actualizados
+      console.log(`🚀 [GamificationContext] Acción completada sin recarga automática para evitar flash`);
 
       return result;
     } catch (err) {
@@ -409,6 +447,7 @@ export const GamificationProvider = ({ children }) => {
     features,
     loading,
     error,
+    refreshTrigger, // Para forzar re-renders
 
     // Acciones principales
     recordAction,
