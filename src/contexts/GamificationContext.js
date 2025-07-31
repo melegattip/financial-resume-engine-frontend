@@ -178,22 +178,21 @@ export const GamificationProvider = ({ children }) => {
 
       console.log(`✅ [GamificationContext] Resultado de la acción:`, result);
 
-      // Actualizar datos locales
+      // Actualizar datos locales inmediatamente
+      setUserProfile(prev => ({
+        ...prev,
+        total_xp: result.total_xp || prev?.total_xp || 0,
+        current_level: result.new_level || prev?.current_level || 0
+      }));
+
+      setStats(prev => ({
+        ...prev,
+        total_xp: result.total_xp || prev?.total_xp || 0,
+        current_level: result.new_level || prev?.current_level || 0
+      }));
+
       if (result.xp_earned > 0) {
         console.log(`🏆 [GamificationContext] XP ganado: ${result.xp_earned}`);
-        
-        setUserProfile(prev => ({
-          ...prev,
-          total_xp: result.total_xp,
-          current_level: result.new_level
-        }));
-
-        setStats(prev => ({
-          ...prev,
-          total_xp: result.total_xp,
-          current_level: result.new_level
-        }));
-
         // Mostrar notificación de XP ganado
         showXPGained(result.xp_earned, `¡Has ganado ${result.xp_earned} XP!`);
       } else {
@@ -225,6 +224,11 @@ export const GamificationProvider = ({ children }) => {
 
       // Limpiar acción pendiente
       setPendingActions(prev => prev.filter(p => p !== actionKey));
+
+      // Recargar datos completos después de una acción exitosa para asegurar sincronización
+      setTimeout(() => {
+        loadGamificationData();
+      }, 500); // Pequeño delay para permitir que el backend procese completamente
 
       return result;
     } catch (err) {
