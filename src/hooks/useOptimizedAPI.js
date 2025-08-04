@@ -19,8 +19,10 @@ export const useOptimizedAPI = () => {
       setError(null);
       
       const result = await operation();
+      console.log(`🔍 [useOptimizedAPI] Resultado de operación ${cacheType}:`, result);
       
       // Invalidar cache después de la operación exitosa
+      console.log(`🗑️ [useOptimizedAPI] Invalidando caché para tipo: ${cacheType}`);
       dataService.invalidateAfterMutation(cacheType);
       
       if (successMessage) {
@@ -29,7 +31,7 @@ export const useOptimizedAPI = () => {
       
       return result;
     } catch (err) {
-      console.error(`Error en operación ${cacheType}:`, err);
+      console.error(`❌ [useOptimizedAPI] Error en operación ${cacheType}:`, err);
       setError(err);
       toast.error(err.message || `Error en operación ${cacheType}`);
       throw err;

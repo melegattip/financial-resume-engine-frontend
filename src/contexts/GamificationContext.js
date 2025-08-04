@@ -182,6 +182,7 @@ export const GamificationProvider = ({ children }) => {
       console.log(`✅ [GamificationContext] Resultado de la acción:`, result);
       console.log(`🔍 [GamificationContext] Campos recibidos:`, {
         total_xp: result.total_xp,
+        current_level: result.current_level,
         new_level: result.new_level,
         xp_earned: result.xp_earned,
         level_up: result.level_up,
@@ -193,7 +194,8 @@ export const GamificationProvider = ({ children }) => {
           const prevXP = prev?.total_xp || 0;
           const prevLevel = prev?.current_level || 0;
           const newXP = result.total_xp || prevXP;
-          const newLevel = result.new_level || prevLevel;
+          // 🔧 FIX: Usar current_level del resultado, no new_level
+          const newLevel = result.current_level || result.new_level || prevLevel;
 
           // Solo actualizar si realmente cambió algo
           if (newXP !== prevXP || newLevel !== prevLevel) {
@@ -212,7 +214,8 @@ export const GamificationProvider = ({ children }) => {
 
         setStats(prev => {
           const newTotalXP = result.total_xp || prev?.total_xp || 0;
-          const newLevel = result.new_level || prev?.current_level || 0;
+          // 🔧 FIX: Usar current_level del resultado, no new_level
+          const newLevel = result.current_level || result.new_level || prev?.current_level || 0;
           
           // Solo actualizar si hay cambios
           if (newTotalXP !== (prev?.total_xp || 0) || newLevel !== (prev?.current_level || 0)) {
@@ -237,9 +240,10 @@ export const GamificationProvider = ({ children }) => {
 
       // Mostrar notificación de subida de nivel
       if (result.level_up) {
-        console.log(`🎉 [GamificationContext] ¡Subida de nivel! Nuevo nivel: ${result.new_level}`);
-        const levelInfo = getLevelInfo(result.new_level);
-        showLevelUp(result.new_level, levelInfo.name);
+        const actualNewLevel = result.current_level || result.new_level;
+        console.log(`🎉 [GamificationContext] ¡Subida de nivel! Nuevo nivel: ${actualNewLevel}`);
+        const levelInfo = getLevelInfo(actualNewLevel);
+        showLevelUp(actualNewLevel, levelInfo.name);
       }
 
       // Mostrar notificaciones de nuevos logros
@@ -258,6 +262,17 @@ export const GamificationProvider = ({ children }) => {
         );
       }
 
+      // Actualizar userProfile local con los nuevos datos
+      if (userProfile && result.total_xp !== undefined) {
+        setUserProfile(prev => ({
+          ...prev,
+          total_xp: result.total_xp,
+          current_level: result.new_level || result.current_level || prev.current_level,
+          achievements_count: prev.achievements_count + (result.new_achievements?.length || 0)
+        }));
+        console.log(`🔄 [GamificationContext] Perfil local actualizado: ${result.total_xp} XP, Nivel ${result.new_level || result.current_level}`);
+      }
+
       // Limpiar acción pendiente
       setPendingActions(prev => prev.filter(p => p !== actionKey));
 
@@ -265,8 +280,7 @@ export const GamificationProvider = ({ children }) => {
       setLastUpdate(Date.now());
       setRefreshTrigger(prev => prev + 1); // Forzar re-render de componentes dependientes
       
-      // ✅ No recargar inmediatamente para evitar flash - los datos del backend ya están actualizados
-      console.log(`🚀 [GamificationContext] Acción completada sin recarga automática para evitar flash`);
+      console.log(`🚀 [GamificationContext] Acción completada y header actualizado automáticamente`);
 
       return result;
     } catch (err) {

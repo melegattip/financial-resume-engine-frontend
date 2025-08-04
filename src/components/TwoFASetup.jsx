@@ -101,7 +101,7 @@ const TwoFASetup = ({ onComplete, onCancel }) => {
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-fr-primary mx-auto mb-4"></div>
-          <p className="text-fr-gray-600">Configurando 2FA...</p>
+          <p className="text-fr-gray-600 dark:text-gray-300">Configurando 2FA...</p>
         </div>
       </div>
     );
@@ -112,27 +112,27 @@ const TwoFASetup = ({ onComplete, onCancel }) => {
       <div className="space-y-6">
         <div className="text-center">
           <FaQrcode className="w-12 h-12 text-fr-primary mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-fr-gray-900 mb-2">
+          <h3 className="text-xl font-semibold text-fr-gray-900 dark:text-gray-100 mb-2">
             Configurar Autenticación de Dos Factores
           </h3>
-          <p className="text-fr-gray-600">
+          <p className="text-fr-gray-600 dark:text-gray-300">
             Escanea el código QR con tu aplicación de autenticación
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-fr p-4">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-fr p-4">
             <div className="flex items-center">
-              <FaTimesCircle className="w-5 h-5 text-red-400 mr-2" />
-              <p className="text-red-800">{error}</p>
+              <FaTimesCircle className="w-5 h-5 text-red-400 dark:text-red-300 mr-2" />
+              <p className="text-red-800 dark:text-red-200">{error}</p>
             </div>
           </div>
         )}
 
-        <div className="bg-white border border-fr-gray-200 rounded-fr p-6 text-center">
+        <div className="bg-white dark:bg-gray-800 border border-fr-gray-200 dark:border-gray-600 rounded-fr p-6 text-center">
           <div className="mb-4">
-            <p className="text-sm text-fr-gray-600 mb-2">Código QR para escanear:</p>
-            <div className="bg-gray-100 p-4 rounded-fr inline-block">
+            <p className="text-sm text-fr-gray-600 dark:text-gray-300 mb-2">Código QR para escanear:</p>
+            <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-fr inline-block">
               <img 
                 src={`data:image/png;base64,${setupData?.qr_code_image}`} 
                 alt="QR Code 2FA"
@@ -142,8 +142,8 @@ const TwoFASetup = ({ onComplete, onCancel }) => {
           </div>
           
           <div className="mb-4">
-            <p className="text-sm text-fr-gray-600 mb-2">O ingresa manualmente:</p>
-            <code className="bg-gray-100 px-3 py-2 rounded text-sm font-mono break-all">
+            <p className="text-sm text-fr-gray-600 dark:text-gray-300 mb-2">O ingresa manualmente:</p>
+            <code className="bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded text-sm font-mono break-all text-gray-800 dark:text-gray-200">
               {setupData?.secret}
             </code>
           </div>
@@ -151,14 +151,14 @@ const TwoFASetup = ({ onComplete, onCancel }) => {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-fr-gray-700 mb-2">
+            <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
               Código de verificación (6 dígitos)
             </label>
             <input
               type="text"
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              className="w-full px-4 py-2 border border-fr-gray-300 rounded-fr focus:ring-2 focus:ring-fr-primary focus:border-transparent"
+              className="w-full px-4 py-2 border border-fr-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-fr focus:ring-2 focus:ring-fr-primary focus:border-transparent"
               placeholder="123456"
               maxLength={6}
             />
@@ -189,42 +189,42 @@ const TwoFASetup = ({ onComplete, onCancel }) => {
       <div className="space-y-6">
         <div className="text-center">
           <FaKey className="w-12 h-12 text-fr-primary mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-fr-gray-900 mb-2">
+          <h3 className="text-xl font-semibold text-fr-gray-900 dark:text-gray-100 mb-2">
             Códigos de Backup
           </h3>
-          <p className="text-fr-gray-600">
+          <p className="text-fr-gray-600 dark:text-gray-300">
             Guarda estos códigos en un lugar seguro. Los necesitarás si pierdes acceso a tu aplicación de autenticación.
           </p>
         </div>
 
-        <div className="bg-yellow-50 border border-yellow-200 rounded-fr p-4">
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-fr p-4">
           <div className="flex items-start">
-            <FaCheckCircle className="w-5 h-5 text-yellow-600 mr-2 mt-0.5" />
+            <FaCheckCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2 mt-0.5" />
             <div>
-              <p className="text-yellow-800 font-medium">¡Importante!</p>
-              <p className="text-yellow-700 text-sm">
+              <p className="text-yellow-800 dark:text-yellow-200 font-medium">¡Importante!</p>
+              <p className="text-yellow-700 dark:text-yellow-300 text-sm">
                 Estos códigos solo se muestran una vez. Guárdalos de forma segura.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white border border-fr-gray-200 rounded-fr p-6">
+        <div className="bg-white dark:bg-gray-800 border border-fr-gray-200 dark:border-gray-600 rounded-fr p-6">
           <div className="flex justify-between items-center mb-4">
-            <h4 className="font-medium text-fr-gray-900">Códigos de Backup</h4>
+            <h4 className="font-medium text-fr-gray-900 dark:text-gray-100">Códigos de Backup</h4>
             <button
               onClick={() => setShowBackupCodes(!showBackupCodes)}
-              className="text-fr-primary hover:text-fr-primary-dark text-sm"
+              className="text-fr-primary hover:text-fr-primary-dark dark:text-blue-400 dark:hover:text-blue-300 text-sm flex items-center space-x-1"
             >
               {showBackupCodes ? <FaEyeSlash /> : <FaEye />}
-              {showBackupCodes ? 'Ocultar' : 'Mostrar'}
+              <span>{showBackupCodes ? 'Ocultar' : 'Mostrar'}</span>
             </button>
           </div>
           
           <div className="grid grid-cols-2 gap-3">
             {backupCodes.map((code, index) => (
-              <div key={index} className="bg-gray-100 p-3 rounded text-center">
-                <code className="font-mono text-sm">
+              <div key={index} className="bg-gray-100 dark:bg-gray-700 p-3 rounded text-center">
+                <code className="font-mono text-sm text-gray-800 dark:text-gray-200">
                   {showBackupCodes ? code : '••••-••••'}
                 </code>
               </div>
@@ -262,11 +262,11 @@ const TwoFASetup = ({ onComplete, onCancel }) => {
   if (step === 'complete') {
     return (
       <div className="text-center space-y-6">
-        <FaCheckCircle className="w-16 h-16 text-green-500 mx-auto" />
-        <h3 className="text-xl font-semibold text-fr-gray-900">
+        <FaCheckCircle className="w-16 h-16 text-green-500 dark:text-green-400 mx-auto" />
+        <h3 className="text-xl font-semibold text-fr-gray-900 dark:text-gray-100">
           ¡2FA Configurado Exitosamente!
         </h3>
-        <p className="text-fr-gray-600">
+        <p className="text-fr-gray-600 dark:text-gray-300">
           Tu cuenta ahora está protegida con autenticación de dos factores.
         </p>
         <button
