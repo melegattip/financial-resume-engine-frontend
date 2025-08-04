@@ -24,11 +24,14 @@ const GamificationWidget = () => {
       const newXP = userProfile.total_xp || 0;
       const newLevel = userProfile.current_level || 0;
       
-      console.log(`🎮 [GamificationWidget] Sincronizando: XP=${newXP}, Nivel=${newLevel} (trigger: ${refreshTrigger})`);
-      setLocalXP(newXP);
-      setLocalLevel(newLevel);
+      // Solo actualizar si los valores realmente cambiaron
+      if (newXP !== localXP || newLevel !== localLevel) {
+        console.log(`🎮 [GamificationWidget] Sincronizando: XP=${localXP}→${newXP}, Nivel=${localLevel}→${newLevel} (trigger: ${refreshTrigger})`);
+        setLocalXP(newXP);
+        setLocalLevel(newLevel);
+      }
     }
-  }, [userProfile, refreshTrigger]); // Sin incluir localXP/localLevel para evitar loops
+  }, [userProfile, refreshTrigger, localXP, localLevel]);
 
   const handleClick = () => {
     navigate('/achievements');

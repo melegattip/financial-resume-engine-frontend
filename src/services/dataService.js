@@ -60,16 +60,21 @@ class DataService {
   clearCache(pattern = null) {
     if (pattern) {
       // Limpiar solo entradas que coincidan con el patrón
+      let deletedCount = 0;
       for (const [key] of this.cache.entries()) {
         if (key.includes(pattern)) {
           this.cache.delete(key);
+          console.log(`🗑️ [DataService] Entrada eliminada: ${key}`);
+          deletedCount++;
         }
       }
+      console.log(`🧹 [DataService] Cache limpiado para patrón: ${pattern} (${deletedCount} entradas)`);
     } else {
       // Limpiar todo el cache
+      const totalEntries = this.cache.size;
       this.cache.clear();
+      console.log(`🧹 [DataService] Cache limpiado completamente (${totalEntries} entradas)`);
     }
-    console.log(`🧹 Cache limpiado${pattern ? ` para patrón: ${pattern}` : ' completamente'}`);
   }
 
   /**
@@ -274,8 +279,11 @@ class DataService {
         this.clearCache('dashboard');
         break;
       case 'category':
+        console.log('🗑️ [DataService] Invalidando caché de categorías...');
         this.clearCache('categories');
         this.clearCache('analytics_categories');
+        this.clearCache('categories_list'); // Agregado: caché específico para lista
+        console.log('✅ [DataService] Caché de categorías invalidado');
         break;
       case 'recurring_transaction':
         // Cuando se ejecuta una transacción recurrente, puede crear gastos o ingresos

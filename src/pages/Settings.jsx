@@ -128,11 +128,11 @@ const Settings = () => {
       <div className="card">
         {activeTab === 'profile' && (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-fr-gray-900">Información del Perfil</h3>
+            <h3 className="text-lg font-semibold text-fr-gray-900 dark:text-gray-100">Información del Perfil</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
                   Nombre completo
                 </label>
                 <input
@@ -144,7 +144,7 @@ const Settings = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
                   Email
                 </label>
                 <input
@@ -156,7 +156,7 @@ const Settings = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-fr-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
                   Teléfono
                 </label>
                 <input
@@ -178,13 +178,13 @@ const Settings = () => {
 
         {activeTab === 'notifications' && (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-fr-gray-900">Configuración de Notificaciones</h3>
+            <h3 className="text-lg font-semibold text-fr-gray-900 dark:text-gray-100">Configuración de Notificaciones</h3>
             
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-fr-gray-900">Notificaciones por email</h4>
-                  <p className="text-sm text-fr-gray-500">Recibe actualizaciones por correo electrónico</p>
+                  <h4 className="font-medium text-fr-gray-900 dark:text-gray-100">Notificaciones por email</h4>
+                  <p className="text-sm text-fr-gray-500 dark:text-gray-300">Recibe actualizaciones por correo electrónico</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -193,14 +193,14 @@ const Settings = () => {
                     onChange={(e) => updateSetting('notifications', 'emailNotifications', e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-fr-primary"></div>
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-fr-primary"></div>
                 </label>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-fr-gray-900">Notificaciones push</h4>
-                  <p className="text-sm text-fr-gray-500">Recibe notificaciones en tiempo real</p>
+                  <h4 className="font-medium text-fr-gray-900 dark:text-gray-100">Notificaciones push</h4>
+                  <p className="text-sm text-fr-gray-500 dark:text-gray-300">Recibe notificaciones en tiempo real</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -209,14 +209,14 @@ const Settings = () => {
                     onChange={(e) => updateSetting('notifications', 'pushNotifications', e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-fr-primary"></div>
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-fr-primary"></div>
                 </label>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-fr-gray-900">Reportes semanales</h4>
-                  <p className="text-sm text-fr-gray-500">Resumen semanal de tus finanzas</p>
+                  <h4 className="font-medium text-fr-gray-900 dark:text-gray-100">Reportes semanales</h4>
+                  <p className="text-sm text-fr-gray-500 dark:text-gray-300">Resumen semanal de tus finanzas</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -225,14 +225,14 @@ const Settings = () => {
                     onChange={(e) => updateSetting('notifications', 'weeklyReports', e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-fr-primary"></div>
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-fr-primary"></div>
                 </label>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-fr-gray-900">Alertas de gastos</h4>
-                  <p className="text-sm text-fr-gray-500">Notificaciones cuando superes límites</p>
+                  <h4 className="font-medium text-fr-gray-900 dark:text-gray-100">Alertas de gastos</h4>
+                  <p className="text-sm text-fr-gray-500 dark:text-gray-300">Notificaciones cuando superes límites</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -241,7 +241,7 @@ const Settings = () => {
                     onChange={(e) => updateSetting('notifications', 'expenseAlerts', e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-fr-primary"></div>
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-fr-primary"></div>
                 </label>
               </div>
             </div>
@@ -258,12 +258,12 @@ const Settings = () => {
 
         {activeTab === 'security' && (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-fr-gray-900">Seguridad y Privacidad</h3>
+            <h3 className="text-lg font-semibold text-fr-gray-900 dark:text-gray-100">Seguridad y Privacidad</h3>
             
             <div className="space-y-6">
-              <div className="border border-fr-gray-200 rounded-fr p-4">
-                <h4 className="font-medium text-fr-gray-900 mb-2">Cambiar contraseña</h4>
-                <p className="text-sm text-fr-gray-500 mb-4">
+              <div className="border border-fr-gray-200 dark:border-gray-600 rounded-fr p-4">
+                <h4 className="font-medium text-fr-gray-900 dark:text-gray-100 mb-2">Cambiar contraseña</h4>
+                <p className="text-sm text-fr-gray-500 dark:text-gray-300 mb-4">
                   Actualiza tu contraseña regularmente para mantener tu cuenta segura
                 </p>
                 <button 
@@ -274,9 +274,9 @@ const Settings = () => {
                 </button>
               </div>
 
-              <div className="border border-fr-gray-200 rounded-fr p-4">
-                <h4 className="font-medium text-fr-gray-900 mb-2">Autenticación de dos factores</h4>
-                <p className="text-sm text-fr-gray-500 mb-4">
+              <div className="border border-fr-gray-200 dark:border-gray-600 rounded-fr p-4">
+                <h4 className="font-medium text-fr-gray-900 dark:text-gray-100 mb-2">Autenticación de dos factores</h4>
+                <p className="text-sm text-fr-gray-500 dark:text-gray-300 mb-4">
                   Agrega una capa extra de seguridad a tu cuenta
                 </p>
                 <button 
@@ -288,9 +288,9 @@ const Settings = () => {
                 </button>
               </div>
 
-              <div className="border border-fr-gray-200 rounded-fr p-4">
-                <h4 className="font-medium text-fr-gray-900 mb-2">Exportar datos</h4>
-                <p className="text-sm text-fr-gray-500 mb-4">
+              <div className="border border-fr-gray-200 dark:border-gray-600 rounded-fr p-4">
+                <h4 className="font-medium text-fr-gray-900 dark:text-gray-100 mb-2">Exportar datos</h4>
+                <p className="text-sm text-fr-gray-500 dark:text-gray-300 mb-4">
                   Descarga una copia de todos tus datos financieros
                 </p>
                 <button onClick={handleExportData} className="btn-outline flex items-center space-x-2">
@@ -299,14 +299,14 @@ const Settings = () => {
                 </button>
               </div>
 
-              <div className="border border-red-200 rounded-fr p-4 bg-red-50">
-                <h4 className="font-medium text-red-900 mb-2">Zona de peligro</h4>
-                <p className="text-sm text-red-700 mb-4">
+              <div className="border border-red-200 dark:border-red-800 rounded-fr p-4 bg-red-50 dark:bg-red-900/20">
+                <h4 className="font-medium text-red-900 dark:text-red-100 mb-2">Zona de peligro</h4>
+                <p className="text-sm text-red-700 dark:text-red-200 mb-4">
                   Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, ten cuidado.
                 </p>
                 <button 
                   onClick={handleDeleteAccount}
-                  className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-fr transition-colors flex items-center space-x-2"
+                  className="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white font-medium py-2 px-4 rounded-fr transition-colors flex items-center space-x-2"
                 >
                   <FaTrash className="w-4 h-4" />
                   <span>Eliminar Cuenta</span>

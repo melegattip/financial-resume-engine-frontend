@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FaPlus, FaSearch, FaTag, FaEdit, FaTrash } from 'react-icons/fa';
 import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
+import { useGamification } from '../contexts/GamificationContext';
 import ValidatedInput from '../components/ValidatedInput';
 import { validateCategoryName } from '../utils/validation';
 import toast from 'react-hot-toast';
@@ -18,11 +19,15 @@ const Categories = () => {
   // Estados para validación del formulario
   const [formErrors, setFormErrors] = useState({});
   const [isFormValid, setIsFormValid] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Usar el hook optimizado para operaciones API
   const { 
     categories: categoriesAPI
   } = useOptimizedAPI();
+
+  // Hook de gamificación
+  const { recordAction } = useGamification();
 
   const loadCategories = useCallback(async () => {
     try {
@@ -30,12 +35,19 @@ const Categories = () => {
       console.log('🔄 Cargando categorías con API optimizada...');
       
       const response = await categoriesAPI.list();
+      console.log('🔍 [Categories] Respuesta completa del backend:', response);
+      console.log('🔍 [Categories] response.data:', response.data);
+      console.log('🔍 [Categories] response.data?.data:', response.data?.data);
+      
       const categoriesData = response.data?.data || response.data || response || [];
+      console.log('🔍 [Categories] Datos procesados:', categoriesData);
+      console.log('🔍 [Categories] ¿Es array?:', Array.isArray(categoriesData));
+      
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       
       console.log('✅ Categorías cargadas exitosamente:', categoriesData.length);
     } catch (error) {
-      console.error('Error loading categories:', error);
+      console.error('❌ [Categories] Error loading categories:', error);
       // No mostrar toast aquí porque useOptimizedAPI ya lo maneja
       setCategories([]);
     } finally {
@@ -74,12 +86,19 @@ const Categories = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Prevenir doble click/submit
+    if (isSubmitting) {
+      console.log('🚫 [Categories] Submit ya en progreso, ignorando...');
+      return;
+    }
+    
     // Validar antes de enviar
     if (!validateForm()) {
       toast.error('Por favor corrige los errores en el formulario');
       return;
     }
 
+    setIsSubmitting(true);
     try {
       if (editingCategory) {
         // Para actualización, el backend espera el campo "new_name"
@@ -93,17 +112,39 @@ const Categories = () => {
         const createData = {
           name: formData.name
         };
-        await categoriesAPI.create(createData);
+        console.log('🚀 [Categories] Enviando datos para crear:', createData);
+        const result = await categoriesAPI.create(createData);
+        console.log('🔍 [Categories] Resultado de creación:', result);
+        console.log('🔍 [Categories] result.data:', result.data);
+        console.log('🔍 [Categories] result.status:', result.status);
+        
+        // 🎮 REGISTRAR GAMIFICACIÓN - Obtener ID de la respuesta
+        if (result && result.data) {
+          const categoryId = result.data.id || result.data.category_id;
+          console.log('🔍 [Categories] ID extraído para gamificación:', categoryId);
+          if (categoryId) {
+            console.log('🎯 Registrando creación de categoría para gamificación:', categoryId);
+            await recordAction('create_category', 'category', categoryId, `Created category: ${formData.name}`);
+          } else {
+            console.warn('⚠️ [Categories] No se pudo extraer el ID de la categoría creada');
+          }
+        } else {
+          console.warn('⚠️ [Categories] Resultado de creación no tiene estructura esperada');
+        }
+        
         // useOptimizedAPI ya muestra el toast de éxito
       }
       
       setShowModal(false);
       setEditingCategory(null);
       setFormData({ name: '' });
+      console.log('🔄 [Categories] Recargando categorías después de operación...');
       await loadCategories();
     } catch (error) {
       // useOptimizedAPI ya maneja el error
       console.error('Error en handleSubmit:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -113,6 +154,7 @@ const Categories = () => {
       name: category.name,
     });
     setShowModal(true);
+    setIsSubmitting(false);
   };
 
   const handleDelete = async (category) => {
@@ -160,7 +202,10 @@ const Categories = () => {
           </div>
 
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              setShowModal(true);
+              setIsSubmitting(false);
+            }}
             className="btn-primary flex items-center space-x-2"
           >
             <FaPlus className="w-4 h-4" />
@@ -242,6 +287,7 @@ const Categories = () => {
                     setShowModal(false);
                     setEditingCategory(null);
                     setFormData({ name: '' });
+                    setIsSubmitting(false);
                   }}
                   className="btn-outline flex-1"
                 >
@@ -249,10 +295,10 @@ const Categories = () => {
                 </button>
                 <button 
                   type="submit" 
-                  className={`btn-primary flex-1 ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={!isFormValid}
+                  className={`btn-primary flex-1 ${(!isFormValid || isSubmitting) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={!isFormValid || isSubmitting}
                 >
-                  {editingCategory ? 'Actualizar' : 'Crear'}
+                  {isSubmitting ? 'Enviando...' : (editingCategory ? 'Actualizar' : 'Crear')}
                 </button>
               </div>
             </form>

@@ -83,7 +83,10 @@ api.interceptors.request.use(
       baseURL: config.baseURL,
       hasAuth: !!token,
       hasCallerId: !!(user && user.id),
-      userId: user?.id
+      userId: user?.id,
+      userIdType: typeof user?.id,
+      fullUser: user,
+      callerIdHeader: config.headers['X-Caller-ID']
     });
     
     return config;
@@ -129,6 +132,10 @@ api.interceptors.response.use(
       } else {
         toast.error('Error interno del servidor');
       }
+    } else if (status === 409) {
+      // Manejo específico para conflictos (duplicados)
+      const conflictMessage = data?.message || data?.error || 'Ya existe un elemento con esos datos';
+      toast.error(`Conflicto: ${conflictMessage}`);
     } else if (status >= 400 && status < 500) {
       toast.error(message);
     } else if (status >= 500) {
