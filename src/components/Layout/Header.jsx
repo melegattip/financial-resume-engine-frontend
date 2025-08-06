@@ -1,20 +1,40 @@
-import React from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import PeriodFilter from './PeriodFilter';
 import ThemeToggle from '../ThemeToggle';
 import GamificationWidget from '../GamificationWidget';
-import { FaUser, FaSignOutAlt, FaHome, FaBrain, FaPlusCircle, FaMinusCircle, FaFolderOpen, FaFileAlt, FaCog, FaChartPie, FaBullseye, FaRedo, FaTrophy } from 'react-icons/fa';
+import { FaUser, FaSignOutAlt, FaHome, FaBrain, FaPlusCircle, FaMinusCircle, FaFolderOpen, FaFileAlt, FaCog, FaChartPie, FaBullseye, FaRedo, FaTrophy, FaBell, FaLock, FaChevronDown } from 'react-icons/fa';
+import { getAvatarUrl } from '../../utils/avatarUtils';
 
 const Header = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef(null);
+
+
+
+  // Cerrar menú al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Mapeo de rutas a información de página
   const getPageInfo = (pathname) => {
     const routes = {
       '/dashboard': { 
-        title: 'Dashboard', 
+        title: 'Resumen', 
         subtitle: 'Resumen de tu actividad financiera',
         icon: FaHome
       },
@@ -83,6 +103,23 @@ const Header = () => {
     logout();
   };
 
+  const handleMenuClick = (action) => {
+    setShowUserMenu(false);
+    switch (action) {
+      case 'profile':
+        navigate('/settings?tab=profile');
+        break;
+      case 'security':
+        navigate('/settings?tab=security');
+        break;
+      case 'logout':
+        handleLogout();
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 shadow-sm dark:shadow-gray-900/20 transition-colors duration-300">
       <div className="px-4 lg:px-6 xl:px-8">
@@ -139,7 +176,7 @@ const Header = () => {
             </div>
 
             {/* User Menu - Responsive */}
-            <div className="flex items-center space-x-0.5 sm:space-x-2">
+            <div className="flex items-center space-x-0.5 sm:space-x-2" ref={userMenuRef}>
               
               {/* User info - Hidden on mobile */}
               <div className="hidden md:block text-right">
@@ -151,19 +188,85 @@ const Header = () => {
                 </p>
               </div>
               
-              {/* Avatar - Very compact on mobile */}
-              <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <FaUser className="w-2.5 h-2.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
+              {/* Avatar with dropdown - Very compact on mobile */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-1 p-1 sm:p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title="Menú de usuario"
+                >
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    {user?.avatar ? (
+                      <img 
+                        src={getAvatarUrl(user.avatar)} 
+                        alt="Avatar" 
+                        className="w-full h-full object-cover rounded-full"
+                        onError={(e) => {
+                          console.error('❌ [Header] Error cargando avatar:', e.target.src);
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <FaUser className="w-2.5 h-2.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
+                    )}
+                  </div>
+                  <FaChevronDown className={`w-2.5 h-2.5 sm:w-3 sm:h-3 lg:w-4 lg:h-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {/* Dropdown Menu */}
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                    {/* Profile Section */}
+                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {user?.name || user?.email || 'Usuario'}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {user?.email}
+                      </p>
+                    </div>
+                    
+                    {/* Menu Items */}
+                    <div className="py-1">
+                      <button
+                        onClick={() => handleMenuClick('profile')}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <FaUser className="w-4 h-4 mr-3" />
+                        Perfil
+                      </button>
+                      
+                      <button
+                        onClick={() => handleMenuClick('security')}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <FaLock className="w-4 h-4 mr-3" />
+                        Seguridad
+                      </button>
+                      
+                      <button
+                        disabled
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50"
+                        title="Próximamente"
+                      >
+                        <FaBell className="w-4 h-4 mr-3" />
+                        Notificaciones
+                      </button>
+                    </div>
+                    
+                    {/* Logout Section */}
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-1">
+                      <button
+                        onClick={() => handleMenuClick('logout')}
+                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                      >
+                        <FaSignOutAlt className="w-4 h-4 mr-3" />
+                        Cerrar sesión
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              
-              {/* Logout button - Very compact on mobile */}
-              <button
-                onClick={handleLogout}
-                className="p-1 sm:p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                title="Cerrar sesión"
-              >
-                <FaSignOutAlt className="w-2.5 h-2.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-              </button>
             </div>
           </div>
         </div>

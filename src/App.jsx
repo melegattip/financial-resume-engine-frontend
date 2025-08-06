@@ -8,7 +8,7 @@ import ProtectedRoute, { PublicOnlyRoute } from './components/ProtectedRoute';
 import FeatureGuard from './components/FeatureGuard';
 
 // Páginas principales
-import Dashboard from './pages/Dashboard';
+import Resumen from './pages/Dashboard';
 import FinancialInsights from './pages/FinancialInsights';
 import Expenses from './pages/Expenses';
 import Incomes from './pages/Incomes';
@@ -67,7 +67,7 @@ export function AppContent() {
             </ProtectedRoute>
           }
         >
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="dashboard" element={<Resumen />} />
           <Route 
             path="insights" 
             element={
