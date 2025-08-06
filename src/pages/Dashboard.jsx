@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { FaArrowUp, FaArrowDown, FaDollarSign, FaChartPie, FaCalendar, FaCheckCircle, FaTimesCircle, FaChartBar, FaBullseye, FaExclamationCircle, FaRedo, FaBrain } from 'react-icons/fa';
 import { 
   ResponsiveContainer,
@@ -8,18 +9,18 @@ import {
   Cell,
   Tooltip
 } from 'recharts';
-import { formatCurrency, formatDate, formatPercentage as formatPercentageUtil, budgetsAPI, savingsGoalsAPI, recurringTransactionsAPI } from '../services/api';
+import { formatCurrency, formatDate, formatPercentage as formatPercentageUtil, budgetsAPI, savingsGoalsAPI, recurringTransactionsAPI, expensesAPI } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useGamification } from '../contexts/GamificationContext';
 import dataService from '../services/dataService';
 import useDataRefresh from '../hooks/useDataRefresh';
 import LockedWidget from '../components/LockedWidget';
-
-
 import toast from 'react-hot-toast';
+import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
 
-const Dashboard = () => {
+
+const Resumen = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('fecha');
@@ -36,6 +37,11 @@ const Dashboard = () => {
   const [budgetsSummary, setBudgetsSummary] = useState(null);
   const [savingsGoalsSummary, setSavingsGoalsSummary] = useState(null);
   const [recurringTransactionsSummary, setRecurringTransactionsSummary] = useState(null);
+
+  // Estados para el modal de pago
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [payingExpense, setPayingExpense] = useState(null);
+  const [paymentAmount, setPaymentAmount] = useState('');
 
   // Usar el contexto global de período
   const {
@@ -54,9 +60,18 @@ const Dashboard = () => {
   // Usar el contexto de gamificación para niveles
   const { userProfile, isFeatureUnlocked, FEATURE_GATES } = useGamification();
 
+  // Usar el hook optimizado para operaciones API
+  const { 
+    expenses: expensesAPI, 
+    categories: categoriesAPI
+  } = useOptimizedAPI();
+
+  // Hook de gamificación para registrar acciones
+  const { recordCreateExpense, recordUpdateExpense, recordDeleteExpense } = useGamification();
+
   // Debug de autenticación
   useEffect(() => {
-    console.log('🔍 Dashboard - Estado de autenticación:', {
+    console.log('🔍 Resumen - Estado de autenticación:', {
       isAuthenticated,
       user,
       token: localStorage.getItem('auth_token') ? 'EXISTS' : 'MISSING'
@@ -70,7 +85,7 @@ const Dashboard = () => {
       // Obtener parámetros de filtro del contexto global
       const filterParams = getFilterParams();
       
-      console.log('📊 Cargando dashboard con parámetros:', filterParams);
+      console.log('📊 Cargando resumen con parámetros:', filterParams);
 
       // Usar el servicio optimizado de datos
       const dashboardData = await dataService.loadDashboardData(
@@ -88,10 +103,10 @@ const Dashboard = () => {
         );
       }
 
-      console.log(`✅ Dashboard cargado exitosamente (${dashboardData.source})`);
+      console.log(`✅ Resumen cargado exitosamente (${dashboardData.source})`);
       
     } catch (error) {
-      console.error('❌ Error cargando dashboard:', error);
+      console.error('❌ Error cargando resumen:', error);
       
       // Último recurso: datos vacíos
       setData({
@@ -106,7 +121,7 @@ const Dashboard = () => {
         categoriesAnalytics: [],
       });
       
-      toast.error('Error cargando datos del dashboard');
+      toast.error('Error cargando datos del resumen');
     } finally {
       setLoading(false);
     }
@@ -365,11 +380,156 @@ const Dashboard = () => {
     }
   };
 
+  // Funciones de navegación para los widgets
+  const navigateToExpenses = (filter = 'all') => {
+    const params = new URLSearchParams();
+    if (filter === 'pending') {
+      params.set('status', 'pending');
+    }
+    navigate(`/expenses?${params.toString()}`);
+  };
+
+  const navigateToIncomes = () => {
+    navigate('/incomes');
+  };
+
+  const navigateToBudgets = () => {
+    navigate('/budgets');
+  };
+
+  const navigateToSavingsGoals = () => {
+    navigate('/savings-goals');
+  };
+
+  const navigateToRecurringTransactions = () => {
+    navigate('/recurring-transactions');
+  };
+
+  const navigateToAI = () => {
+    navigate('/insights');
+  };
+
+  // Funciones para manejar pagos desde el dashboard
+  const togglePaid = async (expense) => {
+    console.log('🔍 [Dashboard] togglePaid llamado con:', expense);
+    
+    // Guardar la posición actual de scroll y el elemento activo
+    const currentScrollPosition = window.scrollY;
+    const activeElement = document.activeElement;
+    
+    if (expense.paid) {
+      // Si ya está pagado, permitir marcarlo como no pagado
+      console.log('🔍 [Dashboard] Marcando gasto como pendiente:', expense.description);
+      try {
+        const updateData = { paid: false };
+        await expensesAPI.update(expense.id, updateData);
+        toast.success('Gasto marcado como pendiente');
+        
+        // Recargar datos para mostrar cambios
+        await loadDashboardData(false);
+        
+        // Restaurar la posición de scroll después de que el contenido se actualice
+        setTimeout(() => {
+          // Verificar que la posición no sea mayor que el contenido actual
+          const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+          const targetPosition = Math.min(currentScrollPosition, maxScroll);
+          
+          window.scrollTo({
+            top: targetPosition,
+            behavior: 'smooth'
+          });
+          
+          // Restaurar el foco si había un elemento activo
+          if (activeElement && activeElement.focus) {
+            activeElement.focus();
+          }
+        }, 150);
+      } catch (error) {
+        console.error('❌ [Dashboard] Error en togglePaid (marcar como pendiente):', error);
+      }
+    } else {
+      // Si no está pagado, abrir modal de pago
+      console.log('🔍 [Dashboard] Abriendo modal de pago para gasto:', expense.description);
+      setPayingExpense(expense);
+      const pendingAmount = expense.pending_amount || (expense.amount - (expense.amount_paid || 0));
+      setPaymentAmount(pendingAmount.toString());
+      setShowPaymentModal(true);
+    }
+  };
+
+  const handlePayment = async (paymentType) => {
+    console.log('🔍 [Dashboard] handlePayment llamado con paymentType:', paymentType);
+    console.log('🔍 [Dashboard] payingExpense:', payingExpense);
+    console.log('🔍 [Dashboard] paymentAmount:', paymentAmount);
+    
+    // Guardar la posición actual de scroll y el elemento activo
+    const currentScrollPosition = window.scrollY;
+    const activeElement = document.activeElement;
+    
+    try {
+      if (paymentType === 'total') {
+        // Pago total - marcar como pagado
+        const updateData = { paid: true };
+        console.log('🔍 [Dashboard] Actualizando gasto como pagado:', payingExpense.id);
+        await expensesAPI.update(payingExpense.id, updateData);
+        toast.success('Gasto pagado completamente');
+      } else if (paymentType === 'partial') {
+        // Pago parcial - enviar payment_amount
+        const paymentAmt = parseFloat(paymentAmount);
+        if (paymentAmt <= 0 || paymentAmt > payingExpense.amount) {
+          toast.error('Monto de pago inválido');
+          return;
+        }
+        
+        const updateData = { payment_amount: paymentAmt };
+        console.log('🔍 [Dashboard] Actualizando gasto con pago parcial:', paymentAmt);
+        await expensesAPI.update(payingExpense.id, updateData);
+        
+        // Verificar si el pago cubre el total
+        const remaining = payingExpense.amount - (payingExpense.amount_paid || 0) - paymentAmt;
+        if (remaining <= 0) {
+          toast.success('Gasto pagado completamente');
+        } else {
+          toast.success(`Pago parcial registrado. Quedan ${formatCurrency(remaining)} pendientes`);
+        }
+      }
+      
+      setShowPaymentModal(false);
+      setPayingExpense(null);
+      setPaymentAmount('');
+      
+      // Recargar datos para mostrar cambios
+      console.log('🔍 [Dashboard] Recargando datos después del pago');
+      await loadDashboardData(false);
+      
+      // Restaurar la posición de scroll después de que el contenido se actualice
+      setTimeout(() => {
+        // Verificar que la posición no sea mayor que el contenido actual
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        const targetPosition = Math.min(currentScrollPosition, maxScroll);
+        
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
+        });
+        
+        // Restaurar el foco si había un elemento activo
+        if (activeElement && activeElement.focus) {
+          activeElement.focus();
+        }
+      }, 150);
+      
+    } catch (error) {
+      // useOptimizedAPI ya maneja el error base, pero estos son casos especiales
+      console.error('❌ [Dashboard] Error en handlePayment:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="spinner"></div>
-        <span className="ml-2 text-fr-gray-600 dark:text-gray-400">Cargando dashboard...</span>
+        <span className="ml-2 text-fr-gray-600 dark:text-gray-400">Cargando resumen...</span>
       </div>
     );
   }
@@ -406,7 +566,7 @@ const Dashboard = () => {
         </div>
 
         {/* Total ingresos */}
-        <div className="card">
+        <div className="card cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToIncomes}>
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
@@ -429,7 +589,7 @@ const Dashboard = () => {
         </div>
 
         {/* Total gastos */}
-        <div className="card">
+        <div className="card cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigateToExpenses('all')}>
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
@@ -452,7 +612,7 @@ const Dashboard = () => {
         </div>
 
         {/* Gastos pendientes */}
-        <div className="card">
+        <div className="card cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigateToExpenses('pending')}>
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
@@ -478,7 +638,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
         {/* Widget de Presupuestos (Nivel 5 requerido) */}
         {isFeatureUnlocked('BUDGETS') && budgetsSummary && (
-          <div className="card">
+          <div className="card cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToBudgets}>
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
@@ -510,7 +670,7 @@ const Dashboard = () => {
 
         {/* Widget de Metas de Ahorro (Nivel 3 requerido) */}
         {isFeatureUnlocked('SAVINGS_GOALS') && savingsGoalsSummary && (
-          <div className="card">
+          <div className="card cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToSavingsGoals}>
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
@@ -537,7 +697,7 @@ const Dashboard = () => {
 
         {/* Widget de IA Financiera (Nivel 7 requerido) */}
         {isFeatureUnlocked('AI_INSIGHTS') && (
-          <div className="card cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/insights')}>
+          <div className="card cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToAI}>
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
@@ -561,7 +721,7 @@ const Dashboard = () => {
 
         {/* Widget de Transacciones Recurrentes */}
         {recurringTransactionsSummary && (
-          <div className="card">
+          <div className="card cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToRecurringTransactions}>
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
@@ -575,13 +735,13 @@ const Dashboard = () => {
                 <FaRedo className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-sm text-green-600">
-                +{formatAmount(recurringTransactionsSummary.summary?.monthly_income_total || 0)}/mes
-              </span>
-              <span className="text-sm text-red-600 dark:text-red-400">
-                -{formatAmount(recurringTransactionsSummary.summary?.monthly_expense_total || 0)}/mes
-              </span>
+            <div className="mt-3 space-y-1">
+              <div className="text-sm text-green-600">
+                +{formatAmount(recurringTransactionsSummary.summary?.monthly_income || 0)}/mes
+              </div>
+              <div className="text-sm text-red-600">
+                -{formatAmount(recurringTransactionsSummary.summary?.monthly_expenses || 0)}/mes
+              </div>
             </div>
           </div>
         )}
@@ -704,11 +864,17 @@ const Dashboard = () => {
                           <div className="flex items-start space-x-3">
                             {/* Indicador de pago */}
                             <div className="flex-shrink-0 mt-1">
-                              {expense.paid ? (
-                                <FaCheckCircle className="w-5 h-5 text-green-500" />
-                              ) : (
-                                <FaTimesCircle className="w-5 h-5 text-red-500" />
-                              )}
+                              <button
+                                onClick={() => togglePaid(expense)}
+                                className="hover:scale-110 transition-transform cursor-pointer"
+                                title={expense.paid ? "Marcar como pendiente" : "Hacer pago"}
+                              >
+                                {expense.paid ? (
+                                  <FaCheckCircle className="w-5 h-5 text-green-500" />
+                                ) : (
+                                  <FaTimesCircle className="w-5 h-5 text-red-500" />
+                                )}
+                              </button>
                             </div>
                             
                             <div className="flex-1">
@@ -1122,8 +1288,110 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Modal de Pago */}
+      {showPaymentModal && payingExpense && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-fr-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-fr-gray-900 dark:text-gray-100 mb-6">
+              Registrar Pago
+            </h2>
+
+            {/* Información del gasto */}
+            <div className="bg-fr-gray-50 dark:bg-gray-700 rounded-fr p-4 mb-6">
+              <h3 className="font-medium text-fr-gray-900 dark:text-gray-100 mb-2">{payingExpense.description}</h3>
+              <div className="space-y-1">
+                <p className="text-lg font-bold text-fr-gray-900 dark:text-gray-100">
+                  Monto total: {formatAmount(payingExpense.amount)}
+                </p>
+                {payingExpense.amount_paid > 0 && (
+                  <>
+                    <p className="text-sm text-fr-secondary dark:text-green-400">
+                      Ya pagado: {formatAmount(payingExpense.amount_paid)}
+                    </p>
+                    <p className="text-lg font-bold text-fr-accent dark:text-yellow-400">
+                      Pendiente: {formatAmount(payingExpense.pending_amount || (payingExpense.amount - payingExpense.amount_paid))}
+                    </p>
+                  </>
+                )}
+              </div>
+              {payingExpense.due_date && (
+                <p className="text-sm text-fr-gray-600 dark:text-gray-400 mt-1">
+                  Vence: {new Date(payingExpense.due_date).toLocaleDateString('es-AR')}
+                </p>
+              )}
+            </div>
+
+            {/* Opciones de pago */}
+            <div className="space-y-4">
+              {/* Pago Total */}
+              <button
+                onClick={() => handlePayment('total')}
+                className="w-full p-4 border-2 border-fr-secondary dark:border-green-600 rounded-fr hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors text-left"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-fr-gray-900 dark:text-gray-100">💰 Pago Total</h4>
+                    <p className="text-sm text-fr-gray-600 dark:text-gray-400">Marcar como completamente pagado</p>
+                  </div>
+                  <p className="font-bold text-fr-secondary dark:text-green-400">
+                    {formatAmount(payingExpense.pending_amount || (payingExpense.amount - (payingExpense.amount_paid || 0)))}
+                  </p>
+                </div>
+              </button>
+
+              {/* Pago Parcial */}
+              <div className="border-2 border-fr-accent dark:border-yellow-600 rounded-fr p-4">
+                <h4 className="font-medium text-fr-gray-900 dark:text-gray-100 mb-3">💸 Pago Parcial</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
+                      Monto a pagar
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      max={payingExpense.pending_amount || (payingExpense.amount - (payingExpense.amount_paid || 0))}
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                      className="input"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="text-sm text-fr-gray-600 dark:text-gray-400">
+                    <p>Quedarían pendientes: <span className="font-medium">
+                      {formatAmount(Math.max(0, (payingExpense.pending_amount || (payingExpense.amount - (payingExpense.amount_paid || 0))) - (parseFloat(paymentAmount) || 0)))}
+                    </span></p>
+                  </div>
+                  <button
+                    onClick={() => handlePayment('partial')}
+                    disabled={!paymentAmount || parseFloat(paymentAmount) <= 0}
+                    className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Registrar Pago Parcial
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Botón de cancelar */}
+            <div className="mt-6">
+              <button
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  setPayingExpense(null);
+                  setPaymentAmount('');
+                }}
+                className="w-full btn-outline"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
 
-export default Dashboard; 
+export default Resumen; 

@@ -10,11 +10,11 @@ const Sidebar = () => {
 
   // Grupo 1: Transacciones principales
   const mainMenuItems = [
-          { path: '/dashboard', icon: FaHome, label: 'Dashboard' },
+    { path: '/dashboard', icon: FaHome, label: 'Resumen' },
+    { path: '/recurring-transactions', icon: FaRedo, label: 'Recurrentes' },
     { path: '/incomes', icon: FaPlusCircle, label: 'Ingresos' },
     { path: '/expenses', icon: FaMinusCircle, label: 'Gastos' },
-          { path: '/recurring-transactions', icon: FaRedo, label: 'Recurrentes' },
-          { path: '/categories', icon: FaFolderOpen, label: 'Categorías' }
+    { path: '/categories', icon: FaFolderOpen, label: 'Categorías' }
   ];
 
   // Grupo 2: Análisis y planificación

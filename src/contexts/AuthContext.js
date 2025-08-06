@@ -70,6 +70,7 @@ export const AuthProvider = ({ children }) => {
       return result;
     } catch (error) {
       console.error('❌ Error en login:', error);
+      // Para errores de 2FA, mantener estado UNAUTHENTICATED (no LOADING)
       setAuthState(AUTH_STATES.UNAUTHENTICATED);
       throw error;
     }
@@ -144,6 +145,26 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const uploadAvatar = useCallback(async (file) => {
+    try {
+      console.log('🔧 [AuthContext] Subiendo avatar...');
+      const result = await authService.uploadAvatar(file);
+      console.log('🔧 [AuthContext] Resultado upload:', result);
+      
+      // Recargar el perfil del usuario para obtener la URL del avatar actualizado
+      console.log('🔧 [AuthContext] Recargando perfil del usuario...');
+      const updatedUser = await authService.getProfile();
+      console.log('🔧 [AuthContext] Usuario actualizado recibido:', updatedUser);
+      
+      setUser(updatedUser);
+      console.log('✅ [AuthContext] Avatar subido y perfil actualizado');
+      return { success: true, result };
+    } catch (error) {
+      console.error('❌ [AuthContext] Error subiendo avatar:', error);
+      return { success: false, error: error.message };
+    }
+  }, []);
+
   // Valor del contexto
   const contextValue = {
     // Estado
@@ -163,6 +184,7 @@ export const AuthProvider = ({ children }) => {
     refreshToken,
     changePassword,
     updateProfile,
+    uploadAvatar,
     
     // Utilidades
     hasRole: (role) => user?.roles?.includes(role) || false,

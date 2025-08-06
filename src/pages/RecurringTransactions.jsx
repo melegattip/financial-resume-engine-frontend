@@ -12,7 +12,6 @@ const RecurringTransactions = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showProjectionModal, setShowProjectionModal] = useState(false);
-  const [showFuturePreview, setShowFuturePreview] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [deletingTransaction, setDeletingTransaction] = useState(null);
@@ -41,8 +40,6 @@ const RecurringTransactions = () => {
     category_id: '',
     next_date: getDefaultDate(),
     end_date: '',
-    day_of_month: '',
-    day_of_week: '',
     is_active: true
   });
 
@@ -160,8 +157,6 @@ const RecurringTransactions = () => {
       category_id: transaction.category_id || '',
       next_date: transaction.next_date,
       end_date: transaction.end_date || '',
-      day_of_month: transaction.day_of_month?.toString() || '',
-      day_of_week: transaction.day_of_week?.toString() || '',
       is_active: transaction.is_active
     });
     setShowModal(true);
@@ -294,8 +289,6 @@ const RecurringTransactions = () => {
       category_id: '',
       next_date: getDefaultDate(),
       end_date: '',
-      day_of_month: '',
-      day_of_week: '',
       is_active: true
     });
   };
@@ -347,46 +340,12 @@ const RecurringTransactions = () => {
     return next <= today;
   };
 
-  const generateFuturePreview = () => {
-    const futureMonths = [];
-    const today = new Date();
-    
-    for (let i = 0; i < 6; i++) {
-      const targetMonth = new Date(today.getFullYear(), today.getMonth() + i + 1, 1);
-      const monthName = targetMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-      
-      let monthlyIncome = 0;
-      let monthlyExpenses = 0;
-      
-      // Calcular transacciones que aplicarían en ese mes
-      transactions.forEach(transaction => {
-        if (!transaction.is_active) return;
-        
-        const monthlyAmount = calculateMonthlyEquivalent(transaction);
-        if (transaction.type === 'income') {
-          monthlyIncome += monthlyAmount;
-        } else {
-          monthlyExpenses += monthlyAmount;
-        }
-      });
-      
-      futureMonths.push({
-        month: monthName,
-        income: monthlyIncome,
-        expenses: monthlyExpenses,
-        balance: monthlyIncome - monthlyExpenses
-      });
-    }
-    
-    return futureMonths;
-  };
-
   const calculateMonthlyEquivalent = (transaction) => {
     switch (transaction.frequency) {
       case 'daily':
-        return transaction.amount * 30; // Aproximado
+        return transaction.amount * 30;
       case 'weekly':
-        return transaction.amount * 4.33; // Aproximado
+        return transaction.amount * 4.33;
       case 'monthly':
         return transaction.amount;
       case 'yearly':
@@ -693,12 +652,6 @@ const RecurringTransactions = () => {
             {loading ? '⏳' : '🔄'}
           </button>
           <button
-            onClick={() => setShowFuturePreview(true)}
-            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 transition-colors"
-          >
-            Vista Futura
-          </button>
-          <button
             onClick={loadProjection}
             className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
           >
@@ -947,51 +900,13 @@ const RecurringTransactions = () => {
                 </p>
               </div>
 
-              {formData.frequency === 'monthly' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Día del mes (1-31)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={formData.day_of_month}
-                    onChange={(e) => setFormData({...formData, day_of_month: e.target.value})}
-                    className="input"
-                  />
-                </div>
-              )}
-
-              {formData.frequency === 'weekly' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Día de la semana
-                  </label>
-                  <select
-                    value={formData.day_of_week}
-                    onChange={(e) => setFormData({...formData, day_of_week: e.target.value})}
-                    className="input"
-                  >
-                    <option value="">Seleccionar día</option>
-                    <option value="0">Domingo</option>
-                    <option value="1">Lunes</option>
-                    <option value="2">Martes</option>
-                    <option value="3">Miércoles</option>
-                    <option value="4">Jueves</option>
-                    <option value="5">Viernes</option>
-                    <option value="6">Sábado</option>
-                  </select>
-                </div>
-              )}
-
               <div className="flex items-center">
                 <input
                   type="checkbox"
                   id="is_active"
                   checked={formData.is_active}
                   onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <label htmlFor="is_active" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                   Activa
@@ -1022,16 +937,16 @@ const RecurringTransactions = () => {
         </div>
       )}
 
-      {/* Future Preview Modal */}
-      {showFuturePreview && (
+      {/* Projection Modal */}
+      {showProjectionModal && projection && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-screen overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-6xl max-h-screen overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                🔮 Vista Futura - Próximos 6 Meses
+                📊 Proyección de Flujo de Caja - {projectionMonths} Meses
               </h2>
               <button
-                onClick={() => setShowFuturePreview(false)}
+                onClick={() => setShowProjectionModal(false)}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
               >
                 ✕
@@ -1040,113 +955,35 @@ const RecurringTransactions = () => {
             
             <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <p className="text-sm text-blue-800 dark:text-blue-300">
-                💡 Esta vista muestra una proyección aproximada basada en tus transacciones recurrentes activas.
-                Los cálculos son estimativos y pueden variar según fechas específicas y cambios futuros.
+                💡 Esta proyección se basa en tus transacciones recurrentes activas y calcula el flujo de caja esperado.
+                Los cálculos consideran las frecuencias reales de cada transacción (diaria, semanal, mensual, anual).
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {generateFuturePreview().map((month, index) => (
-                <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 capitalize">
-                    {month.month}
-                  </h3>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Ingresos:</span>
-                      <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                        {formatCurrency(month.income)}
-                      </span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Gastos:</span>
-                      <span className="text-sm font-medium text-red-600 dark:text-red-400">
-                        {formatCurrency(month.expenses)}
-                      </span>
-                    </div>
-                    
-                    <div className="border-t pt-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Balance:</span>
-                        <span className={`text-sm font-bold ${
-                          month.balance >= 0 
-                            ? 'text-green-600 dark:text-green-400' 
-                            : 'text-red-600 dark:text-red-400'
-                        }`}>
-                          {formatCurrency(month.balance)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-              <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-300 mb-2">
-                🚀 Próximas Funcionalidades
-              </h4>
-              <ul className="text-sm text-yellow-700 dark:text-yellow-400 space-y-1">
-                <li>• Integración con metas de ahorro</li>
-                <li>• Comparación con presupuestos</li>
-                <li>• Alertas de desvíos financieros</li>
-                <li>• Simulación de escenarios</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Projection Modal */}
-      {showProjectionModal && projection && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-screen overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                Proyección de Flujo de Caja - {projectionMonths} meses
-              </h2>
-              <div className="flex items-center space-x-2">
-                <select
-                  value={projectionMonths}
-                  onChange={(e) => {
-                    const newMonths = parseInt(e.target.value);
-                    setProjectionMonths(newMonths);
-                    // Trigger automatic update with the new value
-                    loadProjection(newMonths);
-                  }}
-                  className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                >
-                  <option value="3">3 meses</option>
-                  <option value="6">6 meses</option>
-                  <option value="12">12 meses</option>
-                  <option value="24">24 meses</option>
-                </select>
-                <button
-                  onClick={() => setShowProjectionModal(false)}
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-            
+            {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-green-800 dark:text-green-300">Total Ingresos</h3>
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-green-800 dark:text-green-300 mb-1">
+                  Ingresos Mensuales Promedio
+                </h3>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {formatCurrency(projection.summary?.total_projected_income || 0)}
+                  {formatCurrency(projection.summary?.average_monthly_income || 0)}
                 </p>
               </div>
-              <div className="bg-red-50 dark:bg-red-900/30 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-red-800 dark:text-red-300">Total Gastos</h3>
+              
+              <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-300 mb-1">
+                  Gastos Mensuales Promedio
+                </h3>
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                  {formatCurrency(projection.summary?.total_projected_expenses || 0)}
+                  {formatCurrency(projection.summary?.average_monthly_expenses || 0)}
                 </p>
               </div>
-              <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">Flujo Neto</h3>
+              
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
+                  Balance Neto Mensual
+                </h3>
                 <p className={`text-2xl font-bold ${
                   (projection.summary?.net_projected_amount || 0) >= 0 
                     ? 'text-green-600 dark:text-green-400' 
@@ -1157,47 +994,79 @@ const RecurringTransactions = () => {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                      Mes
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                      Ingresos
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                      Gastos
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                      Flujo Neto
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {projection.monthly_projections?.map((month, index) => (
-                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {month.month_display}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400">
-                        {formatCurrency(month.income)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 dark:text-red-400">
-                        {formatCurrency(month.expenses)}
-                      </td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                        month.net_amount >= 0 
-                          ? 'text-green-600 dark:text-green-400' 
-                          : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {formatCurrency(month.net_amount)}
-                      </td>
+            {/* Monthly Projections Table */}
+            <div className="bg-white dark:bg-gray-700 rounded-lg overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Proyección Mensual Detallada
+                </h3>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                  <thead className="bg-gray-50 dark:bg-gray-600">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Mes
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Ingresos
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Gastos
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Balance Neto
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Acumulado
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {projection.monthly_projections?.map((month, index) => (
+                      <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {month.month_display}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400">
+                          {formatCurrency(month.income)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 dark:text-red-400">
+                          {formatCurrency(month.expenses)}
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
+                          month.net_amount >= 0 
+                            ? 'text-green-600 dark:text-green-400' 
+                            : 'text-red-600 dark:text-red-400'
+                        }`}>
+                          {formatCurrency(month.net_amount)}
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold ${
+                          month.cumulative_net >= 0 
+                            ? 'text-green-600 dark:text-green-400' 
+                            : 'text-red-600 dark:text-red-400'
+                        }`}>
+                          {formatCurrency(month.cumulative_net)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Insights */}
+            <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+              <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-300 mb-2">
+                💡 Insights
+              </h4>
+              <ul className="text-sm text-yellow-700 dark:text-yellow-400 space-y-1">
+                <li>• Esta proyección considera solo transacciones recurrentes activas</li>
+                <li>• Los gastos únicos no están incluidos en esta proyección</li>
+                <li>• Revisa regularmente tus transacciones recurrentes para mantener la proyección actualizada</li>
+                <li>• Considera ajustar frecuencias o montos según tus necesidades financieras</li>
+              </ul>
             </div>
           </div>
         </div>
@@ -1248,4 +1117,4 @@ const RecurringTransactions = () => {
   );
 };
 
-export default RecurringTransactions; 
+export default RecurringTransactions;

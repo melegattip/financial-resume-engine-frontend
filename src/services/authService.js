@@ -273,7 +273,7 @@ class AuthService {
       const authData = response.data;
       
       // Verificar si el servidor requiere 2FA
-      if (authData.error === '2FA code required') {
+      if (authData.error === '2FA code required' || authData.requires_2fa) {
         console.log('🔧 [authService] 2FA requerido para el usuario');
         throw new Error('2FA code required');
       }
@@ -293,8 +293,8 @@ class AuthService {
       console.error('❌ [authService] Error en login:', error);
       
       // Si es un error de 2FA, re-lanzar el error específico
-      if (error.message === '2FA code required') {
-        throw error;
+      if (error.message === '2FA code required' || error.response?.data?.requires_2fa) {
+        throw new Error('2FA code required');
       }
       
       const message = error.response?.data?.error || 'Error en el login';
@@ -354,7 +354,10 @@ class AuthService {
   async getProfile() {
     try {
       const response = await authAPI.get('/users/profile');
-      const userData = response.data;
+      console.log('🔧 [authService] Respuesta completa de /users/profile:', response.data);
+      const userData = response.data.user || response.data; // El backend envía {user: {...}}
+      console.log('🔧 [authService] Datos del usuario extraídos:', userData);
+      console.log('🔧 [authService] Avatar en userData:', userData?.avatar);
       
       // Actualizar datos del usuario en memoria y storage
       this.user = userData;
@@ -410,6 +413,43 @@ class AuthService {
     } catch (error) {
       console.error('❌ [authService] Error actualizando perfil:', error);
       const message = error.response?.data?.error || 'Error actualizando perfil';
+      toast.error(message);
+      throw new Error(message);
+    }
+  }
+
+  /**
+   * Sube un avatar para el usuario autenticado
+   * @param {File} file - Archivo de imagen del avatar
+   */
+  async uploadAvatar(file) {
+    try {
+      console.log('🔧 [authService] Subiendo avatar...');
+      console.log('🔧 [authService] Archivo:', { name: file.name, size: file.size, type: file.type });
+      
+      const formData = new FormData();
+      formData.append('avatar', file);
+      
+      console.log('🔧 [authService] FormData creado, enviando petición...');
+      
+      const response = await authAPI.post('/users/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      console.log('🔧 [authService] Response status:', response.status);
+      console.log('🔧 [authService] Response headers:', response.headers);
+      console.log('✅ [authService] Avatar subido exitosamente:', response.data);
+      
+      toast.success('Avatar actualizado correctamente');
+      return response.data;
+    } catch (error) {
+      console.error('❌ [authService] Error subiendo avatar:', error);
+      console.error('❌ [authService] Error response:', error.response?.data);
+      console.error('❌ [authService] Error status:', error.response?.status);
+      
+      const message = error.response?.data?.error || 'Error subiendo avatar';
       toast.error(message);
       throw new Error(message);
     }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocation } from 'react-router-dom';
 import { FaPlus, FaSearch, FaArrowDown, FaCalendar, FaEdit, FaTrash, FaCheckCircle, FaTimesCircle, FaDollarSign } from 'react-icons/fa';
 import { formatCurrency, formatPercentage } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
@@ -12,6 +13,7 @@ import ValidatedInput from '../components/ValidatedInput';
 import { validateAmount, validateDescription, VALIDATION_RULES } from '../utils/validation';
 
 const Expenses = () => {
+  const location = useLocation();
   const [expenses, setExpenses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +55,27 @@ const Expenses = () => {
 
   // Hook de gamificación para registrar acciones
   const { recordCreateExpense, recordUpdateExpense, recordDeleteExpense } = useGamification();
+
+  // Leer parámetros de URL y aplicar filtros automáticamente
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const statusParam = searchParams.get('status');
+    
+    if (statusParam) {
+      // Mapear parámetros de URL a valores del filtro
+      const filterMapping = {
+        'pending': 'unpaid',
+        'paid': 'paid',
+        'all': 'all'
+      };
+      
+      const newFilter = filterMapping[statusParam] || 'all';
+      if (newFilter !== filterPaid) {
+        console.log(`🔍 [Expenses] Aplicando filtro desde URL: ${statusParam} → ${newFilter}`);
+        setFilterPaid(newFilter);
+      }
+    }
+  }, [location.search, filterPaid]);
 
   const formatAmount = (amount) => {
     if (balancesHidden) return '••••••';

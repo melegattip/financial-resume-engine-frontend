@@ -1,16 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { FaUser, FaBell, FaLock, FaDownload, FaTrash, FaShieldAlt } from 'react-icons/fa';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import { FaUser, FaBell, FaLock, FaDownload, FaTrash, FaShieldAlt, FaCamera, FaTimes } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import TwoFASetup from '../components/TwoFASetup';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import { useAuth } from '../contexts/AuthContext';
+import { getAvatarUrl } from '../utils/avatarUtils';
 
 const Settings = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('profile');
   const [show2FAModal, setShow2FAModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, uploadAvatar } = useAuth();
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+
+
   
   // Usar datos reales del usuario autenticado
   const [settings, setSettings] = useState({
@@ -18,6 +25,7 @@ const Settings = () => {
       name: user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : '',
       email: user?.email || '',
       phone: user?.phone || '',
+      avatar: user?.avatar || null,
     },
     notifications: {
       emailNotifications: true,
@@ -30,22 +38,80 @@ const Settings = () => {
   // Actualizar settings cuando cambie el usuario
   useEffect(() => {
     if (user) {
+      console.log('🔧 [Settings] Usuario actualizado:', user);
+      console.log('🔧 [Settings] Avatar del usuario:', user.avatar);
       setSettings(prev => ({
         ...prev,
         profile: {
           name: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
           email: user.email || '',
           phone: user.phone || '',
+          avatar: user.avatar || null,
         }
       }));
     }
   }, [user]);
 
+  // Manejar parámetros de URL para abrir pestaña específica
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tabParam = searchParams.get('tab');
+    
+    if (tabParam && ['profile', 'notifications', 'security'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [location.search]);
+
   const tabs = [
     { id: 'profile', label: 'Perfil', icon: FaUser },
-    { id: 'notifications', label: 'Notificaciones', icon: FaBell },
+    { id: 'notifications', label: 'Notificaciones', icon: FaBell, disabled: true },
     { id: 'security', label: 'Seguridad', icon: FaLock },
   ];
+
+  const handleAvatarChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Validar tipo de archivo
+      if (!file.type.startsWith('image/')) {
+        toast.error('Por favor selecciona una imagen válida');
+        return;
+      }
+      
+      // Validar tamaño (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('La imagen debe ser menor a 5MB');
+        return;
+      }
+      
+      // Crear preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAvatarPreview(e.target.result);
+        setSettings(prev => ({
+          ...prev,
+          profile: {
+            ...prev.profile,
+            avatar: file
+          }
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeAvatar = () => {
+    setAvatarPreview(null);
+    setSettings(prev => ({
+      ...prev,
+      profile: {
+        ...prev.profile,
+        avatar: null
+      }
+    }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleSave = async () => {
     // Validación mínima
@@ -58,7 +124,33 @@ const Settings = () => {
       // Separar nombre completo en first_name y last_name
       const [first_name, ...rest] = settings.profile.name.trim().split(' ');
       const last_name = rest.join(' ');
-      // Tomar datos actuales del usuario
+      
+      // Subir avatar si hay un archivo nuevo
+      if (settings.profile.avatar instanceof File) {
+        try {
+          console.log('🔧 [Settings] Subiendo avatar usando authService...');
+          console.log('🔧 [Settings] Archivo a subir:', {
+            name: settings.profile.avatar.name,
+            size: settings.profile.avatar.size,
+            type: settings.profile.avatar.type
+          });
+          
+          const result = await uploadAvatar(settings.profile.avatar);
+          console.log('🔧 [Settings] Resultado completo del uploadAvatar:', result);
+          
+          if (result.success) {
+            console.log('✅ [Settings] Avatar subido exitosamente:', result);
+          } else {
+            console.error('❌ [Settings] Upload falló:', result.error);
+            throw new Error(result.error || 'Error subiendo avatar');
+          }
+        } catch (error) {
+          console.error('❌ [Settings] Error subiendo avatar:', error);
+          toast.error(`Error subiendo avatar: ${error.message}`);
+        }
+      }
+      
+      // Actualizar datos del perfil (sin avatar, ya que se maneja por separado)
       const profileData = {
         id: user?.id,
         email: user?.email,
@@ -66,9 +158,12 @@ const Settings = () => {
         last_name,
         phone: settings.profile.phone,
       };
+      
       const result = await updateProfile(profileData);
       if (result.success) {
         toast.success('Perfil actualizado');
+        // Limpiar preview después de guardar
+        setAvatarPreview(null);
       } else {
         toast.error(result.error || 'Error actualizando perfil');
       }
@@ -114,7 +209,8 @@ const Settings = () => {
                   activeTab === tab.id
                     ? 'bg-fr-primary text-white'
                     : 'text-fr-gray-600 hover:bg-fr-gray-100'
-                }`}
+                } ${tab.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={tab.disabled}
               >
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
@@ -166,6 +262,83 @@ const Settings = () => {
                   className="input"
                 />
               </div>
+
+              <div className="col-span-full md:col-span-1">
+                <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
+                  Avatar
+                </label>
+                <div className="flex items-center space-x-4">
+                  <div className="relative w-16 h-16 rounded-full overflow-hidden bg-fr-gray-200 dark:bg-fr-gray-700">
+                    {avatarPreview ? (
+                      <img src={avatarPreview} alt="Avatar Preview" className="w-full h-full object-cover" />
+                    ) : user?.avatar ? (
+                      <img 
+                        src={getAvatarUrl(user.avatar)} 
+                        alt="Avatar" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.error('❌ Error cargando avatar:', e.target.src);
+                          console.error('❌ Avatar path original:', user.avatar);
+                          e.target.style.display = 'none';
+                        }}
+                        onLoad={() => {
+                          console.log('✅ Avatar cargado exitosamente');
+                        }}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-fr-gray-500 dark:text-gray-400">
+                        <FaUser className="w-8 h-8" />
+                      </div>
+                    )}
+                    
+                    {/* Overlay solo cuando NO hay avatar */}
+                    {!avatarPreview && !user?.avatar && (
+                      <label htmlFor="avatar-upload" className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full cursor-pointer">
+                        <FaCamera className="w-6 h-6 text-white" />
+                        <input
+                          type="file"
+                          id="avatar-upload"
+                          accept="image/*"
+                          onChange={handleAvatarChange}
+                          className="hidden"
+                          ref={fileInputRef}
+                        />
+                      </label>
+                    )}
+                    
+                    {/* Input oculto para cuando HAY avatar */}
+                    {(avatarPreview || user?.avatar) && (
+                      <input
+                        type="file"
+                        id="avatar-upload-hidden"
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        className="hidden"
+                        ref={fileInputRef}
+                      />
+                    )}
+                  </div>
+                  
+                  {/* Botón para cambiar avatar cuando HAY avatar */}
+                  {(avatarPreview || user?.avatar) && (
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                      Cambiar avatar
+                    </button>
+                  )}
+                  {avatarPreview && (
+                    <button
+                      onClick={removeAvatar}
+                      className="flex items-center space-x-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
+                    >
+                      <FaTimes className="w-4 h-4" />
+                      <span>Eliminar Avatar</span>
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end">
@@ -178,78 +351,27 @@ const Settings = () => {
 
         {activeTab === 'notifications' && (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-fr-gray-900 dark:text-gray-100">Configuración de Notificaciones</h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-fr-gray-900 dark:text-gray-100">Notificaciones por email</h4>
-                  <p className="text-sm text-fr-gray-500 dark:text-gray-300">Recibe actualizaciones por correo electrónico</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications.emailNotifications}
-                    onChange={(e) => updateSetting('notifications', 'emailNotifications', e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-fr-primary"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-fr-gray-900 dark:text-gray-100">Notificaciones push</h4>
-                  <p className="text-sm text-fr-gray-500 dark:text-gray-300">Recibe notificaciones en tiempo real</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications.pushNotifications}
-                    onChange={(e) => updateSetting('notifications', 'pushNotifications', e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-fr-primary"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-fr-gray-900 dark:text-gray-100">Reportes semanales</h4>
-                  <p className="text-sm text-fr-gray-500 dark:text-gray-300">Resumen semanal de tus finanzas</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications.weeklyReports}
-                    onChange={(e) => updateSetting('notifications', 'weeklyReports', e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-fr-primary"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-fr-gray-900 dark:text-gray-100">Alertas de gastos</h4>
-                  <p className="text-sm text-fr-gray-500 dark:text-gray-300">Notificaciones cuando superes límites</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications.expenseAlerts}
-                    onChange={(e) => updateSetting('notifications', 'expenseAlerts', e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-fr-primary"></div>
-                </label>
-              </div>
+            <div className="flex items-center space-x-3 mb-6">
+              <h3 className="text-lg font-semibold text-fr-gray-900 dark:text-gray-100">Configuración de Notificaciones</h3>
+              <span className="px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-full">
+                Próximamente
+              </span>
             </div>
-
-            <div className="flex justify-end">
-              <button onClick={handleSave} className="btn-primary">
-                Guardar Cambios
-              </button>
+            
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 text-center">
+              <FaBell className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                Configuración de Notificaciones
+              </h4>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Esta funcionalidad estará disponible próximamente. Podrás configurar notificaciones por email, push y alertas personalizadas.
+              </p>
+              <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+                <p>• Notificaciones por email</p>
+                <p>• Notificaciones push en tiempo real</p>
+                <p>• Reportes semanales automáticos</p>
+                <p>• Alertas de gastos y presupuestos</p>
+              </div>
             </div>
           </div>
         )}
