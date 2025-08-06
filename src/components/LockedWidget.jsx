@@ -50,7 +50,7 @@ const LockedWidget = ({
     return (
       <div className="relative group cursor-pointer" onClick={handleUnlockClick}>
         {/* Card minimalista - estilo elegante con color por nivel */}
-        <div className={`relative bg-gradient-to-br ${getLevelColor(requiredLevel)} rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] min-h-[160px] border border-white/10`}>
+        <div className={`relative bg-gradient-to-br ${getLevelColor(requiredLevel)} rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-[200px] border border-white/10`}>
           
           {/* Contenido centrado */}
           <div className="flex flex-col items-center text-center text-white h-full justify-between">
@@ -67,7 +67,7 @@ const LockedWidget = ({
                 <h3 className="font-bold text-white">{featureName}</h3>
               </div>
               
-              <p className="text-sm text-white/90 mb-3 leading-relaxed">
+              <p className="text-sm text-white/90 mb-3 leading-relaxed line-clamp-1">
                 {description}
               </p>
             </div>
