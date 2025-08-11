@@ -64,7 +64,7 @@ export const PeriodProvider = ({ children }) => {
       return monthsChanged ? sortedMonths : prevMonths;
     });
     
-    // Auto-seleccionar el último mes del último año por defecto
+    // Auto-seleccionar el último mes del último año por defecto SOLO si no hay selección previa
     if (!selectedMonth && sortedMonths.length > 0) {
       const latestMonth = sortedMonths[0]; // sortedMonths ya está ordenado por fecha más reciente
       const [latestYear] = latestMonth.split('-');
@@ -73,7 +73,7 @@ export const PeriodProvider = ({ children }) => {
       setSelectedMonth(latestMonth);
       setSelectedYear(latestYear);
     }
-  }, [selectedMonth]); // Incluir selectedMonth para la auto-selección
+  }, []); // Remover dependencia de selectedMonth para evitar loops
 
   // Función para obtener meses disponibles para el año seleccionado
   const getMonthsForSelectedYear = useCallback(() => {

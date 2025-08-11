@@ -737,10 +737,10 @@ const Resumen = () => {
             </div>
             <div className="mt-3 space-y-1">
               <div className="text-sm text-green-600">
-                +{formatAmount(recurringTransactionsSummary.summary?.monthly_income || 0)}/mes
+                +{formatAmount(recurringTransactionsSummary.summary?.monthly_income_total || 0)}/mes
               </div>
               <div className="text-sm text-red-600">
-                -{formatAmount(recurringTransactionsSummary.summary?.monthly_expenses || 0)}/mes
+                -{formatAmount(recurringTransactionsSummary.summary?.monthly_expense_total || 0)}/mes
               </div>
             </div>
           </div>
