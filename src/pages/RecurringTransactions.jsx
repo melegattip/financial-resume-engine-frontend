@@ -56,6 +56,9 @@ const RecurringTransactions = () => {
         recurringTransactionsAPI.getDashboard()
       ]);
       
+      console.log('📊 Dashboard response:', dashboardRes.data);
+      console.log('📊 Dashboard summary:', dashboardRes.data.data?.summary);
+      
       setTransactions(transactionsRes.data.data?.transactions || []);
       setCategories(categoriesRes.data.data || []);
       setDashboard(dashboardRes.data.data);
@@ -319,7 +322,36 @@ const RecurringTransactions = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('es-ES');
+    if (!dateString) return '';
+    
+    // Manejar tanto fechas ISO como fechas simples
+    let date;
+    if (dateString.includes('T')) {
+      // Formato ISO
+      date = new Date(dateString);
+    } else {
+      // Formato YYYY-MM-DD
+      date = new Date(dateString + 'T00:00:00');
+    }
+    
+    return new Intl.DateTimeFormat('es-ES', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(date);
+  };
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
   };
 
   const getDaysUntilNext = (nextDate) => {
@@ -394,6 +426,17 @@ const RecurringTransactions = () => {
       hideOnTablet: true,
       render: (value) => getCategoryName(value)
     },
+    // Mostrar fecha de creación solo cuando se ordena por ella
+    ...(filters.sort_by === 'created_at' ? [{
+      header: 'Fecha de Creación',
+      accessor: 'created_at',
+      hideOnMobile: true,
+      render: (value) => (
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          {formatDateTime(value)}
+        </div>
+      )
+    }] : []),
     {
       header: 'Próxima Ejecución',
       accessor: 'next_date',
@@ -542,6 +585,21 @@ const RecurringTransactions = () => {
             </div>
           </div>
         </div>
+
+        {/* Fecha de creación - solo mostrar cuando se ordena por ella */}
+        {filters.sort_by === 'created_at' && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+            <div className="flex items-center space-x-2">
+              <span className="text-blue-600 dark:text-blue-400">📅</span>
+              <div>
+                <span className="text-xs text-gray-600 dark:text-gray-400">Fecha de creación:</span>
+                <div className="font-medium text-gray-900 dark:text-gray-100">
+                  {formatDateTime(transaction.created_at)}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Próxima ejecución */}
         <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">

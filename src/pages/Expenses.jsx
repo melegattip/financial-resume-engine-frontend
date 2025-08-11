@@ -70,12 +70,10 @@ const Expenses = () => {
       };
       
       const newFilter = filterMapping[statusParam] || 'all';
-      if (newFilter !== filterPaid) {
-        console.log(`🔍 [Expenses] Aplicando filtro desde URL: ${statusParam} → ${newFilter}`);
-        setFilterPaid(newFilter);
-      }
+      console.log(`🔍 [Expenses] Aplicando filtro desde URL: ${statusParam} → ${newFilter}`);
+      setFilterPaid(newFilter);
     }
-  }, [location.search, filterPaid]);
+  }, [location.search]);
 
   const formatAmount = (amount) => {
     if (balancesHidden) return '••••••';

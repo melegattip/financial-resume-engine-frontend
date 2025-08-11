@@ -16,7 +16,10 @@ const ResponsiveTable = ({
   className = "",
   loading = false,
   onRowClick = null,
-  showMobileCards = true
+  showMobileCards = true,
+  currentSortBy = null,
+  currentSortOrder = 'asc',
+  onSortChange = null,
 }) => {
   
   if (loading) {
@@ -76,20 +79,43 @@ const ResponsiveTable = ({
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                {columns.map((column, index) => (
-                  <th
-                    key={index}
-                    className={`
-                      px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 
-                      uppercase tracking-wider
-                      ${column.align === 'right' ? 'text-right' : ''}
-                      ${column.align === 'center' ? 'text-center' : ''}
-                      ${column.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700' : ''}
-                    `}
-                  >
-                    {column.header}
-                  </th>
-                ))}
+                {columns.map((column, index) => {
+                  const sortKey = column.sortKey || column.accessor;
+                  const isActive = column.sortable && sortKey && currentSortBy === sortKey;
+                  const sortIcon = !column.sortable
+                    ? null
+                    : isActive
+                      ? (currentSortOrder === 'asc' ? '▲' : '▼')
+                      : '↕';
+
+                  const handleClick = () => {
+                    if (!column.sortable || !onSortChange || !sortKey) return;
+                    // Toggle order if same column, else asc
+                    const nextOrder = isActive ? (currentSortOrder === 'asc' ? 'desc' : 'asc') : 'asc';
+                    onSortChange(sortKey, nextOrder);
+                  };
+
+                  return (
+                    <th
+                      key={index}
+                      onClick={handleClick}
+                      className={`
+                        px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 
+                        uppercase tracking-wider select-none
+                        ${column.align === 'right' ? 'text-right' : ''}
+                        ${column.align === 'center' ? 'text-center' : ''}
+                        ${column.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700' : ''}
+                      `}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        {column.header}
+                        {column.sortable && (
+                          <span className="text-[10px] opacity-80">{sortIcon}</span>
+                        )}
+                      </span>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
