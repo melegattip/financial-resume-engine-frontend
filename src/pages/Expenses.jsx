@@ -50,7 +50,8 @@ const Expenses = () => {
   // Usar el hook optimizado para operaciones API
   const { 
     expenses: expensesAPI, 
-    categories: categoriesAPI
+    categories: categoriesAPI,
+    dataService
   } = useOptimizedAPI();
 
   // Hook de gamificación para registrar acciones
@@ -175,23 +176,12 @@ const Expenses = () => {
         amount: parseFloat(formData.amount)
       };
 
-      if (editingExpense) {
-        await expensesAPI.update(editingExpense.id, dataToSend);
-        // useOptimizedAPI ya muestra el toast de éxito
-        
-        // 🎮 Registrar acción de gamificación
-        console.log(`🎯 [Expenses] Registrando actualización de expense: ${editingExpense.id}`);
-        recordUpdateExpense(editingExpense.id, `Gasto actualizado: ${dataToSend.description}`);
-      } else {
-        const result = await expensesAPI.create(dataToSend);
-        // useOptimizedAPI ya muestra el toast de éxito
-        
-        // 🎮 Registrar acción de gamificación  
-        const expenseId = result?.data?.id || `expense-${Date.now()}`;
-        console.log(`🎯 [Expenses] Registrando creación de expense: ${expenseId}`);
-        recordCreateExpense(expenseId, `Nuevo gasto: ${dataToSend.description}`);
-      }
-      
+      // Lanzar la operación sin bloquear la UI
+      const operationPromise = editingExpense
+        ? expensesAPI.update(editingExpense.id, dataToSend)
+        : expensesAPI.create(dataToSend);
+
+      // Cerrar modal y limpiar estado inmediatamente para que la UI avance
       setShowModal(false);
       setEditingExpense(null);
       setFormData({
@@ -202,8 +192,26 @@ const Expenses = () => {
         paid: false,
       });
       setFormErrors({});
-      
-      // Recargar datos para mostrar cambios
+
+      // Forzar limpiar cache de lista y recargar para reflejar cambios lo antes posible
+      try {
+        dataService?.clearCache?.('expenses_list');
+      } catch {}
+      await loadData();
+
+      // Esperar resultado para registrar gamificación y hacer una recarga final
+      const result = await operationPromise;
+
+      if (editingExpense) {
+        console.log(`🎯 [Expenses] Registrando actualización de expense: ${editingExpense.id}`);
+        recordUpdateExpense(editingExpense.id, `Gasto actualizado: ${dataToSend.description}`);
+      } else {
+        const expenseId = result?.data?.id || `expense-${Date.now()}`;
+        console.log(`🎯 [Expenses] Registrando creación de expense: ${expenseId}`);
+        recordCreateExpense(expenseId, `Nuevo gasto: ${dataToSend.description}`);
+      }
+
+      // Recarga final para asegurar consistencia luego de invalidación
       await loadData();
     } catch (error) {
       // useOptimizedAPI ya maneja el error y muestra el toast
@@ -221,6 +229,9 @@ const Expenses = () => {
         });
         setFormErrors({});
         // Forzar recarga de datos para reflejar el gasto creado
+        try {
+          dataService?.clearCache?.('expenses_list');
+        } catch {}
         await loadData();
       }
     }
