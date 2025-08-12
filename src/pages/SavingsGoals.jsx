@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { savingsGoalsAPI, formatCurrency } from '../services/api';
+import { savingsGoalsAPI, formatCurrency, formatPercentage } from '../services/api';
 import toast from '../utils/notifications';
 import ConfirmationModal from '../components/ConfirmationModal';
 
@@ -338,6 +338,17 @@ const SavingsGoals = () => {
     return icon || getCategoryIcon(goal.category);
   };
 
+  const getProgressPercent = (progress, current, target) => {
+    let p = 0;
+    if (typeof progress === 'number') {
+      p = progress * 100;
+    } else if (Number(target) > 0) {
+      p = (Number(current) / Number(target)) * 100;
+    }
+    if (!isFinite(p) || isNaN(p)) p = 0;
+    return Math.max(0, Math.min(100, Math.round(p)));
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -374,6 +385,22 @@ const SavingsGoals = () => {
               <div className="mb-4">
                 <div className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                   {formatCurrency(selectedGoal.current_amount)}
+                </div>
+              </div>
+
+              {/* Barra de progreso grande */}
+              <div className="max-w-xl mx-auto w-full">
+                <div className="w-full h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 to-green-500"
+                    style={{ width: `${getProgressPercent(selectedGoal.progress, selectedGoal.current_amount, selectedGoal.target_amount)}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-sm mt-2 text-gray-600 dark:text-gray-400">
+                  <span>{formatPercentage(getProgressPercent(selectedGoal.progress, selectedGoal.current_amount, selectedGoal.target_amount))}</span>
+                  <span>
+                    {formatCurrency(selectedGoal.current_amount)} / {formatCurrency(selectedGoal.target_amount)}
+                  </span>
                 </div>
               </div>
 
@@ -714,6 +741,15 @@ const SavingsGoals = () => {
                     <div className="flex-1 ml-4">
                       <h4 className="font-semibold text-gray-900 dark:text-gray-100">{goal.name}</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400">{getCategoryText(goal.category)}</p>
+                      {/* Barra de progreso compacta */}
+                      <div className="w-full max-w-xs mt-1">
+                        <div className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-500 dark:bg-blue-400"
+                            style={{ width: `${getProgressPercent(goal.progress, goal.current_amount, goal.target_amount)}%` }}
+                          />
+                        </div>
+                      </div>
                     </div>
                     
                     {/* Botones circulares de acción */}
