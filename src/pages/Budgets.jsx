@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { budgetsAPI, categoriesAPI, formatCurrency } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
+import { formatAmount } from '../utils/formatters';
 import toast from '../utils/notifications';
 
 const Budgets = () => {
-  const { getFilterParams } = usePeriod();
+  const { getFilterParams, balancesHidden } = usePeriod();
   const [budgets, setBudgets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [dashboard, setDashboard] = useState(null);
@@ -333,11 +334,11 @@ const Budgets = () => {
                       {getPeriodText(budget.period)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                      {formatCurrency(budget.amount)}
+                      {formatAmount(budget.amount, balancesHidden)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 dark:text-gray-100">
-                        {formatCurrency(budget.spent_amount)}
+                        {formatAmount(budget.spent_amount, balancesHidden)}
                       </div>
                       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
                         <div

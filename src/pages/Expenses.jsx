@@ -208,6 +208,21 @@ const Expenses = () => {
     } catch (error) {
       // useOptimizedAPI ya maneja el error y muestra el toast
       console.error('Error en handleSubmit:', error);
+      // Si la request tardó pero el backend creó el recurso, evitamos dejar el modal abierto
+      if (error?.code === 'ECONNABORTED') {
+        setShowModal(false);
+        setEditingExpense(null);
+        setFormData({
+          description: '',
+          amount: '',
+          category_id: '',
+          due_date: '',
+          paid: false,
+        });
+        setFormErrors({});
+        // Forzar recarga de datos para reflejar el gasto creado
+        await loadData();
+      }
     }
   };
 

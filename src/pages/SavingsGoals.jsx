@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { savingsGoalsAPI, formatCurrency, formatPercentage } from '../services/api';
+import { usePeriod } from '../contexts/PeriodContext';
+import { formatAmount } from '../utils/formatters';
 import toast from '../utils/notifications';
 import ConfirmationModal from '../components/ConfirmationModal';
 
 const SavingsGoals = () => {
+  const { balancesHidden } = usePeriod();
   const [goals, setGoals] = useState([]);
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -384,7 +387,7 @@ const SavingsGoals = () => {
               
               <div className="mb-4">
                 <div className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                  {formatCurrency(selectedGoal.current_amount)}
+                  {formatAmount(selectedGoal.current_amount, balancesHidden)}
                 </div>
               </div>
 
@@ -399,7 +402,7 @@ const SavingsGoals = () => {
                 <div className="flex justify-between text-sm mt-2 text-gray-600 dark:text-gray-400">
                   <span>{formatPercentage(getProgressPercent(selectedGoal.progress, selectedGoal.current_amount, selectedGoal.target_amount))}</span>
                   <span>
-                    {formatCurrency(selectedGoal.current_amount)} / {formatCurrency(selectedGoal.target_amount)}
+                    {formatAmount(selectedGoal.current_amount, balancesHidden)} / {formatAmount(selectedGoal.target_amount, balancesHidden)}
                   </span>
                 </div>
               </div>
@@ -486,7 +489,7 @@ const SavingsGoals = () => {
                         </div>
                       </div>
                       <div className={`text-sm font-semibold ${tx.type === 'deposit' ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
-                        {tx.type === 'deposit' ? '+' : '-'}{formatCurrency(tx.amount)}
+                        {tx.type === 'deposit' ? '+' : '-'}{formatAmount(tx.amount, balancesHidden)}
                       </div>
                     </li>
                   ))}
@@ -680,13 +683,13 @@ const SavingsGoals = () => {
   // Vista principal de ahorros
   return (
     <>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900">
         {/* Header con total ahorrado */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl mx-4 mt-4 p-6 shadow-sm border dark:border-gray-700">
           <h2 className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">Total ahorrado</h2>
           <div className="flex items-baseline mb-3">
-            <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
-              {formatCurrency(dashboard?.summary?.total_saved || 0)}
+              <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
+              {formatAmount(dashboard?.summary?.total_saved || 0, balancesHidden)}
             </span>
           </div>
 
@@ -835,10 +838,10 @@ const SavingsGoals = () => {
                     {/* Monto y objetivo */}
                     <div className="text-right">
                       <div className="font-bold text-gray-900 dark:text-gray-100">
-                        {formatCurrency(goal.current_amount)}
+                        {formatAmount(goal.current_amount, balancesHidden)}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
-                        de {formatCurrency(goal.target_amount)}
+                        de {formatAmount(goal.target_amount, balancesHidden)}
                       </div>
                     </div>
                   </div>
