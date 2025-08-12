@@ -122,7 +122,7 @@ const Header = () => {
 
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 shadow-sm dark:shadow-gray-900/20 transition-colors duration-300">
-      <div className="px-4 lg:px-6 xl:px-8">
+      <div className="pl-14 pr-4 lg:px-6 xl:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           
           {/* Left Side - Page title and info */}

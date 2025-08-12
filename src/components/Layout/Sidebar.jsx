@@ -98,7 +98,8 @@ const Sidebar = () => {
       {/* Mobile menu button */}
       <button
         onClick={toggleSidebar}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-gray-900/30 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+        className="lg:hidden fixed top-3 left-3 z-50 p-2 bg-white/90 backdrop-blur-sm dark:bg-gray-800/90 rounded-lg shadow-lg dark:shadow-gray-900/30 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+        aria-label={isOpen ? 'Cerrar menú' : 'Abrir menú'}
       >
         {isOpen ? <FaTimes className="w-5 h-5" /> : <FaBars className="w-5 h-5" />}
       </button>

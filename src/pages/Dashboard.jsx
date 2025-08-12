@@ -24,6 +24,7 @@ const Resumen = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('fecha');
+  const [rowsToShow, setRowsToShow] = useState('all'); // 'all' | '10' | '25' | '50'
   const [data, setData] = useState({
     totalIncome: 0,
     totalExpenses: 0,
@@ -798,13 +799,13 @@ const Resumen = () => {
       {/* Transacciones por mes - Dos columnas */}
       {hasActiveFilters && (data.expenses.length > 0 || data.incomes.length > 0) && (
         <div className="card">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 sticky top-0 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 supports-[backdrop-filter]:dark:bg-gray-800/60 rounded-t-lg px-3 py-2 -mx-3">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               💰 Transacciones de {getPeriodTitle()}
             </h3>
-            <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
+            <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
               {/* Dropdown de ordenamiento */}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 col-span-1">
                 <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Ordenar por:</label>
                 <select
                   value={sortBy}
@@ -816,9 +817,24 @@ const Resumen = () => {
                   <option value="categoria">Categoría</option>
                 </select>
               </div>
+
+              {/* Selector de filas */}
+              <div className="flex items-center space-x-2 col-span-1">
+                <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Filas:</label>
+                <select
+                  value={rowsToShow}
+                  onChange={(e) => setRowsToShow(e.target.value)}
+                  className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="all">Todas</option>
+                </select>
+              </div>
               
               {/* Indicadores de cantidad */}
-              <div className="flex items-center space-x-4 text-sm">
+              <div className="col-span-2 sm:col-span-1 flex items-center space-x-4 text-sm">
                 <div className="flex items-center">
                   <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
                   <span className="text-gray-600 dark:text-gray-400">Gastos ({data.expenses.length})</span>
@@ -848,19 +864,21 @@ const Resumen = () => {
 
               </div>
               
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className="space-y-3 lg:max-h-none lg:overflow-visible max-h-[26rem] overflow-y-auto">
                 {data.expenses.length === 0 ? (
                   <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                     <FaArrowDown className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p>No hay gastos en este período</p>
                   </div>
                 ) : (
-                  sortTransactions(data.expenses, sortBy)
+                  (rowsToShow === 'all'
+                    ? sortTransactions(data.expenses, sortBy)
+                    : sortTransactions(data.expenses, sortBy).slice(0, Number(rowsToShow)))
                     .map((expense, index) => {
                       const category = data.categories.find(c => c.id === expense.category_id);
                       const color = getCategoryColor(expense.category_id);
                       return (
-                        <div key={expense.id || index} className={`flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-shadow`}>
+                        <div key={expense.id || index} className={`flex items-center justify-between px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-shadow`}>
                           <div className="flex items-start space-x-3">
                             {/* Indicador de pago */}
                             <div className="flex-shrink-0 mt-1">
@@ -878,7 +896,7 @@ const Resumen = () => {
                             </div>
                             
                             <div className="flex-1">
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
                                 <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                                   {expense.description}
                                 </p>
@@ -890,13 +908,19 @@ const Resumen = () => {
                                     {category.name}
                                   </span>
                                 )}
+                                {/* Fechas inline solo en desktop */}
+                                <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2">
+                                  {new Date(expense.created_at).toLocaleDateString('es-AR')}
+                                  {expense.due_date && (
+                                    <span className="ml-2">• Vence: {new Date(expense.due_date).toLocaleDateString('es-AR')}</span>
+                                  )}
+                                </span>
                               </div>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {/* Fechas debajo solo en mobile/tablet */}
+                              <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
                                 {new Date(expense.created_at).toLocaleDateString('es-AR')}
                                 {expense.due_date && (
-                                  <span className="ml-2">
-                                    • Vence: {new Date(expense.due_date).toLocaleDateString('es-AR')}
-                                  </span>
+                                  <span className="ml-2">• Vence: {new Date(expense.due_date).toLocaleDateString('es-AR')}</span>
                                 )}
                               </p>
                             </div>
@@ -904,9 +928,14 @@ const Resumen = () => {
                           <div className="text-right ml-3">
                             <p className="font-semibold text-gray-900 dark:text-gray-100">
                               -{formatAmount(expense.amount)}
+                              {expense.percentage && (
+                                <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2 align-middle">
+                                  {formatPercentage(expense.percentage)} del total
+                                </span>
+                              )}
                             </p>
                             {expense.percentage && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                              <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400">
                                 {formatPercentage(expense.percentage)} del total
                               </p>
                             )}
@@ -941,21 +970,23 @@ const Resumen = () => {
 
               </div>
               
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className="space-y-3 lg:max-h-none lg:overflow-visible max-h-[26rem] overflow-y-auto">
                 {data.incomes.length === 0 ? (
                   <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                     <FaArrowUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p>No hay ingresos en este período</p>
                   </div>
                 ) : (
-                  sortTransactions(data.incomes, sortBy)
+                  (rowsToShow === 'all'
+                    ? sortTransactions(data.incomes, sortBy)
+                    : sortTransactions(data.incomes, sortBy).slice(0, Number(rowsToShow)))
                     .map((income, index) => {
                       const color = getCategoryColor(income.category_id);
                       const category = data.categories.find(c => c.id === income.category_id);
                       return (
-                        <div key={income.id || index} className={`flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-shadow`}>
+                        <div key={income.id || index} className={`flex items-center justify-between px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-shadow`}>
                           <div className="flex-1">
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
                               <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                                 {income.description}
                               </p>
@@ -964,17 +995,26 @@ const Resumen = () => {
                                   {category.name}
                                 </span>
                               )}
+                              {/* Fecha inline en desktop */}
+                              <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2">
+                                {new Date(income.created_at).toLocaleDateString('es-AR')}
+                              </span>
                             </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
                               {new Date(income.created_at).toLocaleDateString('es-AR')}
                             </p>
                           </div>
                           <div className="text-right ml-3">
                             <p className="font-semibold text-green-600 dark:text-green-400">
                               +{formatAmount(income.amount)}
+                              {income.percentage && (
+                                <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2 align-middle">
+                                  {formatPercentage(income.percentage)}
+                                </span>
+                              )}
                             </p>
                             {income.percentage && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                              <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400">
                                 {formatPercentage(income.percentage)}
                               </p>
                             )}
@@ -997,9 +1037,14 @@ const Resumen = () => {
                   <div className="text-right">
                     <div className="font-bold text-gray-900 dark:text-gray-100">
                       {formatAmount(data.totalExpenses)}
+                      {data.totalIncome > 0 && (
+                        <span className="hidden md:inline text-xs text-gray-500 dark:text-gray-400 ml-2 align-middle">
+                          {((data.totalExpenses / data.totalIncome) * 100).toFixed(1)}% de ingresos
+                        </span>
+                      )}
                     </div>
                     {data.totalIncome > 0 && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="md:hidden text-xs text-gray-500 dark:text-gray-400">
                         {((data.totalExpenses / data.totalIncome) * 100).toFixed(1)}% de ingresos
                       </div>
                     )}
@@ -1012,10 +1057,9 @@ const Resumen = () => {
                   <div className="text-right">
                     <div className="font-bold text-green-600 dark:text-green-400">
                       {formatAmount(data.totalIncome)}
+                      <span className="hidden md:inline text-xs text-gray-500 dark:text-gray-400 ml-2 align-middle">100% base</span>
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      100% base
-                    </div>
+                    <div className="md:hidden text-xs text-gray-500 dark:text-gray-400">100% base</div>
                   </div>
                 </div>
               </div>
@@ -1035,7 +1079,7 @@ const Resumen = () => {
       {/* Gráficos */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
         {/* Métricas clave */}
-        <div className="card">
+        <div className="card overflow-hidden">
           <div className="flex items-center justify-between mb-6">
             <div>
                           <h3 className="text-lg font-semibold text-fr-gray-900 dark:text-gray-100">
@@ -1133,7 +1177,7 @@ const Resumen = () => {
         </div>
 
         {/* Gráfico de categorías */}
-        <div className="card">
+        <div className="card overflow-hidden">
           <h3 className="text-lg font-semibold text-fr-gray-900 dark:text-gray-100 mb-6">
             Gastos por Categoría{hasActiveFilters && ` - ${getPeriodTitle()}`}
           </h3>
