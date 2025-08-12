@@ -230,7 +230,7 @@ export const GamificationProvider = ({ children }) => {
           return prev; // No cambios
         });
 
-      if (result.xp_earned > 0) {
+      if (result.xp_earned > 0 && actionType !== 'view_insight') {
         console.log(`🏆 [GamificationContext] XP ganado: ${result.xp_earned}`);
         // Mostrar notificación de XP ganado
         showXPGained(result.xp_earned, `¡Has ganado ${result.xp_earned} XP!`);

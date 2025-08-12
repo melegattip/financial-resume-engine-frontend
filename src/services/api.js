@@ -299,8 +299,9 @@ export const savingsGoalsAPI = {
   create: (data) => api.post('/savings-goals', data),
   update: (id, data) => api.put(`/savings-goals/${id}`, data),
   delete: (id) => api.delete(`/savings-goals/${id}`),
-  deposit: (id, data) => api.post(`/savings-goals/${id}/deposit`, data),
-  withdraw: (id, data) => api.post(`/savings-goals/${id}/withdraw`, data),
+  // Backend endpoints: /:id/add-savings and /:id/withdraw-savings
+  deposit: (id, data) => api.post(`/savings-goals/${id}/add-savings`, data),
+  withdraw: (id, data) => api.post(`/savings-goals/${id}/withdraw-savings`, data),
   pause: (id) => api.post(`/savings-goals/${id}/pause`),
   resume: (id) => api.post(`/savings-goals/${id}/resume`),
   getDashboard: () => api.get('/savings-goals/dashboard'),

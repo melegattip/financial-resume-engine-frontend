@@ -360,12 +360,17 @@ const AIInsights = () => {
 
   // 🎮 Funciones de gamificación mejoradas
   const handleViewInsight = async (insightId, insightTitle) => {
+    // Registrar solo una vez por sesión para cada insightId
+    const sessionKey = `gami_view_insight_${insightId}`;
+    try {
+      if (sessionStorage.getItem(sessionKey)) return;
+      sessionStorage.setItem(sessionKey, '1');
+    } catch (_) {}
+
     if (!viewedInsights.has(insightId)) {
       setViewedInsights(prev => new Set([...prev, insightId]));
-      
-      // Registrar en gamificación
-      await recordInsightViewed(String(insightId), insightTitle);
     }
+    await recordInsightViewed(String(insightId), insightTitle);
   };
 
   const handleUnderstandInsight = async (insightId, insightTitle) => {
@@ -576,7 +581,9 @@ const AIInsights = () => {
                       <div
                         key={index}
                         className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-500 transition-all cursor-pointer group"
-                        onMouseEnter={() => handleViewInsight(index, insight.title)}
+                        onMouseEnter={() => {/* no-op: evitar múltiples registros por hover */}}
+                        onFocus={() => {/* no-op */}}
+                        onClick={() => handleViewInsight(index, insight.title)}
                       >
                         <div className="flex items-start space-x-3">
                           <div className="text-2xl group-hover:scale-110 transition-transform">

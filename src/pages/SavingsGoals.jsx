@@ -30,7 +30,8 @@ const SavingsGoals = () => {
     category: 'emergency',
     priority: 'medium',
     auto_save_amount: '',
-    auto_save_frequency: 'monthly'
+    auto_save_frequency: 'monthly',
+    icon: ''
   });
 
   const [transactionData, setTransactionData] = useState({
@@ -68,18 +69,54 @@ const SavingsGoals = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const data = {
-        ...formData,
-        target_amount: parseFloat(formData.target_amount),
-        current_amount: parseFloat(formData.current_amount || 0),
-        auto_save_amount: parseFloat(formData.auto_save_amount || 0)
+      // Normalizar payload para backend
+      const allowedCategories = new Set(['vacation','emergency','house','car','education','retirement','investment','other']);
+      const normalizedCategory = (formData.category || 'other').toLowerCase();
+      const category = allowedCategories.has(normalizedCategory) ? normalizedCategory : 'other';
+
+      // target_date del input date viene como YYYY-MM-DD → convertir a ISO RFC3339
+      let targetDateISO = undefined;
+      if (formData.target_date) {
+        const d = new Date(`${formData.target_date}T00:00:00`);
+        if (!isNaN(d.getTime())) targetDateISO = d.toISOString();
+      }
+
+      const targetAmount = parseFloat(formData.target_amount);
+      const currentAmount = parseFloat(formData.current_amount || 0);
+      const autoSaveAmount = parseFloat(formData.auto_save_amount || 0);
+      const priority = (formData.priority || 'medium').toLowerCase();
+
+      const payload = {
+        name: formData.name,
+        description: formData.description || '',
+        target_amount: targetAmount,
+        category,
+        priority,
+        ...(targetDateISO ? { target_date: targetDateISO } : {}),
+        ...(autoSaveAmount > 0 ? { is_auto_save: true, auto_save_amount: autoSaveAmount, auto_save_frequency: formData.auto_save_frequency || 'monthly' } : { is_auto_save: false }),
+        ...(formData.icon ? { image_url: `data:text/plain;charset=utf-8,${encodeURIComponent(formData.icon)}` } : {})
       };
 
       if (editingGoal) {
-        await savingsGoalsAPI.update(editingGoal.id, data);
+        const res = await savingsGoalsAPI.update(editingGoal.id, payload);
+        const updated = res?.data?.data || null;
+        // Refrescar la vista de detalle inmediatamente si estamos viendo esta meta
+        if (updated && selectedGoal && selectedGoal.id === editingGoal.id) {
+          setSelectedGoal(updated);
+        }
         toast.success('Meta de ahorro actualizada exitosamente');
       } else {
-        await savingsGoalsAPI.create(data);
+        const res = await savingsGoalsAPI.create(payload);
+        const createdId = res?.data?.data?.id || res?.data?.id;
+        // Si el usuario indicó un monto inicial, lo registramos como depósito
+        if (createdId && currentAmount > 0) {
+          try {
+            await savingsGoalsAPI.deposit(createdId, { amount: currentAmount, description: 'Depósito inicial' });
+          } catch (err) {
+            console.error('Error realizando depósito inicial:', err);
+            toast.error('La meta se creó, pero falló el depósito inicial');
+          }
+        }
         toast.success('Meta de ahorro creada exitosamente');
       }
 
@@ -119,6 +156,19 @@ const SavingsGoals = () => {
     }
   };
 
+  const decodeIcon = (imageUrl) => {
+    if (!imageUrl) return '';
+    try {
+      const prefix = 'data:text/plain;charset=utf-8,';
+      if (String(imageUrl).startsWith(prefix)) {
+        return decodeURIComponent(String(imageUrl).slice(prefix.length));
+      }
+      return '';
+    } catch (_) {
+      return '';
+    }
+  };
+
   const handleEdit = (goal) => {
     setEditingGoal(goal);
     setFormData({
@@ -126,11 +176,13 @@ const SavingsGoals = () => {
       description: goal.description || '',
       target_amount: goal.target_amount.toString(),
       current_amount: goal.current_amount.toString(),
-      target_date: goal.target_date,
+      // Para input type=date usamos YYYY-MM-DD
+      target_date: goal.target_date ? String(goal.target_date).substring(0, 10) : '',
       category: goal.category,
       priority: goal.priority,
       auto_save_amount: goal.auto_save_amount?.toString() || '',
-      auto_save_frequency: goal.auto_save_frequency || 'monthly'
+      auto_save_frequency: goal.auto_save_frequency || 'monthly',
+      icon: decodeIcon(goal.image_url)
     });
     setShowModal(true);
   };
@@ -200,10 +252,12 @@ const SavingsGoals = () => {
       target_amount: '',
       current_amount: '',
       target_date: '',
-      category: 'money',
+      // Usar categoría válida por defecto
+      category: 'emergency',
       priority: 'medium',
       auto_save_amount: '',
-      auto_save_frequency: 'monthly'
+      auto_save_frequency: 'monthly',
+      icon: ''
     });
   };
 
@@ -250,7 +304,7 @@ const SavingsGoals = () => {
     return icon ? icon.label : category;
   };
 
-  // Opciones de iconos disponibles
+  // Opciones de iconos disponibles (alineadas con categorías válidas del backend)
   const iconOptions = [
     { value: 'car', emoji: '🚗', label: 'Auto' },
     { value: 'house', emoji: '🏠', label: 'Casa' },
@@ -258,21 +312,18 @@ const SavingsGoals = () => {
     { value: 'education', emoji: '📚', label: 'Educación' },
     { value: 'emergency', emoji: '🏥', label: 'Emergencia' },
     { value: 'investment', emoji: '📈', label: 'Inversión' },
-    { value: 'wedding', emoji: '💒', label: 'Boda' },
-    { value: 'baby', emoji: '👶', label: 'Bebé' },
-    { value: 'pet', emoji: '🐕', label: 'Mascota' },
-    { value: 'technology', emoji: '💻', label: 'Tecnología' },
-    { value: 'sports', emoji: '⚽', label: 'Deportes' },
-    { value: 'music', emoji: '🎵', label: 'Música' },
-    { value: 'food', emoji: '🍕', label: 'Comida' },
-    { value: 'shopping', emoji: '🛍️', label: 'Compras' },
-    { value: 'gift', emoji: '🎁', label: 'Regalo' },
-    { value: 'money', emoji: '💰', label: 'Dinero' }
+    { value: 'retirement', emoji: '🧓', label: 'Retiro' },
+    { value: 'other', emoji: '💰', label: 'Otro' }
   ];
 
   const getCategoryIcon = (category) => {
     const icon = iconOptions.find(option => option.value === category);
     return icon ? icon.emoji : '💰';
+  };
+
+  const getGoalDisplayIcon = (goal) => {
+    const icon = decodeIcon(goal.image_url);
+    return icon || getCategoryIcon(goal.category);
   };
 
   if (loading) {
@@ -306,7 +357,7 @@ const SavingsGoals = () => {
             {/* Título y imagen */}
             <div className="text-center mb-8">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">{selectedGoal.name}</h1>
-              <div className="text-6xl mb-6">{getCategoryIcon(selectedGoal.category)}</div>
+              <div className="text-6xl mb-6">{getGoalDisplayIcon(selectedGoal)}</div>
               
               <div className="mb-4">
                 <div className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
@@ -609,7 +660,7 @@ const SavingsGoals = () => {
                   >
                     {/* Icono */}
                     <div className="text-3xl">
-                      {getCategoryIcon(goal.category)}
+                      {getGoalDisplayIcon(goal)}
                     </div>
                     
                     {/* Título y categoría */}
@@ -698,10 +749,13 @@ const SavingsGoals = () => {
                       </button>
                     </div>
                     
-                    {/* Monto */}
+                    {/* Monto y objetivo */}
                     <div className="text-right">
                       <div className="font-bold text-gray-900 dark:text-gray-100">
                         {formatCurrency(goal.current_amount)}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        de {formatCurrency(goal.target_amount)}
                       </div>
                     </div>
                   </div>
@@ -737,20 +791,18 @@ const SavingsGoals = () => {
             </h2>
 
             <div className="text-center mb-6">
-              <div className="text-6xl mb-4">{getCategoryIcon(formData.category)}</div>
+              <div className="text-6xl mb-4">{formData.icon || getCategoryIcon(formData.category)}</div>
             </div>
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  Icono
-                </label>
+                  <label className="block text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Icono</label>
                 <div className="grid grid-cols-4 gap-3 mb-4">
                   {iconOptions.map((option) => (
                     <button
                       key={option.value}
                       type="button"
-                      onClick={() => setFormData({...formData, category: option.value})}
+                        onClick={() => setFormData({...formData, category: option.value, icon: option.emoji})}
                       className={`p-3 rounded-lg border-2 transition-all ${
                         formData.category === option.value
                           ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/30'
@@ -762,6 +814,10 @@ const SavingsGoals = () => {
                     </button>
                   ))}
                 </div>
+                  <div className="flex items-center space-x-3 mb-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Vista previa:</span>
+                    <span className="text-2xl">{formData.icon || getCategoryIcon(formData.category)}</span>
+                  </div>
               </div>
 
               <div>
