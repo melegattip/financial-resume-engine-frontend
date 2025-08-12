@@ -152,9 +152,9 @@ api.interceptors.response.use(
 export const categoriesAPI = {
   list: () => api.get('/categories'),
   get: (id) => api.get(`/categories/${id}`),
-  create: (data) => api.post('/categories', data),
-  update: (id, data) => api.patch(`/categories/${id}`, data),
-  delete: (id) => api.delete(`/categories/${id}`),
+  create: (data) => api.post('/categories', data, { timeout: 30000 }),
+  update: (id, data) => api.patch(`/categories/${id}`, data, { timeout: 30000 }),
+  delete: (id) => api.delete(`/categories/${id}`, { timeout: 30000 }),
 };
 
 // Servicios de Gastos
@@ -162,18 +162,18 @@ export const expensesAPI = {
   list: () => api.get('/expenses'),
   listUnpaid: () => api.get('/expenses/unpaid'),
   get: (userId, id) => api.get(`/expenses/${userId}/${id}`),
-  create: (data) => api.post('/expenses', data),
-  update: (userId, id, data) => api.patch(`/expenses/${userId}/${id}`, data),
-  delete: (userId, id) => api.delete(`/expenses/${userId}/${id}`),
+  create: (data) => api.post('/expenses', data, { timeout: 30000 }),
+  update: (userId, id, data) => api.patch(`/expenses/${userId}/${id}`, data, { timeout: 30000 }),
+  delete: (userId, id) => api.delete(`/expenses/${userId}/${id}`, { timeout: 30000 }),
 };
 
 // Servicios de Ingresos
 export const incomesAPI = {
   list: () => api.get('/incomes'),
   get: (userId, id) => api.get(`/incomes/${userId}/${id}`),
-  create: (data) => api.post('/incomes', data),
-  update: (userId, id, data) => api.patch(`/incomes/${userId}/${id}`, data),
-  delete: (userId, id) => api.delete(`/incomes/${userId}/${id}`),
+  create: (data) => api.post('/incomes', data, { timeout: 30000 }),
+  update: (userId, id, data) => api.patch(`/incomes/${userId}/${id}`, data, { timeout: 30000 }),
+  delete: (userId, id) => api.delete(`/incomes/${userId}/${id}`, { timeout: 30000 }),
 };
 
 // Servicios de Reportes

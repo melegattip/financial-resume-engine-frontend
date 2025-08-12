@@ -85,7 +85,7 @@ const LockedWidget = ({
 
   // Modo detallado para páginas individuales
   return (
-    <div className="relative group">
+    <div className="relative group z-30">
       {/* Contenedor principal con gradiente y efectos */}
       <div className="relative bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 rounded-2xl overflow-hidden border border-slate-600/50 shadow-2xl transform transition-all duration-300 hover:scale-[1.02] hover:shadow-3xl">
         

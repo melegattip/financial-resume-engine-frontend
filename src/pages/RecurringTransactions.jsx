@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { recurringTransactionsAPI, categoriesAPI, formatCurrency } from '../services/api';
+import { usePeriod } from '../contexts/PeriodContext';
+import { formatAmount } from '../utils/formatters';
 import toast from '../utils/notifications';
 import dataService from '../services/dataService';
 import ResponsiveTable from '../components/ResponsiveTable';
 
 const RecurringTransactions = () => {
+  const { balancesHidden } = usePeriod();
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
   const [dashboard, setDashboard] = useState(null);
@@ -412,7 +415,7 @@ const RecurringTransactions = () => {
       header: 'Monto',
       accessor: 'amount',
       align: 'right',
-      render: (value) => formatCurrency(value)
+      render: (value) => formatAmount(value, balancesHidden)
     },
     {
       header: 'Frecuencia',
@@ -565,7 +568,7 @@ const RecurringTransactions = () => {
           </div>
           <div className="text-right">
             <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
-              {formatCurrency(transaction.amount)}
+              {formatAmount(transaction.amount, balancesHidden)}
             </div>
           </div>
         </div>
@@ -738,13 +741,13 @@ const RecurringTransactions = () => {
           <div className="card">
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Ingresos Mensuales</h3>
             <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-              {formatCurrency(dashboard.summary?.monthly_income_total || 0)}
+              {formatAmount(dashboard.summary?.monthly_income_total || 0, balancesHidden)}
             </p>
           </div>
           <div className="card">
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Gastos Mensuales</h3>
             <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-              {formatCurrency(dashboard.summary?.monthly_expense_total || 0)}
+              {formatAmount(dashboard.summary?.monthly_expense_total || 0, balancesHidden)}
             </p>
           </div>
         </div>
@@ -1025,7 +1028,7 @@ const RecurringTransactions = () => {
                   Ingresos Mensuales Promedio
                 </h3>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {formatCurrency(projection.summary?.average_monthly_income || 0)}
+                  {formatAmount(projection.summary?.average_monthly_income || 0, balancesHidden)}
                 </p>
               </div>
               
@@ -1034,7 +1037,7 @@ const RecurringTransactions = () => {
                   Gastos Mensuales Promedio
                 </h3>
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                  {formatCurrency(projection.summary?.average_monthly_expenses || 0)}
+                  {formatAmount(projection.summary?.average_monthly_expenses || 0, balancesHidden)}
                 </p>
               </div>
               
@@ -1047,7 +1050,7 @@ const RecurringTransactions = () => {
                     ? 'text-green-600 dark:text-green-400' 
                     : 'text-red-600 dark:text-red-400'
                 }`}>
-                  {formatCurrency(projection.summary?.net_projected_amount || 0)}
+                  {formatAmount(projection.summary?.net_projected_amount || 0, balancesHidden)}
                 </p>
               </div>
             </div>
@@ -1087,25 +1090,25 @@ const RecurringTransactions = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                           {month.month_display}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400">
-                          {formatCurrency(month.income)}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400">
+                          {formatAmount(month.income, balancesHidden)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 dark:text-red-400">
-                          {formatCurrency(month.expenses)}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 dark:text-red-400">
+                          {formatAmount(month.expenses, balancesHidden)}
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
                           month.net_amount >= 0 
                             ? 'text-green-600 dark:text-green-400' 
                             : 'text-red-600 dark:text-red-400'
                         }`}>
-                          {formatCurrency(month.net_amount)}
+                          {formatAmount(month.net_amount, balancesHidden)}
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold ${
                           month.cumulative_net >= 0 
                             ? 'text-green-600 dark:text-green-400' 
                             : 'text-red-600 dark:text-red-400'
                         }`}>
-                          {formatCurrency(month.cumulative_net)}
+                          {formatAmount(month.cumulative_net, balancesHidden)}
                         </td>
                       </tr>
                     ))}
