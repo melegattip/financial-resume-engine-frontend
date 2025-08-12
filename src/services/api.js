@@ -305,6 +305,9 @@ export const savingsGoalsAPI = {
   pause: (id) => api.post(`/savings-goals/${id}/pause`),
   resume: (id) => api.post(`/savings-goals/${id}/resume`),
   getDashboard: () => api.get('/savings-goals/dashboard'),
+  // Historial de movimientos de una meta
+  getTransactions: (id, { limit = 50, offset = 0 } = {}) =>
+    api.get(`/savings-goals/${id}/transactions`, { params: { limit, offset } }),
 };
 
 // Servicios de Transacciones Recurrentes

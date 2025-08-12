@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { savingsGoalsAPI, formatCurrency } from '../services/api';
 import toast from '../utils/notifications';
 import ConfirmationModal from '../components/ConfirmationModal';
@@ -13,13 +13,46 @@ const SavingsGoals = () => {
   const [transactionGoal, setTransactionGoal] = useState(null);
   const [transactionType, setTransactionType] = useState('deposit');
   const [selectedGoal, setSelectedGoal] = useState(null);
-  const [filters, setFilters] = useState({
+  const [filters] = useState({
     status: '',
     category: '',
     priority: '',
     sort_by: 'created_at',
     sort_order: 'desc'
   });
+
+  // Estado para movimientos de una meta seleccionada
+  const [transactions, setTransactions] = useState([]);
+  const [txLoading, setTxLoading] = useState(false);
+
+  // Cargar movimientos cuando se abre el detalle de una meta
+  useEffect(() => {
+    const fetchDetailAndTransactions = async () => {
+      if (!selectedGoal?.id) {
+        setTransactions([]);
+        return;
+      }
+      try {
+        setTxLoading(true);
+        // Refrescar detalle para que el current_amount sea coherente con los movimientos
+        try {
+          const detail = await savingsGoalsAPI.get(selectedGoal.id);
+          const fresh = detail?.data?.data || detail?.data;
+          if (fresh) setSelectedGoal(fresh);
+        } catch (_) {}
+
+        const res = await savingsGoalsAPI.getTransactions(selectedGoal.id, { limit: 100, offset: 0 });
+        const txs = res?.data?.data?.transactions || res?.data?.transactions || [];
+        setTransactions(txs);
+      } catch (error) {
+        console.error('Error loading transactions:', error);
+      } finally {
+        setTxLoading(false);
+      }
+    };
+
+    fetchDetailAndTransactions();
+  }, [selectedGoal?.id]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -44,11 +77,7 @@ const SavingsGoals = () => {
   const [deletingGoal, setDeletingGoal] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, [filters]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [goalsRes, dashboardRes] = await Promise.all([
@@ -64,7 +93,11 @@ const SavingsGoals = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -86,7 +119,8 @@ const SavingsGoals = () => {
       const autoSaveAmount = parseFloat(formData.auto_save_amount || 0);
       const priority = (formData.priority || 'medium').toLowerCase();
 
-      const payload = {
+      // Para creación usamos payload completo; para edición, solo campos modificados para evitar conflictos
+      const fullPayload = {
         name: formData.name,
         description: formData.description || '',
         target_amount: targetAmount,
@@ -98,7 +132,25 @@ const SavingsGoals = () => {
       };
 
       if (editingGoal) {
-        const res = await savingsGoalsAPI.update(editingGoal.id, payload);
+        // Construir payload parcial solo con cambios
+        const partial = {};
+        if (editingGoal.name !== fullPayload.name) partial.name = fullPayload.name;
+        if ((editingGoal.description || '') !== (fullPayload.description || '')) partial.description = fullPayload.description;
+        if (Number(editingGoal.target_amount) !== Number(fullPayload.target_amount)) partial.target_amount = fullPayload.target_amount;
+        if (editingGoal.category !== fullPayload.category) partial.category = fullPayload.category;
+        if (editingGoal.priority !== fullPayload.priority) partial.priority = fullPayload.priority;
+        if (targetDateISO) partial.target_date = targetDateISO;
+        if (fullPayload.is_auto_save !== undefined) {
+          // Solo enviar si cambió el flag o parámetros asociados
+          if (Boolean(editingGoal.is_auto_save) !== Boolean(fullPayload.is_auto_save)) partial.is_auto_save = fullPayload.is_auto_save;
+          if (fullPayload.is_auto_save) {
+            if (Number(editingGoal.auto_save_amount || 0) !== Number(fullPayload.auto_save_amount || 0)) partial.auto_save_amount = fullPayload.auto_save_amount;
+            if ((editingGoal.auto_save_frequency || '') !== (fullPayload.auto_save_frequency || '')) partial.auto_save_frequency = fullPayload.auto_save_frequency;
+          }
+        }
+        if (fullPayload.image_url) partial.image_url = fullPayload.image_url;
+
+        const res = await savingsGoalsAPI.update(editingGoal.id, Object.keys(partial).length ? partial : { name: fullPayload.name });
         const updated = res?.data?.data || null;
         // Refrescar la vista de detalle inmediatamente si estamos viendo esta meta
         if (updated && selectedGoal && selectedGoal.id === editingGoal.id) {
@@ -106,7 +158,7 @@ const SavingsGoals = () => {
         }
         toast.success('Meta de ahorro actualizada exitosamente');
       } else {
-        const res = await savingsGoalsAPI.create(payload);
+        const res = await savingsGoalsAPI.create(fullPayload);
         const createdId = res?.data?.data?.id || res?.data?.id;
         // Si el usuario indicó un monto inicial, lo registramos como depósito
         if (createdId && currentAmount > 0) {
@@ -150,6 +202,22 @@ const SavingsGoals = () => {
       setTransactionGoal(null);
       setTransactionData({ amount: '', description: '' });
       loadData();
+
+      // Si estamos en la vista de detalle de ESTA meta, refrescamos detalle y movimientos
+      const justOperatedGoalId = transactionGoal?.id;
+      const isInDetailForSameGoal = !!selectedGoal?.id && selectedGoal.id === justOperatedGoalId;
+      if (isInDetailForSameGoal && justOperatedGoalId) {
+        try {
+          const detail = await savingsGoalsAPI.get(justOperatedGoalId);
+          const newGoal = detail?.data?.data || detail?.data;
+          if (newGoal) setSelectedGoal(newGoal);
+        } catch (_) {}
+        try {
+          const txRes = await savingsGoalsAPI.getTransactions(justOperatedGoalId, { limit: 100, offset: 0 });
+          const txs = txRes?.data?.data?.transactions || txRes?.data?.transactions || [];
+          setTransactions(txs);
+        } catch (_) {}
+      }
     } catch (error) {
       console.error('Error processing transaction:', error);
       toast.error('Error procesando transacción');
@@ -217,27 +285,7 @@ const SavingsGoals = () => {
     setDeleteLoading(false);
   };
 
-  const handlePause = async (id) => {
-    try {
-      await savingsGoalsAPI.pause(id);
-      toast.success('Meta pausada exitosamente');
-      loadData();
-    } catch (error) {
-      console.error('Error pausing goal:', error);
-      toast.error('Error pausando meta');
-    }
-  };
-
-  const handleResume = async (id) => {
-    try {
-      await savingsGoalsAPI.resume(id);
-      toast.success('Meta reanudada exitosamente');
-      loadData();
-    } catch (error) {
-      console.error('Error resuming goal:', error);
-      toast.error('Error reanudando meta');
-    }
-  };
+  // (Pausar/Reanudar) no utilizados en esta vista actualmente
 
   const openTransactionModal = (goal, type) => {
     setTransactionGoal(goal);
@@ -261,43 +309,7 @@ const SavingsGoals = () => {
     });
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active': return 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30';
-      case 'achieved': return 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30';
-      case 'paused': return 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/30';
-      case 'cancelled': return 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/30';
-      default: return 'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-800/50';
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'active': return 'Activa';
-      case 'achieved': return 'Lograda';
-      case 'paused': return 'Pausada';
-      case 'cancelled': return 'Cancelada';
-      default: return status;
-    }
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'high': return 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/30';
-      case 'medium': return 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/30';
-      case 'low': return 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30';
-      default: return 'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-800/50';
-    }
-  };
-
-  const getPriorityText = (priority) => {
-    switch (priority) {
-      case 'high': return 'Alta';
-      case 'medium': return 'Media';
-      case 'low': return 'Baja';
-      default: return priority;
-    }
-  };
+  // Helpers de estado/prioridad removidos por no usarse actualmente
 
   const getCategoryText = (category) => {
     const icon = iconOptions.find(option => option.value === category);
@@ -418,6 +430,41 @@ const SavingsGoals = () => {
                   </div>
                 </button>
               </div>
+            </div>
+            {/* Historial de movimientos */}
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Movimientos</h2>
+                {txLoading && (
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Cargando...</span>
+                )}
+              </div>
+              {transactions.length === 0 ? (
+                <div className="text-gray-600 dark:text-gray-400 text-sm">No hay movimientos aún</div>
+              ) : (
+                <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {transactions.map((tx) => (
+                    <li key={tx.id} className="py-3 flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center ${tx.type === 'deposit' ? 'bg-green-100 dark:bg-green-900/30' : 'bg-yellow-100 dark:bg-yellow-900/30'}`}>
+                          <span className="text-lg">{tx.type === 'deposit' ? '💰' : '💸'}</span>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {tx.description || (tx.type === 'deposit' ? 'Depósito' : 'Retiro')}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(tx.created_at).toLocaleString('es-AR')}
+                          </div>
+                        </div>
+                      </div>
+                      <div className={`text-sm font-semibold ${tx.type === 'deposit' ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
+                        {tx.type === 'deposit' ? '+' : '-'}{formatCurrency(tx.amount)}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         </div>
