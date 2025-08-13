@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { budgetsAPI, categoriesAPI, formatCurrency } from '../services/api';
+import TrialBanner from '../components/TrialBanner';
 import { usePeriod } from '../contexts/PeriodContext';
 import { formatAmount } from '../utils/formatters';
 import toast from '../utils/notifications';
@@ -170,6 +171,7 @@ const Budgets = () => {
 
   return (
     <div className="space-y-6">
+      <TrialBanner featureKey="BUDGETS" />
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>

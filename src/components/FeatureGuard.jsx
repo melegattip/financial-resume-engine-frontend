@@ -29,6 +29,9 @@ const FeatureGuard = ({
 
   // Verificar si la feature está desbloqueada
   const isUnlocked = isFeatureUnlocked(feature);
+  // Consultar info de acceso para detectar trial (si el Context no marcó como unlocked por backend)
+  // Nota: getFeatureAccess ya usa datos del backend cuando existen
+  const access = getFeatureAccess ? getFeatureAccess(feature) : null;
   const featureData = FEATURE_GATES[feature];
   const currentLevel = userProfile?.current_level || 0;
 
@@ -56,6 +59,9 @@ const FeatureGuard = ({
             feature={feature}
             featureData={featureData}
             userLevel={currentLevel}
+            // Mostrar banner si está en trial aunque figure como bloqueada
+            trialActive={Boolean(access?.trialActive)}
+            trialEndsAt={access?.trialEndsAt || null}
             mode="preview"
           />
         );
@@ -83,6 +89,8 @@ const FeatureGuard = ({
           feature={feature}
           featureData={featureData}
           userLevel={currentLevel}
+          trialActive={Boolean(access?.trialActive)}
+          trialEndsAt={access?.trialEndsAt || null}
           mode="full"
         />
       ) : null;

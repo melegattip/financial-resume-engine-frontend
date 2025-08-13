@@ -397,7 +397,13 @@ export const GamificationProvider = ({ children }) => {
     
     // Usar datos del backend si están disponibles
     if (features && features.unlocked_features && Array.isArray(features.unlocked_features)) {
-      return features.unlocked_features.includes(featureKey);
+      if (features.unlocked_features.includes(featureKey)) return true;
+      // Si aparece como bloqueada pero el backend informa trial activo, considerarla desbloqueada
+      if (features.locked_features && Array.isArray(features.locked_features)) {
+        const lf = features.locked_features.find(f => f.feature_key === featureKey);
+        if (lf && (lf.trial_active === true)) return true;
+      }
+      return false;
     }
     
     // Fallback usando nivel local
@@ -420,7 +426,9 @@ export const GamificationProvider = ({ children }) => {
           xpNeeded: lockedFeature.xp_needed,
           featureName: lockedFeature.feature_name,
           featureIcon: lockedFeature.feature_icon,
-          description: lockedFeature.description
+          description: lockedFeature.description,
+          trialActive: Boolean(lockedFeature.trial_active),
+          trialEndsAt: lockedFeature.trial_ends_at || null
         };
       }
     }
@@ -437,7 +445,9 @@ export const GamificationProvider = ({ children }) => {
       xpNeeded: unlocked ? 0 : LEVEL_SYSTEM[feature?.requiredLevel]?.minXP - (userProfile?.total_xp || 0),
       featureName: feature?.name || featureKey,
       featureIcon: feature?.icon || '🔒',
-      description: feature?.description || 'Feature description'
+      description: feature?.description || 'Feature description',
+      trialActive: false,
+      trialEndsAt: null
     };
   }, [userProfile, features]);
 
