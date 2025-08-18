@@ -19,6 +19,7 @@ const Expenses = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showOverpaymentModal, setShowOverpaymentModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [payingExpense, setPayingExpense] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,6 +28,11 @@ const Expenses = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingExpense, setDeletingExpense] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  
+  // Estados para nuevos filtros de ordenamiento
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [totalIncome, setTotalIncome] = useState(0);
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -51,11 +57,12 @@ const Expenses = () => {
   const { 
     expenses: expensesAPI, 
     categories: categoriesAPI,
+    incomes: incomesAPI,
     dataService
   } = useOptimizedAPI();
 
   // Hook de gamificación para registrar acciones
-  const { recordCreateExpense, recordUpdateExpense, recordDeleteExpense } = useGamification();
+  const { recordCreateExpense, recordUpdateExpense, recordDeleteExpense, recordAssignCategory } = useGamification();
 
   // Leer parámetros de URL y aplicar filtros automáticamente
   useEffect(() => {
@@ -91,24 +98,32 @@ const Expenses = () => {
       setLoading(true);
       console.log('🔄 Cargando datos de gastos con API optimizada...');
       
-      const [expensesResponse, categoriesResponse] = await Promise.all([
+      const [expensesResponse, categoriesResponse, incomesResponse] = await Promise.all([
         expensesAPI.list(),
         categoriesAPI.list(),
+        incomesAPI.list(),
       ]);
       
       // Normalizar datos de respuesta
       const expensesData = expensesResponse.data?.expenses || expensesResponse.expenses || expensesResponse || [];
       const categoriesData = categoriesResponse.data?.data || categoriesResponse.data || categoriesResponse || [];
+      const incomesData = incomesResponse.data?.incomes || incomesResponse.incomes || incomesResponse || [];
       
       setExpenses(Array.isArray(expensesData) ? expensesData : []);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       
+      // Calcular total de ingresos para porcentajes
+      const totalIncomeAmount = Array.isArray(incomesData) ? 
+        incomesData.reduce((sum, income) => sum + (income.amount || 0), 0) : 0;
+      setTotalIncome(totalIncomeAmount);
+      
       // Actualizar datos disponibles en el contexto de períodos
-      updateAvailableData(expensesData, []);
+      updateAvailableData(expensesData, incomesData);
       
       console.log('✅ Datos de gastos cargados exitosamente:', {
         expenses: expensesData.length,
-        categories: categoriesData.length
+        categories: categoriesData.length,
+        totalIncome: totalIncomeAmount
       });
       
     } catch (error) {
@@ -117,12 +132,13 @@ const Expenses = () => {
       // Establecer datos vacíos
       setExpenses([]);
       setCategories([]);
+      setTotalIncome(0);
       
       // No mostrar toast aquí porque useOptimizedAPI ya lo maneja
     } finally {
       setLoading(false);
     }
-  }, [expensesAPI, categoriesAPI, updateAvailableData]);
+  }, [expensesAPI, categoriesAPI, incomesAPI, updateAvailableData]);
 
   useEffect(() => {
     loadData();
@@ -205,10 +221,22 @@ const Expenses = () => {
       if (editingExpense) {
         console.log(`🎯 [Expenses] Registrando actualización de expense: ${editingExpense.id}`);
         recordUpdateExpense(editingExpense.id, `Gasto actualizado: ${dataToSend.description}`);
+        
+        // Si se asignó una categoría, registrar la acción
+        if (dataToSend.category_id) {
+          console.log(`🎯 [Expenses] Registrando asignación de categoría: ${dataToSend.category_id} al expense: ${editingExpense.id}`);
+          recordAssignCategory(editingExpense.id, dataToSend.category_id, `Categoría asignada al gasto: ${dataToSend.description}`);
+        }
       } else {
         const expenseId = result?.data?.id || `expense-${Date.now()}`;
         console.log(`🎯 [Expenses] Registrando creación de expense: ${expenseId}`);
         recordCreateExpense(expenseId, `Nuevo gasto: ${dataToSend.description}`);
+        
+        // Si se asignó una categoría en la creación, registrar la acción
+        if (dataToSend.category_id) {
+          console.log(`🎯 [Expenses] Registrando asignación de categoría: ${dataToSend.category_id} al nuevo expense: ${expenseId}`);
+          recordAssignCategory(expenseId, dataToSend.category_id, `Categoría asignada al nuevo gasto: ${dataToSend.description}`);
+        }
       }
 
       // Recarga final para asegurar consistencia luego de invalidación
@@ -310,15 +338,29 @@ const Expenses = () => {
   const handlePayment = async (paymentType) => {
     try {
       if (paymentType === 'total') {
-        // Pago total - marcar como pagado
-        const updateData = { paid: true };
+        // Pago total - marcar como pagado (prioridad absoluta)
+        // Resetea cualquier pago parcial previo y marca como 100% pagado
+        const updateData = { 
+          paid: true, 
+          amount_paid: payingExpense.amount,
+          pending_amount: 0 
+        };
         await expensesAPI.update(payingExpense.id, updateData);
-        toast.success('Gasto pagado completamente');
+        toast.success('Gasto marcado como pagado completamente');
       } else if (paymentType === 'partial') {
-        // Pago parcial - enviar payment_amount
+        // Pago parcial - validar monto
         const paymentAmt = parseFloat(paymentAmount);
-        if (paymentAmt <= 0 || paymentAmt > payingExpense.amount) {
-          toast.error('Monto de pago inválido');
+        const pendingAmount = payingExpense.pending_amount || (payingExpense.amount - (payingExpense.amount_paid || 0));
+        
+        if (paymentAmt <= 0) {
+          toast.error('El monto debe ser mayor a 0');
+          return;
+        }
+        
+        // Verificar si intenta pagar más del monto pendiente
+        if (paymentAmt > pendingAmount) {
+          // Mostrar modal de sobrepago
+          setShowOverpaymentModal(true);
           return;
         }
         
@@ -326,7 +368,7 @@ const Expenses = () => {
         await expensesAPI.update(payingExpense.id, updateData);
         
         // Verificar si el pago cubre el total
-        const remaining = payingExpense.amount - (payingExpense.amount_paid || 0) - paymentAmt;
+        const remaining = pendingAmount - paymentAmt;
         if (remaining <= 0) {
           toast.success('Gasto pagado completamente');
         } else {
@@ -346,6 +388,45 @@ const Expenses = () => {
     }
   };
 
+  const handleOverpaymentChoice = async (choice) => {
+    try {
+      const paymentAmt = parseFloat(paymentAmount);
+      
+      if (choice === 'increase_expense') {
+        // Opción 1: Aumentar el gasto total al monto del pago y aplicar pago total
+        const updateData = { 
+          amount: paymentAmt,  // Aumentar el monto total del gasto
+          paid: true,          // Marcar como pagado
+          amount_paid: paymentAmt,
+          pending_amount: 0 
+        };
+        await expensesAPI.update(payingExpense.id, updateData);
+        toast.success(`Gasto actualizado a ${formatCurrency(paymentAmt)} y marcado como pagado completamente`);
+      } else if (choice === 'apply_total_payment') {
+        // Opción 2: Aplicar pago total con el monto original
+        const updateData = { 
+          paid: true,
+          amount_paid: payingExpense.amount,
+          pending_amount: 0 
+        };
+        await expensesAPI.update(payingExpense.id, updateData);
+        toast.success('Gasto marcado como pagado completamente con el monto original');
+      }
+      
+      // Cerrar modales y limpiar
+      setShowOverpaymentModal(false);
+      setShowPaymentModal(false);
+      setPayingExpense(null);
+      setPaymentAmount('');
+      
+      // Recargar datos para mostrar cambios
+      await loadData();
+    } catch (error) {
+      console.error('Error en handleOverpaymentChoice:', error);
+      toast.error('Error al procesar el pago');
+    }
+  };
+
   const filteredExpenses = Array.isArray(expenses) 
     ? expenses.filter(expense => {
         const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -359,6 +440,37 @@ const Expenses = () => {
         const matchesMonth = !selectedMonth || expense.created_at.slice(0, 7) === selectedMonth;
         
         return matchesSearch && matchesFilter && matchesYear && matchesMonth;
+      })
+      .sort((a, b) => {
+        let aValue, bValue;
+        
+        switch (sortBy) {
+          case 'amount':
+            aValue = a.amount;
+            bValue = b.amount;
+            break;
+          case 'category':
+            const aCat = categories.find(c => c.id === a.category_id);
+            const bCat = categories.find(c => c.id === b.category_id);
+            aValue = (aCat?.name || 'Sin categoría').toLowerCase();
+            bValue = (bCat?.name || 'Sin categoría').toLowerCase();
+            break;
+          case 'due_date':
+            aValue = a.due_date ? new Date(a.due_date).getTime() : 0;
+            bValue = b.due_date ? new Date(b.due_date).getTime() : 0;
+            break;
+          case 'created_at':
+          default:
+            aValue = new Date(a.created_at).getTime();
+            bValue = new Date(b.created_at).getTime();
+            break;
+        }
+        
+        if (sortOrder === 'asc') {
+          return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+        } else {
+          return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+        }
       })
     : [];
 
@@ -435,7 +547,7 @@ const Expenses = () => {
                 />
               </div>
 
-              {/* Filtro */}
+              {/* Filtro de estado */}
               <select
                 value={filterPaid}
                 onChange={(e) => setFilterPaid(e.target.value)}
@@ -447,7 +559,40 @@ const Expenses = () => {
               </select>
             </div>
 
+            {/* Segunda fila: Ordenamiento */}
+            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+              {/* Ordenar por */}
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-fr-gray-700 dark:text-gray-300 whitespace-nowrap">
+                  Ordenar por:
+                </label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="input w-full sm:w-auto"
+                >
+                  <option value="created_at">Fecha de creación</option>
+                  <option value="due_date">Fecha de vencimiento</option>
+                  <option value="amount">Monto</option>
+                  <option value="category">Categoría</option>
+                </select>
+              </div>
 
+              {/* Orden */}
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-fr-gray-700 dark:text-gray-300 whitespace-nowrap">
+                  Orden:
+                </label>
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  className="input w-full sm:w-auto"
+                >
+                  <option value="desc">Descendente</option>
+                  <option value="asc">Ascendente</option>
+                </select>
+              </div>
+            </div>
           </div>
 
           <button
@@ -472,83 +617,101 @@ const Expenses = () => {
           ) : (
             filteredExpenses.map((expense) => {
               const category = categories.find(c => c.id === expense.category_id);
+              const incomePercentage = totalIncome > 0 ? (expense.amount / totalIncome) * 100 : 0;
+              
               return (
-                <div key={expense.id} className="flex items-center justify-between p-4 rounded-fr bg-fr-gray-50 dark:bg-gray-700 hover:bg-fr-gray-100 dark:hover:bg-gray-600 transition-colors">
-                  <div className="flex items-center space-x-4">
+                <div key={expense.id} className="flex items-center justify-between p-3 rounded-fr bg-fr-gray-50 dark:bg-gray-700 hover:bg-fr-gray-100 dark:hover:bg-gray-600 transition-colors">
+                  {/* Estado de pago */}
+                  <div className="flex items-center space-x-2">
                     <button
                       onClick={() => togglePaid(expense)}
-                      className={`p-2 rounded-fr transition-colors ${
+                      className={`p-1.5 rounded-fr transition-colors ${
                         expense.paid 
                           ? 'bg-green-100 dark:bg-green-900/30 text-fr-secondary dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50' 
                           : 'bg-red-100 dark:bg-red-900/30 text-fr-error dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
                       }`}
                     >
                       {expense.paid ? (
-                        <FaCheckCircle className="w-5 h-5" />
+                        <FaCheckCircle className="w-4 h-4" />
                       ) : (
-                        <FaTimesCircle className="w-5 h-5" />
+                        <FaTimesCircle className="w-4 h-4" />
                       )}
                     </button>
+                  </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-medium text-fr-gray-900 dark:text-gray-100">{expense.description}</h3>
-                        {category && (
-                          <span className="badge-info">{category.name}</span>
-                        )}
-                        {expense.paid && (
-                          <span className="badge-success">Pagado</span>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-4 mt-1 text-sm text-fr-gray-500 dark:text-gray-400">
-                        {expense.due_date && (
-                          <span>Vence: {new Date(expense.due_date).toLocaleDateString('es-AR')}</span>
-                        )}
-                        <span>Creado: {new Date(expense.created_at).toLocaleDateString('es-AR')}</span>
-                      </div>
+                  {/* Información principal en una línea */}
+                  <div className="flex-1 flex items-center justify-between min-w-0 mx-3">
+                    {/* Descripción y badges */}
+                    <div className="flex items-center space-x-2 min-w-0 flex-1">
+                      <h3 className="font-medium text-fr-gray-900 dark:text-gray-100 truncate text-sm">
+                        {expense.description}
+                      </h3>
+                      {category && (
+                        <span className="badge-info text-xs whitespace-nowrap py-0.5 px-1.5">{category.name}</span>
+                      )}
+                      {expense.paid && (
+                        <span className="badge-success text-xs whitespace-nowrap py-0.5 px-1.5">Pagado</span>
+                      )}
+                    </div>
+
+                    {/* Fechas y porcentaje en una línea compacta */}
+                    <div className="flex items-center space-x-3 text-xs text-fr-gray-500 dark:text-gray-400 whitespace-nowrap">
+                      {expense.due_date && (
+                        <span>Vence: {new Date(expense.due_date).toLocaleDateString('es-AR', { 
+                          weekday: 'short', 
+                          day: '2-digit', 
+                          month: '2-digit' 
+                        })}</span>
+                      )}
+                      <span>Creado: {new Date(expense.created_at).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}</span>
+                      {/* Porcentaje de ingresos en línea */}
+                      {totalIncome > 0 && (
+                        <span className="text-blue-600 dark:text-blue-400 font-medium">
+                          {incomePercentage.toFixed(1)}% de tus ingresos
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-4">
+                  {/* Montos - todo en una línea */}
+                  <div className="flex items-center space-x-3">
                     <div className="text-right">
                       {expense.amount_paid > 0 && expense.amount_paid < expense.amount ? (
-                        // Pago parcial - mostrar total vs pendiente
-                        <div>
-                          <p className="font-semibold text-fr-gray-900 dark:text-gray-100 text-lg">
+                        // Pago parcial - mostrar en una sola línea compacta
+                        <div className="flex items-center space-x-2 text-xs">
+                          <span className="font-bold text-fr-gray-900 dark:text-gray-100 text-base">
                             {formatAmount(expense.pending_amount || (expense.amount - (expense.amount_paid || 0)))}
-                          </p>
-                          <p className="text-sm text-fr-gray-500 dark:text-gray-400">
-                            de {formatAmount(expense.amount)} total
-                          </p>
-                          <p className="text-xs text-fr-secondary dark:text-green-400">
-                            Pagado: {formatAmount(expense.amount_paid || 0)}
-                          </p>
+                          </span>
+                          <span className="text-fr-gray-500 dark:text-gray-400">
+                            de {formatAmount(expense.amount)}
+                          </span>
+                          <span className="text-fr-secondary dark:text-green-400">
+                            (Pagado: {formatAmount(expense.amount_paid || 0)})
+                          </span>
                         </div>
                       ) : (
                         // Sin pagos parciales - mostrar solo el monto
-                        <p className="font-semibold text-fr-gray-900 dark:text-gray-100 text-lg">
+                        <p className="font-bold text-fr-gray-900 dark:text-gray-100 text-base">
                           {formatAmount(expense.amount)}
-                        </p>
-                      )}
-                      {expense.percentage && (
-                        <p className="text-sm text-fr-gray-500 dark:text-gray-400">
-                          {formatPercentageAmount(expense.percentage)} del total
                         </p>
                       )}
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    {/* Acciones */}
+                    <div className="flex items-center space-x-1">
                       <button
                         onClick={() => handleEdit(expense)}
-                        className="p-2 rounded-fr text-fr-gray-600 dark:text-gray-400 hover:bg-fr-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        className="p-1.5 rounded-fr text-fr-gray-600 dark:text-gray-400 hover:bg-fr-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        title="Editar"
                       >
-                        <FaEdit className="w-4 h-4" />
+                        <FaEdit className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(expense)}
-                        className="p-2 rounded-fr text-fr-error dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                        className="p-1.5 rounded-fr text-fr-error dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                        title="Eliminar"
                       >
-                        <FaTrash className="w-4 h-4" />
+                        <FaTrash className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
@@ -768,6 +931,76 @@ const Expenses = () => {
                   setShowPaymentModal(false);
                   setPayingExpense(null);
                   setPaymentAmount('');
+                }}
+                className="btn-outline flex-1"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal de Sobrepago */}
+      {showOverpaymentModal && payingExpense && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-fr-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-fr-gray-900 dark:text-gray-100 mb-4">
+              ⚠️ Monto Mayor al Pendiente
+            </h2>
+
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-fr p-4 mb-6">
+              <p className="text-sm text-yellow-800 dark:text-yellow-300 mb-3">
+                Estás intentando pagar <strong>{formatCurrency(parseFloat(paymentAmount))}</strong> pero solo hay <strong>{formatCurrency(payingExpense.pending_amount || (payingExpense.amount - (payingExpense.amount_paid || 0)))}</strong> pendientes.
+              </p>
+              <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                ¿Qué quieres hacer?
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {/* Opción 1: Aumentar el gasto */}
+              <button
+                onClick={() => handleOverpaymentChoice('increase_expense')}
+                className="w-full p-4 text-left border-2 border-blue-200 dark:border-blue-700 rounded-fr hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-fr-gray-900 dark:text-gray-100">
+                      📈 Aumentar el gasto total
+                    </h4>
+                    <p className="text-sm text-fr-gray-600 dark:text-gray-400 mt-1">
+                      Cambiar el gasto de {formatCurrency(payingExpense.amount)} a {formatCurrency(parseFloat(paymentAmount))} y marcarlo como pagado
+                    </p>
+                  </div>
+                </div>
+              </button>
+
+              {/* Opción 2: Pago total con monto original */}
+              <button
+                onClick={() => handleOverpaymentChoice('apply_total_payment')}
+                className="w-full p-4 text-left border-2 border-green-200 dark:border-green-700 rounded-fr hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-fr-gray-900 dark:text-gray-100">
+                      💰 Aplicar pago total
+                    </h4>
+                    <p className="text-sm text-fr-gray-600 dark:text-gray-400 mt-1">
+                      Marcar como pagado con el monto original de {formatCurrency(payingExpense.amount)}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            {/* Botón cancelar */}
+            <div className="flex space-x-4 pt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowOverpaymentModal(false);
                 }}
                 className="btn-outline flex-1"
               >

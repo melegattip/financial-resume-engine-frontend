@@ -21,6 +21,10 @@ const Incomes = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingIncome, setDeletingIncome] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  
+  // Estados para nuevos filtros de ordenamiento
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState('desc');
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -46,7 +50,7 @@ const Incomes = () => {
   } = useOptimizedAPI();
 
   // Hook de gamificación para registrar acciones
-  const { recordCreateIncome, recordUpdateIncome, recordDeleteIncome } = useGamification();
+  const { recordCreateIncome, recordUpdateIncome, recordDeleteIncome, recordAssignCategory } = useGamification();
 
   const formatAmount = (amount) => {
     if (balancesHidden) return '••••••';
@@ -150,6 +154,12 @@ const Incomes = () => {
         // 🎮 Registrar acción de gamificación
         console.log(`🎯 [Incomes] Registrando actualización de income: ${editingIncome.id}`);
         recordUpdateIncome(editingIncome.id, `Ingreso actualizado: ${dataToSend.description}`);
+        
+        // Si se asignó una categoría, registrar la acción
+        if (dataToSend.category_id) {
+          console.log(`🎯 [Incomes] Registrando asignación de categoría: ${dataToSend.category_id} al income: ${editingIncome.id}`);
+          recordAssignCategory(editingIncome.id, dataToSend.category_id, `Categoría asignada al ingreso: ${dataToSend.description}`);
+        }
       } else {
         const result = await incomesAPI.create(dataToSend);
         // useOptimizedAPI ya muestra el toast de éxito
@@ -158,6 +168,12 @@ const Incomes = () => {
         const incomeId = result?.data?.id || `income-${Date.now()}`;
         console.log(`🎯 [Incomes] Registrando creación de income: ${incomeId}`);
         recordCreateIncome(incomeId, `Nuevo ingreso: ${dataToSend.description}`);
+        
+        // Si se asignó una categoría en la creación, registrar la acción
+        if (dataToSend.category_id) {
+          console.log(`🎯 [Incomes] Registrando asignación de categoría: ${dataToSend.category_id} al nuevo income: ${incomeId}`);
+          recordAssignCategory(incomeId, dataToSend.category_id, `Categoría asignada al nuevo ingreso: ${dataToSend.description}`);
+        }
       }
       
       setShowModal(false);
@@ -226,6 +242,33 @@ const Incomes = () => {
         
         return matchesSearch && matchesYear && matchesMonth;
       })
+      .sort((a, b) => {
+        let aValue, bValue;
+        
+        switch (sortBy) {
+          case 'amount':
+            aValue = a.amount;
+            bValue = b.amount;
+            break;
+          case 'category':
+            const aCat = categories.find(c => c.id === a.category_id);
+            const bCat = categories.find(c => c.id === b.category_id);
+            aValue = (aCat?.name || 'Sin categoría').toLowerCase();
+            bValue = (bCat?.name || 'Sin categoría').toLowerCase();
+            break;
+          case 'created_at':
+          default:
+            aValue = new Date(a.created_at).getTime();
+            bValue = new Date(b.created_at).getTime();
+            break;
+        }
+        
+        if (sortOrder === 'asc') {
+          return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+        } else {
+          return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+        }
+      })
     : [];
 
   const totalIncomes = filteredIncomes.reduce((sum, income) => sum + income.amount, 0);
@@ -273,18 +316,53 @@ const Incomes = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4">
             {/* Primera fila: Búsqueda */}
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-fr-gray-400 dark:text-gray-500" />
-              <input
-                type="text"
-                placeholder="Buscar ingresos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 input w-full sm:w-64"
-              />
+            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+              {/* Búsqueda */}
+              <div className="relative">
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-fr-gray-400 dark:text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Buscar ingresos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 input w-full sm:w-64"
+                />
+              </div>
             </div>
 
+            {/* Segunda fila: Ordenamiento */}
+            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+              {/* Ordenar por */}
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-fr-gray-700 dark:text-gray-300 whitespace-nowrap">
+                  Ordenar por:
+                </label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="input w-full sm:w-auto"
+                >
+                  <option value="created_at">Fecha de creación</option>
+                  <option value="amount">Monto</option>
+                  <option value="category">Categoría</option>
+                </select>
+              </div>
 
+              {/* Orden */}
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-fr-gray-700 dark:text-gray-300 whitespace-nowrap">
+                  Orden:
+                </label>
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  className="input w-full sm:w-auto"
+                >
+                  <option value="desc">Descendente</option>
+                  <option value="asc">Ascendente</option>
+                </select>
+              </div>
+            </div>
           </div>
 
           <button
@@ -309,45 +387,61 @@ const Incomes = () => {
           ) : (
             filteredIncomes.map((income) => {
               const category = categories.find(c => c.id === income.category_id);
+              
               return (
-                <div key={income.id} className="flex items-center justify-between p-4 rounded-fr bg-fr-gray-50 dark:bg-gray-700 hover:bg-fr-gray-100 dark:hover:bg-gray-600 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-2 rounded-fr bg-green-100 dark:bg-green-900/30">
-                      <FaArrowUp className="w-5 h-5 text-fr-secondary dark:text-green-400" />
-                    </div>
-
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-medium text-fr-gray-900 dark:text-gray-100">{income.description}</h3>
-                        {category && (
-                          <span className="badge-info">{category.name}</span>
-                        )}
-                      </div>
-                      <div className="text-sm text-fr-gray-500 dark:text-gray-400 mt-1">
-                        Creado: {new Date(income.created_at).toLocaleDateString('es-AR')}
-                      </div>
+                <div key={income.id} className="flex items-center justify-between p-3 rounded-fr bg-fr-gray-50 dark:bg-gray-700 hover:bg-fr-gray-100 dark:hover:bg-gray-600 transition-colors">
+                  {/* Icono de ingreso */}
+                  <div className="flex items-center space-x-2">
+                    <div className="p-1.5 rounded-fr bg-green-100 dark:bg-green-900/30">
+                      <FaArrowUp className="w-4 h-4 text-fr-secondary dark:text-green-400" />
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-4">
+                  {/* Información principal en una línea */}
+                  <div className="flex-1 flex items-center justify-between min-w-0 mx-3">
+                    {/* Descripción y badges */}
+                    <div className="flex items-center space-x-2 min-w-0 flex-1">
+                      <h3 className="font-medium text-fr-gray-900 dark:text-gray-100 truncate text-sm">
+                        {income.description}
+                      </h3>
+                      {category && (
+                        <span className="badge-info text-xs whitespace-nowrap py-0.5 px-1.5">{category.name}</span>
+                      )}
+                    </div>
+
+                    {/* Fechas en una línea compacta */}
+                    <div className="flex items-center space-x-3 text-xs text-fr-gray-500 dark:text-gray-400 whitespace-nowrap">
+                      <span>Creado: {new Date(income.created_at).toLocaleDateString('es-AR', { 
+                        weekday: 'short', 
+                        day: '2-digit', 
+                        month: '2-digit' 
+                      })}</span>
+                    </div>
+                  </div>
+
+                  {/* Montos */}
+                  <div className="flex items-center space-x-3">
                     <div className="text-right">
-                      <p className="font-semibold text-fr-secondary dark:text-green-400 text-lg">
+                      <p className="font-bold text-fr-secondary dark:text-green-400 text-base">
                         +{formatAmount(income.amount)}
                       </p>
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    {/* Acciones */}
+                    <div className="flex items-center space-x-1">
                       <button
                         onClick={() => handleEdit(income)}
-                        className="p-2 rounded-fr text-fr-gray-600 dark:text-gray-400 hover:bg-fr-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        className="p-1.5 rounded-fr text-fr-gray-600 dark:text-gray-400 hover:bg-fr-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        title="Editar"
                       >
-                        <FaEdit className="w-4 h-4" />
+                        <FaEdit className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(income)}
-                        className="p-2 rounded-fr text-fr-error dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                        className="p-1.5 rounded-fr text-fr-error dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                        title="Eliminar"
                       >
-                        <FaTrash className="w-4 h-4" />
+                        <FaTrash className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>

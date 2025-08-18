@@ -139,6 +139,14 @@ export const GamificationProvider = ({ children }) => {
       setFeatures(featuresData || { unlocked_features: [], locked_features: [] });
       setLastUpdate(Date.now());
       setError(null);
+      
+      // Registrar daily login automáticamente después de cargar los datos
+      try {
+        console.log('🎯 [GamificationContext] Registrando daily login automáticamente');
+        await api.recordDailyLogin();
+      } catch (loginError) {
+        console.warn('⚠️ [GamificationContext] Error registrando daily login:', loginError);
+      }
     } catch (err) {
       console.error('Error loading gamification data:', err);
       setError(err.message);

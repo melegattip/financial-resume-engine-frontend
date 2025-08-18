@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { FaArrowUp, FaArrowDown, FaDollarSign, FaChartPie, FaCalendar, FaCheckCircle, FaTimesCircle, FaChartBar, FaBullseye, FaExclamationCircle, FaRedo, FaBrain } from 'react-icons/fa';
+import { FaArrowUp, FaArrowDown, FaDollarSign, FaChartPie, FaCalendar, FaCheckCircle, FaTimesCircle, FaChartBar, FaBullseye, FaExclamationCircle, FaRedo, FaBrain, FaEdit } from 'react-icons/fa';
 import { 
   ResponsiveContainer,
   PieChart as RechartsPieChart,
@@ -18,6 +18,8 @@ import useDataRefresh from '../hooks/useDataRefresh';
 import LockedWidget from '../components/LockedWidget';
 import toast from 'react-hot-toast';
 import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
+import ValidatedInput from '../components/ValidatedInput';
+import { validateAmount, validateDescription } from '../utils/validation';
 
 
 const Resumen = () => {
@@ -43,6 +45,24 @@ const Resumen = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [payingExpense, setPayingExpense] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState('');
+  
+  // Estados para modales de edición
+  const [showEditExpenseModal, setShowEditExpenseModal] = useState(false);
+  const [showEditIncomeModal, setShowEditIncomeModal] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [editingIncome, setEditingIncome] = useState(null);
+  const [expenseFormData, setExpenseFormData] = useState({
+    description: '',
+    amount: '',
+    category_id: '',
+    due_date: '',
+    paid: false,
+  });
+  const [incomeFormData, setIncomeFormData] = useState({
+    description: '',
+    amount: '',
+    category_id: '',
+  });
 
   // Usar el contexto global de período
   const {
@@ -64,6 +84,7 @@ const Resumen = () => {
   // Usar el hook optimizado para operaciones API
   const { 
     expenses: expensesAPI, 
+    incomes: incomesAPI,
     categories: categoriesAPI
   } = useOptimizedAPI();
 
@@ -526,6 +547,108 @@ const Resumen = () => {
     }
   };
 
+  // Funciones para editar gastos
+  const handleEditExpense = (expense) => {
+    setEditingExpense(expense);
+    setExpenseFormData({
+      description: expense.description,
+      amount: expense.amount.toString(),
+      category_id: expense.category_id || '',
+      due_date: expense.due_date || '',
+      paid: expense.paid,
+    });
+    setShowEditExpenseModal(true);
+  };
+
+  const handleSubmitExpense = async (e) => {
+    e.preventDefault();
+    
+    // Guardar posición de scroll
+    const currentScrollPosition = window.scrollY;
+    
+    try {
+      const dataToSend = {
+        ...expenseFormData,
+        amount: parseFloat(expenseFormData.amount)
+      };
+
+      await expensesAPI.update(editingExpense.id, dataToSend);
+      toast.success('Gasto actualizado exitosamente');
+      
+      setShowEditExpenseModal(false);
+      setEditingExpense(null);
+      setExpenseFormData({
+        description: '',
+        amount: '',
+        category_id: '',
+        due_date: '',
+        paid: false,
+      });
+      
+      // Recargar datos
+      await loadDashboardData(false);
+      
+      // Restaurar posición
+      setTimeout(() => {
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        const targetPosition = Math.min(currentScrollPosition, maxScroll);
+        window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+      }, 150);
+      
+    } catch (error) {
+      console.error('Error updating expense:', error);
+    }
+  };
+
+  // Funciones para editar ingresos
+  const handleEditIncome = (income) => {
+    setEditingIncome(income);
+    setIncomeFormData({
+      description: income.description,
+      amount: income.amount.toString(),
+      category_id: income.category_id || '',
+    });
+    setShowEditIncomeModal(true);
+  };
+
+  const handleSubmitIncome = async (e) => {
+    e.preventDefault();
+    
+    // Guardar posición de scroll
+    const currentScrollPosition = window.scrollY;
+    
+    try {
+      const dataToSend = {
+        ...incomeFormData,
+        amount: parseFloat(incomeFormData.amount)
+      };
+
+      await incomesAPI.update(editingIncome.id, dataToSend);
+      toast.success('Ingreso actualizado exitosamente');
+      
+      setShowEditIncomeModal(false);
+      setEditingIncome(null);
+      setIncomeFormData({
+        description: '',
+        amount: '',
+        category_id: '',
+      });
+      
+      // Recargar datos
+      await loadDashboardData(false);
+      
+      // Restaurar posición
+      setTimeout(() => {
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        const targetPosition = Math.min(currentScrollPosition, maxScroll);
+        window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+      }, 150);
+      
+    } catch (error) {
+      console.error('Error updating income:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -878,72 +1001,69 @@ const Resumen = () => {
                       const category = data.categories.find(c => c.id === expense.category_id);
                       const color = getCategoryColor(expense.category_id);
                       return (
-                        <div key={expense.id || index} className={`flex items-center justify-between px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-shadow`}>
-                          <div className="flex items-start space-x-3">
-                            {/* Indicador de pago */}
-                            <div className="flex-shrink-0 mt-1">
-                              <button
-                                onClick={() => togglePaid(expense)}
-                                className="hover:scale-110 transition-transform cursor-pointer"
-                                title={expense.paid ? "Marcar como pendiente" : "Hacer pago"}
-                              >
-                                {expense.paid ? (
-                                  <FaCheckCircle className="w-5 h-5 text-green-500" />
-                                ) : (
-                                  <FaTimesCircle className="w-5 h-5 text-red-500" />
-                                )}
-                              </button>
-                            </div>
-                            
-                            <div className="flex-1">
-                              <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
-                                <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">
-                                  {expense.description}
-                                </p>
-                                {!expense.paid && (
-                                  <span className="badge-error text-xs">Pendiente</span>
-                                )}
-                                {category && (
-                                  <span className={`px-2 py-1 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}>
-                                    {category.name}
+                        <div key={expense.id || index} className={`group flex items-center justify-between px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-all duration-200 relative`}>
+                          {/* Indicador de pago */}
+                          <div className="flex items-center space-x-3">
+                            <button
+                              onClick={() => togglePaid(expense)}
+                              className="hover:scale-110 transition-transform cursor-pointer"
+                              title={expense.paid ? "Marcar como pendiente" : "Hacer pago"}
+                            >
+                              {expense.paid ? (
+                                <FaCheckCircle className="w-4 h-4 text-green-500" />
+                              ) : (
+                                <FaTimesCircle className="w-4 h-4 text-red-500" />
+                              )}
+                            </button>
+                          </div>
+                          
+                          {/* Información principal en una línea */}
+                          <div className="flex-1 flex items-center space-x-3 min-w-0 mx-3">
+                            <p className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
+                              {expense.description}
+                            </p>
+                            {!expense.paid && (
+                              <span className="badge-error text-xs whitespace-nowrap">Pendiente</span>
+                            )}
+                            {category && (
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border} whitespace-nowrap`}>
+                                {category.name}
+                              </span>
+                            )}
+                            {expense.due_date && (
+                              <span className="text-xs text-yellow-600 dark:text-yellow-400 whitespace-nowrap">
+                                Vence: {new Date(expense.due_date).toLocaleDateString('es-AR', { 
+                                  weekday: 'short', 
+                                  day: '2-digit', 
+                                  month: '2-digit' 
+                                })}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Monto, porcentaje y botón editar */}
+                          <div className="flex items-center space-x-2">
+                            <div className="text-right">
+                              <div className="flex items-center space-x-2">
+                                {expense.percentage && (
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                    {formatPercentage(expense.percentage)} del total
                                   </span>
                                 )}
-                                {/* Fechas inline solo en desktop */}
-                                <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2">
-                                  {new Date(expense.created_at).toLocaleDateString('es-AR')}
-                                  {expense.due_date && (
-                                    <span className="ml-2">• Vence: {new Date(expense.due_date).toLocaleDateString('es-AR')}</span>
-                                  )}
-                                </span>
+                                <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+                                  -{formatAmount(expense.amount)}
+                                </p>
                               </div>
-                              {/* Fechas debajo solo en mobile/tablet */}
-                              <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                {new Date(expense.created_at).toLocaleDateString('es-AR')}
-                                {expense.due_date && (
-                                  <span className="ml-2">• Vence: {new Date(expense.due_date).toLocaleDateString('es-AR')}</span>
-                                )}
-                              </p>
                             </div>
-                          </div>
-                          <div className="text-right ml-3">
-                            <p className="font-semibold text-gray-900 dark:text-gray-100">
-                              -{formatAmount(expense.amount)}
-                              {expense.percentage && (
-                                <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2 align-middle">
-                                  {formatPercentage(expense.percentage)} del total
-                                </span>
-                              )}
-                            </p>
-                            {expense.percentage && (
-                              <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400">
-                                {formatPercentage(expense.percentage)} del total
-                              </p>
-                            )}
-                            {expense.amount_paid > 0 && expense.amount_paid < expense.amount && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Pagado: {formatAmount(expense.amount_paid)}
-                              </p>
-                            )}
+                            
+                            {/* Botón de edición con hover */}
+                            <button
+                              onClick={() => handleEditExpense(expense)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 rounded-fr text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                              title="Editar gasto"
+                            >
+                              <FaEdit className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
                       );
@@ -984,40 +1104,42 @@ const Resumen = () => {
                       const color = getCategoryColor(income.category_id);
                       const category = data.categories.find(c => c.id === income.category_id);
                       return (
-                        <div key={income.id || index} className={`flex items-center justify-between px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-shadow`}>
-                          <div className="flex-1">
-                            <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
-                              <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">
-                                {income.description}
-                              </p>
-                              {category && (
-                                <span className={`px-2 py-1 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}>
-                                  {category.name}
-                                </span>
-                              )}
-                              {/* Fecha inline en desktop */}
-                              <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2">
-                                {new Date(income.created_at).toLocaleDateString('es-AR')}
-                              </span>
+                        <div key={income.id || index} className={`group flex items-center justify-between px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-all duration-200 relative`}>
+                          {/* Icono de ingreso */}
+                          <div className="flex items-center space-x-3">
+                            <div className="p-1 rounded-fr bg-green-100 dark:bg-green-900/30">
+                              <FaArrowUp className="w-3 h-3 text-green-600 dark:text-green-400" />
                             </div>
-                            <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {new Date(income.created_at).toLocaleDateString('es-AR')}
-                            </p>
                           </div>
-                          <div className="text-right ml-3">
-                            <p className="font-semibold text-green-600 dark:text-green-400">
-                              +{formatAmount(income.amount)}
-                              {income.percentage && (
-                                <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2 align-middle">
-                                  {formatPercentage(income.percentage)}
-                                </span>
-                              )}
+                          
+                          {/* Información principal en una línea */}
+                          <div className="flex-1 flex items-center space-x-3 min-w-0 mx-3">
+                            <p className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
+                              {income.description}
                             </p>
-                            {income.percentage && (
-                              <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400">
-                                {formatPercentage(income.percentage)}
-                              </p>
+                            {category && (
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border} whitespace-nowrap`}>
+                                {category.name}
+                              </span>
                             )}
+                          </div>
+                          
+                          {/* Monto y botón editar */}
+                          <div className="flex items-center space-x-2">
+                            <div className="text-right">
+                              <p className="font-semibold text-green-600 dark:text-green-400 text-sm">
+                                +{formatAmount(income.amount)}
+                              </p>
+                            </div>
+                            
+                            {/* Botón de edición con hover */}
+                            <button
+                              onClick={() => handleEditIncome(income)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 rounded-fr text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                              title="Editar ingreso"
+                            >
+                              <FaEdit className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
                       );
@@ -1331,6 +1453,171 @@ const Resumen = () => {
           })()}
         </div>
       </div>
+
+      {/* Modal de Edición de Gastos */}
+      {showEditExpenseModal && editingExpense && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-fr-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-fr-gray-900 dark:text-gray-100 mb-6">
+              Editar Gasto
+            </h2>
+
+            <form onSubmit={handleSubmitExpense} className="space-y-6">
+              <div>
+                <label className="label">Descripción</label>
+                <input
+                  type="text"
+                  value={expenseFormData.description}
+                  onChange={(e) => setExpenseFormData({...expenseFormData, description: e.target.value})}
+                  className="input w-full"
+                  placeholder="Descripción del gasto"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="label">Monto</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={expenseFormData.amount}
+                  onChange={(e) => setExpenseFormData({...expenseFormData, amount: e.target.value})}
+                  className="input w-full"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="label">Categoría</label>
+                <select
+                  value={expenseFormData.category_id}
+                  onChange={(e) => setExpenseFormData({...expenseFormData, category_id: e.target.value})}
+                  className="input w-full"
+                >
+                  <option value="">Seleccionar categoría</option>
+                  {data.categories.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="label">Fecha de vencimiento</label>
+                <input
+                  type="date"
+                  value={expenseFormData.due_date}
+                  onChange={(e) => setExpenseFormData({...expenseFormData, due_date: e.target.value})}
+                  className="input w-full"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="expense-paid"
+                  checked={expenseFormData.paid}
+                  onChange={(e) => setExpenseFormData({...expenseFormData, paid: e.target.checked})}
+                  className="checkbox"
+                />
+                <label htmlFor="expense-paid" className="label cursor-pointer">
+                  Marcar como pagado
+                </label>
+              </div>
+
+              <div className="flex space-x-3 pt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowEditExpenseModal(false)}
+                  className="btn-outline flex-1"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary flex-1"
+                >
+                  Actualizar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal de Edición de Ingresos */}
+      {showEditIncomeModal && editingIncome && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-fr-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-fr-gray-900 dark:text-gray-100 mb-6">
+              Editar Ingreso
+            </h2>
+
+            <form onSubmit={handleSubmitIncome} className="space-y-6">
+              <div>
+                <label className="label">Descripción</label>
+                <input
+                  type="text"
+                  value={incomeFormData.description}
+                  onChange={(e) => setIncomeFormData({...incomeFormData, description: e.target.value})}
+                  className="input w-full"
+                  placeholder="Descripción del ingreso"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="label">Monto</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={incomeFormData.amount}
+                  onChange={(e) => setIncomeFormData({...incomeFormData, amount: e.target.value})}
+                  className="input w-full"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="label">Categoría</label>
+                <select
+                  value={incomeFormData.category_id}
+                  onChange={(e) => setIncomeFormData({...incomeFormData, category_id: e.target.value})}
+                  className="input w-full"
+                >
+                  <option value="">Seleccionar categoría</option>
+                  {data.categories.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex space-x-3 pt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowEditIncomeModal(false)}
+                  className="btn-outline flex-1"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary flex-1"
+                >
+                  Actualizar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Modal de Pago */}
       {showPaymentModal && payingExpense && createPortal(

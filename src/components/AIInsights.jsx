@@ -41,6 +41,43 @@ const AIInsights = () => {
   // Estados para gamificación
   const [viewedInsights, setViewedInsights] = useState(new Set());
   const [understoodInsights, setUnderstoodInsights] = useState(new Set());
+  
+  // 🔒 Sistema de persistencia anti-farming para insights revisados
+  const getReviewedInsightsKey = (userEmail) => `reviewed_insights_${userEmail}`;
+  const getInsightExpirationKey = (userEmail, insightId) => `insight_expiry_${userEmail}_${insightId}`;
+  
+  // Cargar insights revisados desde localStorage al montar el componente
+  useEffect(() => {
+    if (user?.email) {
+      try {
+        const reviewedKey = getReviewedInsightsKey(user.email);
+        const savedReviewed = localStorage.getItem(reviewedKey);
+        if (savedReviewed) {
+          const reviewedData = JSON.parse(savedReviewed);
+          const currentTime = Date.now();
+          
+          // Filtrar insights que no han expirado (24 horas = 86400000 ms)
+          const validReviewed = reviewedData.filter(item => {
+            const timeDiff = currentTime - item.reviewedAt;
+            return timeDiff < 86400000; // 24 horas
+          });
+          
+          // Actualizar localStorage con solo los válidos
+          if (validReviewed.length !== reviewedData.length) {
+            localStorage.setItem(reviewedKey, JSON.stringify(validReviewed));
+          }
+          
+          // Establecer insights revisados válidos
+          const validInsightIds = validReviewed.map(item => item.insightId);
+          setUnderstoodInsights(new Set(validInsightIds));
+          
+          console.log(`🔒 [AIInsights] Cargados ${validInsightIds.length} insights revisados válidos para ${user.email}`);
+        }
+      } catch (error) {
+        console.warn('⚠️ [AIInsights] Error cargando insights revisados:', error);
+      }
+    }
+  }, [user?.email]);
 
   const paymentTypes = [
     { value: 'contado', label: 'Pago de contado' },
@@ -374,11 +411,52 @@ const AIInsights = () => {
   };
 
   const handleUnderstandInsight = async (insightId, insightTitle) => {
-    if (!understoodInsights.has(insightId)) {
-      setUnderstoodInsights(prev => new Set([...prev, insightId]));
+    if (!understoodInsights.has(insightId) && user?.email) {
+      // 🔒 Sistema anti-farming: Verificar si ya fue revisado recientemente
+      const reviewedKey = getReviewedInsightsKey(user.email);
+      const currentTime = Date.now();
       
-      // Registrar en gamificación
-      await recordInsightUnderstood(String(insightId), insightTitle);
+      try {
+        // Obtener datos existentes
+        const savedReviewed = JSON.parse(localStorage.getItem(reviewedKey) || '[]');
+        
+        // Verificar si este insight ya fue revisado en las últimas 24 horas
+        const existingReview = savedReviewed.find(item => item.insightId === insightId);
+        if (existingReview) {
+          const timeDiff = currentTime - existingReview.reviewedAt;
+          if (timeDiff < 86400000) { // 24 horas
+            console.warn(`⚠️ [AIInsights] Insight ${insightId} ya fue revisado hace ${Math.round(timeDiff / (1000 * 60 * 60))} horas. No se otorga XP.`);
+            // Solo actualizar la UI, no registrar XP
+            setUnderstoodInsights(prev => new Set([...prev, insightId]));
+            return;
+          }
+        }
+        
+        // Agregar/actualizar el registro de revisión
+        const newReviewedData = savedReviewed.filter(item => item.insightId !== insightId);
+        newReviewedData.push({
+          insightId,
+          insightTitle,
+          reviewedAt: currentTime,
+          userEmail: user.email
+        });
+        
+        // Guardar en localStorage
+        localStorage.setItem(reviewedKey, JSON.stringify(newReviewedData));
+        
+        // Actualizar estado UI
+        setUnderstoodInsights(prev => new Set([...prev, insightId]));
+        
+        // 🎮 Registrar en gamificación SOLO si es la primera vez en 24h
+        console.log(`✅ [AIInsights] Insight ${insightId} marcado como revisado. Otorgando XP.`);
+        await recordInsightUnderstood(String(insightId), insightTitle);
+        
+      } catch (error) {
+        console.error('❌ [AIInsights] Error guardando estado de revisión:', error);
+        // Fallback: Actualizar solo la UI sin persistencia
+        setUnderstoodInsights(prev => new Set([...prev, insightId]));
+        await recordInsightUnderstood(String(insightId), insightTitle);
+      }
     }
   };
 
@@ -616,9 +694,31 @@ const AIInsights = () => {
                                   </button>
                                 )}
                                 {understoodInsights.has(index) && (
-                                  <div className="inline-flex items-center px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs rounded-lg font-medium">
-                                    <FaCheckCircle className="w-3 h-3 mr-1" />
-                                    ¡Revisado!
+                                  <div className="inline-flex flex-col items-end space-y-1">
+                                    <div className="inline-flex items-center px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs rounded-lg font-medium">
+                                      <FaCheckCircle className="w-3 h-3 mr-1" />
+                                      Revisado
+                                    </div>
+                                    {(() => {
+                                      // Mostrar cuándo expira la revisión
+                                      try {
+                                        const reviewedKey = getReviewedInsightsKey(user?.email);
+                                        const savedReviewed = JSON.parse(localStorage.getItem(reviewedKey) || '[]');
+                                        const review = savedReviewed.find(item => item.insightId === index);
+                                        if (review) {
+                                          const timeLeft = 86400000 - (Date.now() - review.reviewedAt);
+                                          const hoursLeft = Math.max(0, Math.ceil(timeLeft / (1000 * 60 * 60)));
+                                          return (
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                              Se re-evaluará en {hoursLeft}h
+                                            </div>
+                                          );
+                                        }
+                                      } catch (error) {
+                                        console.debug('Error calculando expiración:', error);
+                                      }
+                                      return null;
+                                    })()}
                                   </div>
                                 )}
                               </div>
