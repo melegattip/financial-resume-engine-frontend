@@ -15,10 +15,14 @@ module.exports = {
 
         if (existingTerserPlugin) {
           // Update existing TerserPlugin options
+          const currentOptions = existingTerserPlugin.options || {};
+          const currentTerserOptions = currentOptions.terserOptions || {};
+          const currentCompress = currentTerserOptions.compress || {};
+          
           existingTerserPlugin.options.terserOptions = {
-            ...existingTerserPlugin.options.terserOptions,
+            ...currentTerserOptions,
             compress: {
-              ...existingTerserPlugin.options.terserOptions.compress,
+              ...currentCompress,
               drop_console: true,
               drop_debugger: true,
               pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn']
