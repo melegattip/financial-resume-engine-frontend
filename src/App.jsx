@@ -69,7 +69,7 @@ export function AppContent() {
           <Route 
             path="insights" 
             element={
-              <FeatureGuard feature="AI_INSIGHTS" mode="preview">
+              <FeatureGuard feature="AI_INSIGHTS">
                 <FinancialInsights />
               </FeatureGuard>
             } 
@@ -81,7 +81,7 @@ export function AppContent() {
           <Route 
             path="budgets" 
             element={
-              <FeatureGuard feature="BUDGETS" mode="preview">
+              <FeatureGuard feature="BUDGETS">
                 <Budgets />
               </FeatureGuard>
             } 
@@ -89,7 +89,7 @@ export function AppContent() {
           <Route 
             path="savings-goals" 
             element={
-              <FeatureGuard feature="SAVINGS_GOALS" mode="preview">
+              <FeatureGuard feature="SAVINGS_GOALS">
                 <SavingsGoals />
               </FeatureGuard>
             } 
