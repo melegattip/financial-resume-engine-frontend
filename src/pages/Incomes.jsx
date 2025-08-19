@@ -50,7 +50,7 @@ const Incomes = () => {
   } = useOptimizedAPI();
 
   // Hook de gamificación para registrar acciones
-  const { recordCreateIncome, recordUpdateIncome, recordDeleteIncome, recordAssignCategory } = useGamification();
+  const { recordCreateIncome, recordUpdateIncome, recordDeleteIncome } = useGamification();
 
   const formatAmount = (amount) => {
     if (balancesHidden) return '••••••';
@@ -154,12 +154,6 @@ const Incomes = () => {
         // 🎮 Registrar acción de gamificación
         console.log(`🎯 [Incomes] Registrando actualización de income: ${editingIncome.id}`);
         recordUpdateIncome(editingIncome.id, `Ingreso actualizado: ${dataToSend.description}`);
-        
-        // Si se asignó una categoría, registrar la acción
-        if (dataToSend.category_id) {
-          console.log(`🎯 [Incomes] Registrando asignación de categoría: ${dataToSend.category_id} al income: ${editingIncome.id}`);
-          recordAssignCategory(editingIncome.id, dataToSend.category_id, `Categoría asignada al ingreso: ${dataToSend.description}`);
-        }
       } else {
         const result = await incomesAPI.create(dataToSend);
         // useOptimizedAPI ya muestra el toast de éxito
@@ -168,12 +162,6 @@ const Incomes = () => {
         const incomeId = result?.data?.id || `income-${Date.now()}`;
         console.log(`🎯 [Incomes] Registrando creación de income: ${incomeId}`);
         recordCreateIncome(incomeId, `Nuevo ingreso: ${dataToSend.description}`);
-        
-        // Si se asignó una categoría en la creación, registrar la acción
-        if (dataToSend.category_id) {
-          console.log(`🎯 [Incomes] Registrando asignación de categoría: ${dataToSend.category_id} al nuevo income: ${incomeId}`);
-          recordAssignCategory(incomeId, dataToSend.category_id, `Categoría asignada al nuevo ingreso: ${dataToSend.description}`);
-        }
       }
       
       setShowModal(false);
@@ -284,29 +272,29 @@ const Incomes = () => {
 
   return (
     <div className="space-y-6">
+      {/* Page Title */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">Ingresos</h1>
+      </div>
+
       {/* Header con métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Total Ingresos</p>
-              <p className="text-2xl font-bold text-fr-secondary dark:text-green-400">{formatAmount(totalIncomes)}</p>
-            </div>
-            <div className="p-3 rounded-fr bg-green-100 dark:bg-green-900/30">
-              <FaArrowUp className="w-6 h-6 text-fr-secondary dark:text-green-400" />
+      <div className="card">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <div className="flex items-center space-x-6">
+              <div>
+                <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Total Ingresos</p>
+                <p className="text-2xl font-bold text-fr-secondary dark:text-green-400">{formatAmount(totalIncomes)}</p>
+              </div>
+              <div className="h-12 w-px bg-fr-gray-200 dark:bg-gray-600"></div>
+              <div>
+                <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Cantidad</p>
+                <p className="text-2xl font-bold text-fr-secondary dark:text-green-400">{filteredIncomes.length}</p>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Cantidad de Ingresos</p>
-              <p className="text-2xl font-bold text-fr-secondary dark:text-green-400">{filteredIncomes.length}</p>
-            </div>
-            <div className="p-3 rounded-fr bg-green-100 dark:bg-green-900/30">
-              <FaArrowUp className="w-6 h-6 text-fr-secondary dark:text-green-400" />
-            </div>
+          <div className="flex-shrink-0 p-3 rounded-fr bg-green-100 dark:bg-green-900/30 ml-4">
+            <FaArrowUp className="w-6 h-6 text-fr-secondary dark:text-green-400" />
           </div>
         </div>
       </div>
@@ -391,7 +379,7 @@ const Incomes = () => {
               return (
                 <div key={income.id} className="flex items-center justify-between p-3 rounded-fr bg-fr-gray-50 dark:bg-gray-700 hover:bg-fr-gray-100 dark:hover:bg-gray-600 transition-colors">
                   {/* Icono de ingreso */}
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3 flex-shrink-0">
                     <div className="p-1.5 rounded-fr bg-green-100 dark:bg-green-900/30">
                       <FaArrowUp className="w-4 h-4 text-fr-secondary dark:text-green-400" />
                     </div>

@@ -19,7 +19,7 @@ const LockedWidget = ({
   requiredXP,
   benefits = [],
   tips = [],
-  mode = 'detailed' // 'minimal' | 'detailed'
+  mode = 'detailed' // 'minimal' | 'detailed' | 'compact'
 }) => {
   const navigate = useNavigate();
 
@@ -44,6 +44,33 @@ const LockedWidget = ({
     if (level <= 5) return <FaTrophy className="w-3 h-3" />;
     return <FaRocket className="w-3 h-3" />;
   };
+
+  // Modo compacto para dashboard optimizado
+  if (mode === 'compact') {
+    return (
+      <div className="relative group cursor-pointer" onClick={handleUnlockClick}>
+        <div className={`relative bg-gradient-to-br ${getLevelColor(requiredLevel)} rounded-xl p-3 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border border-white/10`}>
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-white/90">
+                {featureName}
+              </p>
+              <p className="text-lg sm:text-xl font-bold text-white break-words">
+                Bloqueado
+              </p>
+            </div>
+            <div className="flex-shrink-0 p-1.5 sm:p-2 rounded-fr bg-white/15 backdrop-blur-sm ml-2">
+              <FaLock className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+            </div>
+          </div>
+          <div className="text-xs text-white/80">
+            {getLevelIcon(requiredLevel)}
+            <span className="ml-1">Nivel {requiredLevel} requerido</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Modo minimalista para el dashboard
   if (mode === 'minimal') {

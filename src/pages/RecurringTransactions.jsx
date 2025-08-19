@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FaCalendar, FaDollarSign } from 'react-icons/fa';
 import { recurringTransactionsAPI, categoriesAPI, formatCurrency } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
 import { formatAmount } from '../utils/formatters';
@@ -697,6 +698,11 @@ const RecurringTransactions = () => {
 
   return (
     <div className="space-y-6">
+      {/* Page Title */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">Transacciones Recurrentes</h1>
+      </div>
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -729,26 +735,50 @@ const RecurringTransactions = () => {
 
       {/* Dashboard Summary */}
       {dashboard && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="card">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Activas</h3>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{dashboard.summary?.total_active || 0}</p>
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center space-x-6">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Activas</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{dashboard.summary?.total_active || 0}</p>
+                  </div>
+                  <div className="h-12 w-px bg-fr-gray-200 dark:bg-gray-600"></div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Inactivas</p>
+                    <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{dashboard.summary?.total_inactive || 0}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex-shrink-0 p-3 rounded-fr bg-blue-100 dark:bg-blue-900/30 ml-4">
+                <FaCalendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
           </div>
           <div className="card">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Inactivas</h3>
-            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{dashboard.summary?.total_inactive || 0}</p>
-          </div>
-          <div className="card">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Ingresos Mensuales</h3>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-              {formatAmount(dashboard.summary?.monthly_income_total || 0, balancesHidden)}
-            </p>
-          </div>
-          <div className="card">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Gastos Mensuales</h3>
-            <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-              {formatAmount(dashboard.summary?.monthly_expense_total || 0, balancesHidden)}
-            </p>
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center space-x-6">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Ingresos</p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {formatAmount(dashboard.summary?.monthly_income_total || 0, balancesHidden)}
+                    </p>
+                  </div>
+                  <div className="h-12 w-px bg-fr-gray-200 dark:bg-gray-600"></div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Gastos</p>
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                      {formatAmount(dashboard.summary?.monthly_expense_total || 0, balancesHidden)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex-shrink-0 p-3 rounded-fr bg-purple-100 dark:bg-purple-900/30 ml-4">
+                <FaDollarSign className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              </div>
+            </div>
           </div>
         </div>
       )}

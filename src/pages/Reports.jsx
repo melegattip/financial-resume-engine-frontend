@@ -106,6 +106,11 @@ const Reports = () => {
 
   return (
     <div className="space-y-6">
+      {/* Page Title */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">Reportes</h1>
+      </div>
+
       {/* Controles de fecha */}
       <div className="card">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
@@ -151,44 +156,27 @@ const Reports = () => {
       </div>
 
       {/* Métricas principales */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="card">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Total Ingresos</p>
-              <p className="text-2xl font-bold text-fr-secondary dark:text-green-400">
-                {formatAmount(reportData?.total_income || 0)}
-              </p>
+            <div className="flex-1">
+              <div className="flex items-center space-x-6">
+                <div>
+                  <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Total Ingresos</p>
+                  <p className="text-2xl font-bold text-fr-secondary dark:text-green-400">
+                    {formatAmount(reportData?.total_income || 0)}
+                  </p>
+                </div>
+                <div className="h-12 w-px bg-fr-gray-200 dark:bg-gray-600"></div>
+                <div>
+                  <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Total Gastos</p>
+                  <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">
+                    {formatAmount(reportData?.total_expenses || 0)}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="p-3 rounded-fr bg-green-100 dark:bg-green-900/30">
-              <FaArrowUp className="w-6 h-6 text-fr-secondary dark:text-green-400" />
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Total Gastos</p>
-              <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">
-                {formatAmount(reportData?.total_expenses || 0)}
-              </p>
-            </div>
-            <div className="p-3 rounded-fr bg-gray-100 dark:bg-gray-700">
-              <FaArrowDown className="w-6 h-6 text-fr-gray-900 dark:text-gray-300" />
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Balance</p>
-              <p className="text-2xl font-bold text-fr-secondary dark:text-green-400">
-                {formatAmount((reportData?.total_income || 0) - (reportData?.total_expenses || 0))}
-              </p>
-            </div>
-            <div className="p-3 rounded-fr bg-blue-100 dark:bg-blue-900/30">
+            <div className="flex-shrink-0 p-3 rounded-fr bg-blue-100 dark:bg-blue-900/30 ml-4">
               <FaChartBar className="w-6 h-6 text-fr-primary dark:text-blue-400" />
             </div>
           </div>
@@ -196,14 +184,25 @@ const Reports = () => {
 
         <div className="card">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Transacciones</p>
-              <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">
-                {reportData?.transactions?.length || 0}
-              </p>
+            <div className="flex-1">
+              <div className="flex items-center space-x-6">
+                <div>
+                  <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Balance</p>
+                  <p className="text-2xl font-bold text-fr-secondary dark:text-green-400">
+                    {formatAmount((reportData?.total_income || 0) - (reportData?.total_expenses || 0))}
+                  </p>
+                </div>
+                <div className="h-12 w-px bg-fr-gray-200 dark:bg-gray-600"></div>
+                <div>
+                  <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Transacciones</p>
+                  <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">
+                    {reportData?.transactions?.length || 0}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="p-3 rounded-fr bg-gray-100 dark:bg-gray-700">
-              <FaCalendar className="w-6 h-6 text-fr-gray-600 dark:text-gray-400" />
+            <div className="flex-shrink-0 p-3 rounded-fr bg-purple-100 dark:bg-purple-900/30 ml-4">
+              <FaCalendar className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { FaArrowUp, FaArrowDown, FaDollarSign, FaChartPie, FaCalendar, FaCheckCircle, FaTimesCircle, FaChartBar, FaBullseye, FaExclamationCircle, FaRedo, FaBrain, FaEdit } from 'react-icons/fa';
+import { FaArrowUp, FaArrowDown, FaDollarSign, FaChartPie, FaCalendar, FaCheckCircle, FaTimesCircle, FaChartBar, FaBullseye, FaExclamationCircle, FaRedo, FaBrain } from 'react-icons/fa';
 import { 
   ResponsiveContainer,
   PieChart as RechartsPieChart,
@@ -9,7 +9,7 @@ import {
   Cell,
   Tooltip
 } from 'recharts';
-import { formatCurrency, formatDate, formatPercentage as formatPercentageUtil, budgetsAPI, savingsGoalsAPI, recurringTransactionsAPI, expensesAPI } from '../services/api';
+import { formatCurrency, formatDate, formatPercentage as formatPercentageUtil, budgetsAPI, savingsGoalsAPI, recurringTransactionsAPI, expensesAPI, aiAPI } from '../services/api';
 import { usePeriod } from '../contexts/PeriodContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useGamification } from '../contexts/GamificationContext';
@@ -18,8 +18,6 @@ import useDataRefresh from '../hooks/useDataRefresh';
 import LockedWidget from '../components/LockedWidget';
 import toast from 'react-hot-toast';
 import { useOptimizedAPI } from '../hooks/useOptimizedAPI';
-import ValidatedInput from '../components/ValidatedInput';
-import { validateAmount, validateDescription } from '../utils/validation';
 
 
 const Resumen = () => {
@@ -40,29 +38,33 @@ const Resumen = () => {
   const [budgetsSummary, setBudgetsSummary] = useState(null);
   const [savingsGoalsSummary, setSavingsGoalsSummary] = useState(null);
   const [recurringTransactionsSummary, setRecurringTransactionsSummary] = useState(null);
+  const [healthScore, setHealthScore] = useState(null);
 
   // Estados para el modal de pago
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [payingExpense, setPayingExpense] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState('');
-  
-  // Estados para modales de edición
-  const [showEditExpenseModal, setShowEditExpenseModal] = useState(false);
-  const [showEditIncomeModal, setShowEditIncomeModal] = useState(false);
-  const [editingExpense, setEditingExpense] = useState(null);
-  const [editingIncome, setEditingIncome] = useState(null);
-  const [expenseFormData, setExpenseFormData] = useState({
-    description: '',
-    amount: '',
-    category_id: '',
-    due_date: '',
-    paid: false,
-  });
-  const [incomeFormData, setIncomeFormData] = useState({
-    description: '',
-    amount: '',
-    category_id: '',
-  });
+
+  // Funciones para el color y icono del nivel de salud financiera
+  const getHealthScoreColor = (level) => {
+    switch (level) {
+      case 'Excelente': return 'text-green-600 dark:text-green-400';
+      case 'Bueno': return 'text-blue-600 dark:text-blue-400';
+      case 'Regular': return 'text-yellow-600 dark:text-yellow-400';
+      case 'Mejorable': return 'text-red-600 dark:text-red-400';
+      default: return 'text-gray-500 dark:text-gray-400';
+    }
+  };
+
+  const getHealthScoreIcon = (level) => {
+    switch (level) {
+      case 'Excelente': return '🏆';
+      case 'Bueno': return '👍';
+      case 'Regular': return '⚠️';
+      case 'Mejorable': return '📈';
+      default: return '🎯';
+    }
+  };
 
   // Usar el contexto global de período
   const {
@@ -84,7 +86,6 @@ const Resumen = () => {
   // Usar el hook optimizado para operaciones API
   const { 
     expenses: expensesAPI, 
-    incomes: incomesAPI,
     categories: categoriesAPI
   } = useOptimizedAPI();
 
@@ -154,7 +155,7 @@ const Resumen = () => {
     try {
       console.log('🔄 Cargando resúmenes de nuevas funcionalidades...');
       
-      const [budgetsRes, savingsRes, recurringRes] = await Promise.all([
+      const [budgetsRes, savingsRes, recurringRes, healthRes] = await Promise.all([
         budgetsAPI.getDashboard().catch((err) => {
           console.warn('❌ Error cargando budgets dashboard:', err);
           return null;
@@ -166,13 +167,18 @@ const Resumen = () => {
         recurringTransactionsAPI.getDashboard().catch((err) => {
           console.warn('❌ Error cargando recurring transactions dashboard:', err);
           return null;
+        }),
+        aiAPI.getHealthScore().catch((err) => {
+          console.warn('❌ Error cargando AI health score:', err);
+          return null;
         })
       ]);
 
       console.log('📊 Respuestas recibidas:', {
         budgets: budgetsRes,
         savings: savingsRes,
-        recurring: recurringRes
+        recurring: recurringRes,
+        ai: healthRes
       });
 
       if (budgetsRes?.data?.data) {
@@ -186,6 +192,27 @@ const Resumen = () => {
       if (recurringRes?.data?.data) {
         console.log('✅ Configurando recurring transactions summary:', recurringRes.data.data);
         setRecurringTransactionsSummary(recurringRes.data.data);
+      }
+      if (healthRes) {
+        console.log('✅ Configurando AI data:', healthRes);
+        // Extraer health score - usar estructura consistente con AIInsights
+        const healthScore = healthRes.health_score || healthRes.data?.health_score || 0;
+        let healthLevel = healthRes.health_level || healthRes.data?.health_level;
+        
+        // Si no hay level pero hay score, calcularlo usando la misma lógica que AIInsights
+        if (!healthLevel && healthScore > 0) {
+          if (healthScore >= 800) healthLevel = 'Excelente';
+          else if (healthScore >= 600) healthLevel = 'Bueno';
+          else if (healthScore >= 400) healthLevel = 'Regular';
+          else healthLevel = 'Mejorable';
+        }
+        
+        setHealthScore({
+          score: healthScore,
+          level: healthLevel || 'Cargando...'
+        });
+        
+        console.log('🎯 Health data procesado:', { score: healthScore, level: healthLevel });
       }
     } catch (error) {
       console.error('❌ Error cargando resúmenes de nuevas funcionalidades:', error);
@@ -547,108 +574,6 @@ const Resumen = () => {
     }
   };
 
-  // Funciones para editar gastos
-  const handleEditExpense = (expense) => {
-    setEditingExpense(expense);
-    setExpenseFormData({
-      description: expense.description,
-      amount: expense.amount.toString(),
-      category_id: expense.category_id || '',
-      due_date: expense.due_date || '',
-      paid: expense.paid,
-    });
-    setShowEditExpenseModal(true);
-  };
-
-  const handleSubmitExpense = async (e) => {
-    e.preventDefault();
-    
-    // Guardar posición de scroll
-    const currentScrollPosition = window.scrollY;
-    
-    try {
-      const dataToSend = {
-        ...expenseFormData,
-        amount: parseFloat(expenseFormData.amount)
-      };
-
-      await expensesAPI.update(editingExpense.id, dataToSend);
-      toast.success('Gasto actualizado exitosamente');
-      
-      setShowEditExpenseModal(false);
-      setEditingExpense(null);
-      setExpenseFormData({
-        description: '',
-        amount: '',
-        category_id: '',
-        due_date: '',
-        paid: false,
-      });
-      
-      // Recargar datos
-      await loadDashboardData(false);
-      
-      // Restaurar posición
-      setTimeout(() => {
-        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-        const targetPosition = Math.min(currentScrollPosition, maxScroll);
-        window.scrollTo({ top: targetPosition, behavior: 'smooth' });
-      }, 150);
-      
-    } catch (error) {
-      console.error('Error updating expense:', error);
-    }
-  };
-
-  // Funciones para editar ingresos
-  const handleEditIncome = (income) => {
-    setEditingIncome(income);
-    setIncomeFormData({
-      description: income.description,
-      amount: income.amount.toString(),
-      category_id: income.category_id || '',
-    });
-    setShowEditIncomeModal(true);
-  };
-
-  const handleSubmitIncome = async (e) => {
-    e.preventDefault();
-    
-    // Guardar posición de scroll
-    const currentScrollPosition = window.scrollY;
-    
-    try {
-      const dataToSend = {
-        ...incomeFormData,
-        amount: parseFloat(incomeFormData.amount)
-      };
-
-      await incomesAPI.update(editingIncome.id, dataToSend);
-      toast.success('Ingreso actualizado exitosamente');
-      
-      setShowEditIncomeModal(false);
-      setEditingIncome(null);
-      setIncomeFormData({
-        description: '',
-        amount: '',
-        category_id: '',
-      });
-      
-      // Recargar datos
-      await loadDashboardData(false);
-      
-      // Restaurar posición
-      setTimeout(() => {
-        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-        const targetPosition = Math.min(currentScrollPosition, maxScroll);
-        window.scrollTo({ top: targetPosition, behavior: 'smooth' });
-      }, 150);
-      
-    } catch (error) {
-      console.error('Error updating income:', error);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -742,128 +667,133 @@ const Resumen = () => {
               <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
                 Gastos Pendientes
               </p>
-              <p className="text-xl lg:text-2xl font-bold text-fr-gray-900 dark:text-gray-100">
+              <p className="text-xl lg:text-2xl font-bold text-orange-600 dark:text-orange-400">
                 {data.expenses?.filter(e => !e.paid)?.length || 0}
               </p>
             </div>
-            <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-gray-100 dark:bg-gray-700 ml-2">
-              <FaCalendar className="w-5 h-5 lg:w-6 lg:h-6 text-fr-gray-900 dark:text-gray-300" />
+            <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-orange-100 dark:bg-orange-900/30 ml-2">
+              <FaExclamationCircle className="w-5 h-5 lg:w-6 lg:h-6 text-orange-600 dark:text-orange-400" />
             </div>
           </div>
           <div className="mt-3">
             <span className="text-sm text-fr-gray-500 dark:text-gray-400">
-              {formatAmount(data.expenses?.filter(e => !e.paid)?.reduce((sum, e) => sum + e.amount, 0) || 0)} por pagar
+              Por pagar: {formatAmount(data.expenses?.filter(e => !e.paid)?.reduce((sum, e) => sum + e.amount, 0) || 0)}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Widgets de funcionalidades activas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+      {/* Widgets de funcionalidades secundarias - Nueva fila compacta */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Widget de Presupuestos (Nivel 5 requerido) */}
         {isFeatureUnlocked('BUDGETS') && budgetsSummary && (
-          <div className="card cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToBudgets}>
-            <div className="flex items-start justify-between">
+          <div className="card p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToBudgets}>
+            <div className="flex items-start justify-between mb-2">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
+                <p className="text-xs sm:text-sm font-medium text-fr-gray-600 dark:text-gray-400">
                   Presupuestos
                 </p>
-                <p className="text-xl lg:text-2xl font-bold text-fr-gray-900 dark:text-gray-100 break-words">
+                <p className="text-lg sm:text-xl font-bold text-fr-gray-900 dark:text-gray-100 break-words">
                   {budgetsSummary.summary?.total_budgets || 0}
                 </p>
               </div>
-              <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-blue-100 dark:bg-blue-900/30 ml-2">
-                <FaChartPie className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
+              <div className="flex-shrink-0 p-1.5 sm:p-2 rounded-fr bg-blue-100 dark:bg-blue-900/30 ml-2">
+                <FaChartPie className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-between">
-              <div className="flex items-center space-x-4 text-xs">
-                <span className="text-green-600">
-                  {budgetsSummary.summary?.on_track_count || 0} en meta
-                </span>
-                <span className="text-yellow-600 dark:text-yellow-400">
-                  {budgetsSummary.summary?.warning_count || 0} alerta
-                </span>
-                <span className="text-red-600 dark:text-red-400">
-                  {budgetsSummary.summary?.exceeded_count || 0} excedidos
-                </span>
-              </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-green-600">
+                {budgetsSummary.summary?.on_track_count || 0} en meta
+              </span>
+              <span className="text-yellow-600 dark:text-yellow-400">
+                {budgetsSummary.summary?.warning_count || 0} alerta
+              </span>
+              <span className="text-red-600 dark:text-red-400">
+                {budgetsSummary.summary?.exceeded_count || 0} excedidos
+              </span>
             </div>
           </div>
         )}
 
         {/* Widget de Metas de Ahorro (Nivel 3 requerido) */}
         {isFeatureUnlocked('SAVINGS_GOALS') && savingsGoalsSummary && (
-          <div className="card cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToSavingsGoals}>
-            <div className="flex items-start justify-between">
+          <div className="card p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToSavingsGoals}>
+            <div className="flex items-start justify-between mb-2">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
+                <p className="text-xs sm:text-sm font-medium text-fr-gray-600 dark:text-gray-400">
                   Metas de Ahorro
                 </p>
-                <p className="text-xl lg:text-2xl font-bold text-green-600 break-words">
+                <p className="text-lg sm:text-xl font-bold text-green-600 break-words">
                   {formatAmount(savingsGoalsSummary.summary?.total_saved || 0)}
                 </p>
               </div>
-              <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-green-100 dark:bg-green-900/30 ml-2">
-                <FaBullseye className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
+              <div className="flex-shrink-0 p-1.5 sm:p-2 rounded-fr bg-green-100 dark:bg-green-900/30 ml-2">
+                <FaBullseye className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-sm text-fr-gray-500 dark:text-gray-400">
-                {savingsGoalsSummary.summary?.active_goals || 0} metas activas
-              </span>
-              <span className="text-sm text-fr-gray-500 dark:text-gray-400">
-                Meta: {formatAmount(savingsGoalsSummary.summary?.total_target || 0)}
-              </span>
+            <div className="flex flex-col space-y-1 text-xs text-fr-gray-500 dark:text-gray-400">
+              <span>{savingsGoalsSummary.summary?.active_goals || 0} metas activas</span>
+              <span>Meta: {formatAmount(savingsGoalsSummary.summary?.total_target || 0)}</span>
             </div>
           </div>
         )}
 
         {/* Widget de IA Financiera (Nivel 7 requerido) */}
         {isFeatureUnlocked('AI_INSIGHTS') && (
-          <div className="card cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToAI}>
-            <div className="flex items-start justify-between">
+          <div className="card p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToAI}>
+            <div className="flex items-start justify-between mb-2">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
+                <p className="text-xs sm:text-sm font-medium text-fr-gray-600 dark:text-gray-400">
                   IA Financiera
                 </p>
-                <p className="text-xl lg:text-2xl font-bold text-purple-600 dark:text-purple-400 break-words">
-                  Activa
+                <p className="text-lg sm:text-xl font-bold break-words">
+                  {healthScore?.score !== null && healthScore?.score !== undefined ? (
+                    <span className={getHealthScoreColor(healthScore.level)}>
+                      <span className="text-2xl">{healthScore.score}</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400"> / 1000</span>
+                    </span>
+                  ) : (
+                    <span className="text-purple-600 dark:text-purple-400">Cargando...</span>
+                  )}
                 </p>
               </div>
-              <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-purple-100 dark:bg-purple-900/30 ml-2">
-                <FaBrain className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600 dark:text-purple-400" />
+              <div className="flex-shrink-0 p-1.5 sm:p-2 rounded-fr bg-purple-100 dark:bg-purple-900/30 ml-2">
+                <FaBrain className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
-            <div className="mt-3">
-              <span className="text-sm text-fr-gray-500 dark:text-gray-400">
-                🤖 Análisis inteligente disponible
-              </span>
+            <div className="text-xs text-fr-gray-500 dark:text-gray-400">
+              {healthScore?.level && healthScore?.level !== 'Cargando...' ? (
+                <span className={`font-medium ${getHealthScoreColor(healthScore.level)}`}>
+                  {getHealthScoreIcon(healthScore.level)} {healthScore.level}
+                </span>
+              ) : (
+                '🤖 Calculando análisis...'
+              )}
             </div>
           </div>
         )}
 
         {/* Widget de Transacciones Recurrentes */}
         {recurringTransactionsSummary && (
-          <div className="card cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToRecurringTransactions}>
-            <div className="flex items-start justify-between">
+          <div className="card p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToRecurringTransactions}>
+            <div className="flex items-start justify-between mb-2">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">
+                <p className="text-xs sm:text-sm font-medium text-fr-gray-600 dark:text-gray-400">
                   Transacciones Recurrentes
                 </p>
-                <p className="text-xl lg:text-2xl font-bold text-fr-gray-900 dark:text-gray-100 break-words">
+                <p className="text-lg sm:text-xl font-bold text-fr-gray-900 dark:text-gray-100 break-words">
                   {recurringTransactionsSummary.summary?.total_active || 0}
                 </p>
               </div>
-              <div className="flex-shrink-0 p-2 lg:p-3 rounded-fr bg-purple-100 dark:bg-purple-900/30 ml-2">
-                <FaRedo className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600 dark:text-purple-400" />
+              <div className="flex-shrink-0 p-1.5 sm:p-2 rounded-fr bg-purple-100 dark:bg-purple-900/30 ml-2">
+                <FaRedo className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
-            <div className="mt-3 space-y-1">
-              <div className="text-sm text-green-600">
+            <div className="space-y-1 text-xs">
+              <div className="text-green-600">
                 +{formatAmount(recurringTransactionsSummary.summary?.monthly_income_total || 0)}/mes
               </div>
-              <div className="text-sm text-red-600">
+              <div className="text-red-600">
                 -{formatAmount(recurringTransactionsSummary.summary?.monthly_expense_total || 0)}/mes
               </div>
             </div>
@@ -871,53 +801,55 @@ const Resumen = () => {
         )}
       </div>
 
-      {/* Widgets bloqueados */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-        {/* Widget de Presupuestos (Nivel 5 requerido) */}
-        {!isFeatureUnlocked('BUDGETS') && (
-          <LockedWidget
-            mode="minimal"
-            featureName="Presupuestos"
-            featureIcon={<FaChartPie className="w-4 h-4" />}
-            description="Controla tus gastos con límites inteligentes por categoría"
-            requiredLevel={FEATURE_GATES.BUDGETS.requiredLevel}
-            currentLevel={userProfile?.current_level || 0}
-            currentXP={userProfile?.total_xp || 0}
-            requiredXP={FEATURE_GATES.BUDGETS.xpThreshold}
-            benefits={FEATURE_GATES.BUDGETS.benefits}
-          />
-        )}
+      {/* Widgets bloqueados - Layout compacto */}
+      {(!isFeatureUnlocked('BUDGETS') || !isFeatureUnlocked('SAVINGS_GOALS') || !isFeatureUnlocked('AI_INSIGHTS')) && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {/* Widget de Presupuestos (Nivel 5 requerido) */}
+          {!isFeatureUnlocked('BUDGETS') && (
+            <LockedWidget
+              mode="compact"
+              featureName="Presupuestos"
+              featureIcon={<FaChartPie className="w-3 h-3 sm:w-4 sm:h-4" />}
+              description="Controla tus gastos con límites inteligentes por categoría"
+              requiredLevel={FEATURE_GATES.BUDGETS.requiredLevel}
+              currentLevel={userProfile?.current_level || 0}
+              currentXP={userProfile?.total_xp || 0}
+              requiredXP={FEATURE_GATES.BUDGETS.xpThreshold}
+              benefits={FEATURE_GATES.BUDGETS.benefits}
+            />
+          )}
 
-        {/* Widget de Metas de Ahorro (Nivel 3 requerido) */}
-        {!isFeatureUnlocked('SAVINGS_GOALS') && (
-          <LockedWidget
-            mode="minimal"
-            featureName="Metas de Ahorro"
-            featureIcon={<FaBullseye className="w-4 h-4" />}
-            description="Crea y gestiona objetivos de ahorro personalizados"
-            requiredLevel={FEATURE_GATES.SAVINGS_GOALS.requiredLevel}
-            currentLevel={userProfile?.current_level || 0}
-            currentXP={userProfile?.total_xp || 0}
-            requiredXP={FEATURE_GATES.SAVINGS_GOALS.xpThreshold}
-            benefits={FEATURE_GATES.SAVINGS_GOALS.benefits}
-          />
-        )}
+          {/* Widget de Metas de Ahorro (Nivel 3 requerido) */}
+          {!isFeatureUnlocked('SAVINGS_GOALS') && (
+            <LockedWidget
+              mode="compact"
+              featureName="Metas de Ahorro"
+              featureIcon={<FaBullseye className="w-3 h-3 sm:w-4 sm:h-4" />}
+              description="Crea y gestiona objetivos de ahorro personalizados"
+              requiredLevel={FEATURE_GATES.SAVINGS_GOALS.requiredLevel}
+              currentLevel={userProfile?.current_level || 0}
+              currentXP={userProfile?.total_xp || 0}
+              requiredXP={FEATURE_GATES.SAVINGS_GOALS.xpThreshold}
+              benefits={FEATURE_GATES.SAVINGS_GOALS.benefits}
+            />
+          )}
 
-        {/* Widget de IA Financiera (Nivel 7 requerido) */}
-        {!isFeatureUnlocked('AI_INSIGHTS') && (
-          <LockedWidget
-            mode="minimal"
-            featureName="IA Financiera"
-            featureIcon={<FaBrain className="w-4 h-4" />}
-            description="Análisis inteligente con IA para decisiones financieras"
-            requiredLevel={FEATURE_GATES.AI_INSIGHTS.requiredLevel}
-            currentLevel={userProfile?.current_level || 0}
-            currentXP={userProfile?.total_xp || 0}
-            requiredXP={FEATURE_GATES.AI_INSIGHTS.xpThreshold}
-            benefits={FEATURE_GATES.AI_INSIGHTS.benefits}
-          />
-        )}
-      </div>
+          {/* Widget de IA Financiera (Nivel 7 requerido) */}
+          {!isFeatureUnlocked('AI_INSIGHTS') && (
+            <LockedWidget
+              mode="compact"
+              featureName="IA Financiera"
+              featureIcon={<FaBrain className="w-3 h-3 sm:w-4 sm:h-4" />}
+              description="Análisis inteligente con IA para decisiones financieras"
+              requiredLevel={FEATURE_GATES.AI_INSIGHTS.requiredLevel}
+              currentLevel={userProfile?.current_level || 0}
+              currentXP={userProfile?.total_xp || 0}
+              requiredXP={FEATURE_GATES.AI_INSIGHTS.xpThreshold}
+              benefits={FEATURE_GATES.AI_INSIGHTS.benefits}
+            />
+          )}
+        </div>
+      )}
 
       {/* Transacciones por mes - Dos columnas */}
       {hasActiveFilters && (data.expenses.length > 0 || data.incomes.length > 0) && (
@@ -1001,69 +933,72 @@ const Resumen = () => {
                       const category = data.categories.find(c => c.id === expense.category_id);
                       const color = getCategoryColor(expense.category_id);
                       return (
-                        <div key={expense.id || index} className={`group flex items-center justify-between px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-all duration-200 relative`}>
-                          {/* Indicador de pago */}
-                          <div className="flex items-center space-x-3">
-                            <button
-                              onClick={() => togglePaid(expense)}
-                              className="hover:scale-110 transition-transform cursor-pointer"
-                              title={expense.paid ? "Marcar como pendiente" : "Hacer pago"}
-                            >
-                              {expense.paid ? (
-                                <FaCheckCircle className="w-4 h-4 text-green-500" />
-                              ) : (
-                                <FaTimesCircle className="w-4 h-4 text-red-500" />
-                              )}
-                            </button>
-                          </div>
-                          
-                          {/* Información principal en una línea */}
-                          <div className="flex-1 flex items-center space-x-3 min-w-0 mx-3">
-                            <p className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
-                              {expense.description}
-                            </p>
-                            {!expense.paid && (
-                              <span className="badge-error text-xs whitespace-nowrap">Pendiente</span>
-                            )}
-                            {category && (
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border} whitespace-nowrap`}>
-                                {category.name}
-                              </span>
-                            )}
-                            {expense.due_date && (
-                              <span className="text-xs text-yellow-600 dark:text-yellow-400 whitespace-nowrap">
-                                Vence: {new Date(expense.due_date).toLocaleDateString('es-AR', { 
-                                  weekday: 'short', 
-                                  day: '2-digit', 
-                                  month: '2-digit' 
-                                })}
-                              </span>
-                            )}
-                          </div>
-                          
-                          {/* Monto, porcentaje y botón editar */}
-                          <div className="flex items-center space-x-2">
-                            <div className="text-right">
-                              <div className="flex items-center space-x-2">
-                                {expense.percentage && (
-                                  <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                                    {formatPercentage(expense.percentage)} del total
-                                  </span>
+                        <div key={expense.id || index} className={`flex items-center justify-between px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-shadow`}>
+                          <div className="flex items-start space-x-3">
+                            {/* Indicador de pago */}
+                            <div className="flex-shrink-0 mt-1">
+                              <button
+                                onClick={() => togglePaid(expense)}
+                                className="hover:scale-110 transition-transform cursor-pointer"
+                                title={expense.paid ? "Marcar como pendiente" : "Hacer pago"}
+                              >
+                                {expense.paid ? (
+                                  <FaCheckCircle className="w-5 h-5 text-green-500" />
+                                ) : (
+                                  <FaTimesCircle className="w-5 h-5 text-red-500" />
                                 )}
-                                <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
-                                  -{formatAmount(expense.amount)}
-                                </p>
-                              </div>
+                              </button>
                             </div>
                             
-                            {/* Botón de edición con hover */}
-                            <button
-                              onClick={() => handleEditExpense(expense)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 rounded-fr text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30"
-                              title="Editar gasto"
-                            >
-                              <FaEdit className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="flex-1">
+                              <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
+                                <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+                                  {expense.description}
+                                </p>
+                                {!expense.paid && (
+                                  <span className="badge-error text-xs">Pendiente</span>
+                                )}
+                                {category && (
+                                  <span className={`px-2 py-1 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}>
+                                    {category.name}
+                                  </span>
+                                )}
+                                {/* Fechas inline solo en desktop */}
+                                <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2">
+                                  {new Date(expense.created_at).toLocaleDateString('es-AR')}
+                                  {expense.due_date && (
+                                    <span className="ml-2">• Vence: {new Date(expense.due_date).toLocaleDateString('es-AR')}</span>
+                                  )}
+                                </span>
+                              </div>
+                              {/* Fechas debajo solo en mobile/tablet */}
+                              <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {new Date(expense.created_at).toLocaleDateString('es-AR')}
+                                {expense.due_date && (
+                                  <span className="ml-2">• Vence: {new Date(expense.due_date).toLocaleDateString('es-AR')}</span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right ml-3">
+                            <p className="font-semibold text-gray-900 dark:text-gray-100">
+                              -{formatAmount(expense.amount)}
+                              {expense.percentage && (
+                                <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2 align-middle">
+                                  {formatPercentage(expense.percentage)} del total
+                                </span>
+                              )}
+                            </p>
+                            {expense.percentage && (
+                              <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400">
+                                {formatPercentage(expense.percentage)} del total
+                              </p>
+                            )}
+                            {expense.amount_paid > 0 && expense.amount_paid < expense.amount && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Pagado: {formatAmount(expense.amount_paid)}
+                              </p>
+                            )}
                           </div>
                         </div>
                       );
@@ -1104,42 +1039,40 @@ const Resumen = () => {
                       const color = getCategoryColor(income.category_id);
                       const category = data.categories.find(c => c.id === income.category_id);
                       return (
-                        <div key={income.id || index} className={`group flex items-center justify-between px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-all duration-200 relative`}>
-                          {/* Icono de ingreso */}
-                          <div className="flex items-center space-x-3">
-                            <div className="p-1 rounded-fr bg-green-100 dark:bg-green-900/30">
-                              <FaArrowUp className="w-3 h-3 text-green-600 dark:text-green-400" />
-                            </div>
-                          </div>
-                          
-                          {/* Información principal en una línea */}
-                          <div className="flex-1 flex items-center space-x-3 min-w-0 mx-3">
-                            <p className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
-                              {income.description}
-                            </p>
-                            {category && (
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border} whitespace-nowrap`}>
-                                {category.name}
-                              </span>
-                            )}
-                          </div>
-                          
-                          {/* Monto y botón editar */}
-                          <div className="flex items-center space-x-2">
-                            <div className="text-right">
-                              <p className="font-semibold text-green-600 dark:text-green-400 text-sm">
-                                +{formatAmount(income.amount)}
+                        <div key={income.id || index} className={`flex items-center justify-between px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-shadow`}>
+                          <div className="flex-1">
+                            <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
+                              <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+                                {income.description}
                               </p>
+                              {category && (
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}>
+                                  {category.name}
+                                </span>
+                              )}
+                              {/* Fecha inline en desktop */}
+                              <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2">
+                                {new Date(income.created_at).toLocaleDateString('es-AR')}
+                              </span>
                             </div>
-                            
-                            {/* Botón de edición con hover */}
-                            <button
-                              onClick={() => handleEditIncome(income)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 rounded-fr text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30"
-                              title="Editar ingreso"
-                            >
-                              <FaEdit className="w-3.5 h-3.5" />
-                            </button>
+                            <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {new Date(income.created_at).toLocaleDateString('es-AR')}
+                            </p>
+                          </div>
+                          <div className="text-right ml-3">
+                            <p className="font-semibold text-green-600 dark:text-green-400">
+                              +{formatAmount(income.amount)}
+                              {income.percentage && (
+                                <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2 align-middle">
+                                  {formatPercentage(income.percentage)}
+                                </span>
+                              )}
+                            </p>
+                            {income.percentage && (
+                              <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400">
+                                {formatPercentage(income.percentage)}
+                              </p>
+                            )}
                           </div>
                         </div>
                       );
@@ -1453,171 +1386,6 @@ const Resumen = () => {
           })()}
         </div>
       </div>
-
-      {/* Modal de Edición de Gastos */}
-      {showEditExpenseModal && editingExpense && createPortal(
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-fr-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-fr-gray-900 dark:text-gray-100 mb-6">
-              Editar Gasto
-            </h2>
-
-            <form onSubmit={handleSubmitExpense} className="space-y-6">
-              <div>
-                <label className="label">Descripción</label>
-                <input
-                  type="text"
-                  value={expenseFormData.description}
-                  onChange={(e) => setExpenseFormData({...expenseFormData, description: e.target.value})}
-                  className="input w-full"
-                  placeholder="Descripción del gasto"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="label">Monto</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={expenseFormData.amount}
-                  onChange={(e) => setExpenseFormData({...expenseFormData, amount: e.target.value})}
-                  className="input w-full"
-                  placeholder="0.00"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="label">Categoría</label>
-                <select
-                  value={expenseFormData.category_id}
-                  onChange={(e) => setExpenseFormData({...expenseFormData, category_id: e.target.value})}
-                  className="input w-full"
-                >
-                  <option value="">Seleccionar categoría</option>
-                  {data.categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="label">Fecha de vencimiento</label>
-                <input
-                  type="date"
-                  value={expenseFormData.due_date}
-                  onChange={(e) => setExpenseFormData({...expenseFormData, due_date: e.target.value})}
-                  className="input w-full"
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="expense-paid"
-                  checked={expenseFormData.paid}
-                  onChange={(e) => setExpenseFormData({...expenseFormData, paid: e.target.checked})}
-                  className="checkbox"
-                />
-                <label htmlFor="expense-paid" className="label cursor-pointer">
-                  Marcar como pagado
-                </label>
-              </div>
-
-              <div className="flex space-x-3 pt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowEditExpenseModal(false)}
-                  className="btn-outline flex-1"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary flex-1"
-                >
-                  Actualizar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* Modal de Edición de Ingresos */}
-      {showEditIncomeModal && editingIncome && createPortal(
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-fr-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-fr-gray-900 dark:text-gray-100 mb-6">
-              Editar Ingreso
-            </h2>
-
-            <form onSubmit={handleSubmitIncome} className="space-y-6">
-              <div>
-                <label className="label">Descripción</label>
-                <input
-                  type="text"
-                  value={incomeFormData.description}
-                  onChange={(e) => setIncomeFormData({...incomeFormData, description: e.target.value})}
-                  className="input w-full"
-                  placeholder="Descripción del ingreso"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="label">Monto</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={incomeFormData.amount}
-                  onChange={(e) => setIncomeFormData({...incomeFormData, amount: e.target.value})}
-                  className="input w-full"
-                  placeholder="0.00"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="label">Categoría</label>
-                <select
-                  value={incomeFormData.category_id}
-                  onChange={(e) => setIncomeFormData({...incomeFormData, category_id: e.target.value})}
-                  className="input w-full"
-                >
-                  <option value="">Seleccionar categoría</option>
-                  {data.categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex space-x-3 pt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowEditIncomeModal(false)}
-                  className="btn-outline flex-1"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary flex-1"
-                >
-                  Actualizar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>,
-        document.body
-      )}
 
       {/* Modal de Pago */}
       {showPaymentModal && payingExpense && createPortal(

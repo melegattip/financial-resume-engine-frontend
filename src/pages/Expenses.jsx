@@ -62,7 +62,7 @@ const Expenses = () => {
   } = useOptimizedAPI();
 
   // Hook de gamificación para registrar acciones
-  const { recordCreateExpense, recordUpdateExpense, recordDeleteExpense, recordAssignCategory } = useGamification();
+  const { recordCreateExpense, recordUpdateExpense, recordDeleteExpense } = useGamification();
 
   // Leer parámetros de URL y aplicar filtros automáticamente
   useEffect(() => {
@@ -221,22 +221,10 @@ const Expenses = () => {
       if (editingExpense) {
         console.log(`🎯 [Expenses] Registrando actualización de expense: ${editingExpense.id}`);
         recordUpdateExpense(editingExpense.id, `Gasto actualizado: ${dataToSend.description}`);
-        
-        // Si se asignó una categoría, registrar la acción
-        if (dataToSend.category_id) {
-          console.log(`🎯 [Expenses] Registrando asignación de categoría: ${dataToSend.category_id} al expense: ${editingExpense.id}`);
-          recordAssignCategory(editingExpense.id, dataToSend.category_id, `Categoría asignada al gasto: ${dataToSend.description}`);
-        }
       } else {
         const expenseId = result?.data?.id || `expense-${Date.now()}`;
         console.log(`🎯 [Expenses] Registrando creación de expense: ${expenseId}`);
         recordCreateExpense(expenseId, `Nuevo gasto: ${dataToSend.description}`);
-        
-        // Si se asignó una categoría en la creación, registrar la acción
-        if (dataToSend.category_id) {
-          console.log(`🎯 [Expenses] Registrando asignación de categoría: ${dataToSend.category_id} al nuevo expense: ${expenseId}`);
-          recordAssignCategory(expenseId, dataToSend.category_id, `Categoría asignada al nuevo gasto: ${dataToSend.description}`);
-        }
       }
 
       // Recarga final para asegurar consistencia luego de invalidación
@@ -488,15 +476,29 @@ const Expenses = () => {
 
   return (
     <div className="space-y-6">
+      {/* Page Title */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">Gastos</h1>
+      </div>
+
       {/* Header con métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="card">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Total Gastos</p>
-              <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">{formatAmount(totalExpenses)}</p>
+            <div className="flex-1">
+              <div className="flex items-center space-x-6">
+                <div>
+                  <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Total Gastos</p>
+                  <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">{formatAmount(totalExpenses)}</p>
+                </div>
+                <div className="h-12 w-px bg-fr-gray-200 dark:bg-gray-600"></div>
+                <div>
+                  <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Cantidad</p>
+                  <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">{filteredExpenses.length}</p>
+                </div>
+              </div>
             </div>
-            <div className="p-3 rounded-fr bg-gray-100 dark:bg-gray-700">
+            <div className="flex-shrink-0 p-3 rounded-fr bg-gray-100 dark:bg-gray-700 ml-4">
               <FaArrowDown className="w-6 h-6 text-fr-gray-900 dark:text-gray-300" />
             </div>
           </div>
@@ -504,26 +506,23 @@ const Expenses = () => {
 
         <div className="card">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Gastos Pendientes</p>
-              <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">{unpaidExpenses.length}</p>
+            <div className="flex-1">
+              <div className="flex items-center space-x-6">
+                <div>
+                  <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Pendientes</p>
+                  <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">{unpaidExpenses.length}</p>
+                </div>
+                <div className="h-12 w-px bg-fr-gray-200 dark:bg-gray-600"></div>
+                <div>
+                  <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Monto</p>
+                  <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">
+                    {formatAmount(unpaidExpenses.reduce((sum, e) => sum + e.amount, 0))}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="p-3 rounded-fr bg-gray-100 dark:bg-gray-700">
-              <FaCalendar className="w-6 h-6 text-fr-gray-900 dark:text-gray-300" />
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-fr-gray-600 dark:text-gray-400">Monto Pendiente</p>
-                              <p className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">
-                  {formatAmount(unpaidExpenses.reduce((sum, e) => sum + e.amount, 0))}
-                </p>
-            </div>
-            <div className="p-3 rounded-fr bg-gray-100 dark:bg-gray-700">
-              <FaTimesCircle className="w-6 h-6 text-fr-gray-900 dark:text-gray-300" />
+            <div className="flex-shrink-0 p-3 rounded-fr bg-red-100 dark:bg-red-900/30 ml-4">
+              <FaTimesCircle className="w-6 h-6 text-fr-error dark:text-red-400" />
             </div>
           </div>
         </div>
@@ -620,99 +619,88 @@ const Expenses = () => {
               const incomePercentage = totalIncome > 0 ? (expense.amount / totalIncome) * 100 : 0;
               
               return (
-                <div key={expense.id} className="flex items-center justify-between p-3 rounded-fr bg-fr-gray-50 dark:bg-gray-700 hover:bg-fr-gray-100 dark:hover:bg-gray-600 transition-colors">
-                  {/* Estado de pago */}
-                  <div className="flex items-center space-x-2">
+                <div key={expense.id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  {/* Estado de pago compacto */}
+                  <div className="flex-shrink-0 w-12 h-12 mr-3">
                     <button
                       onClick={() => togglePaid(expense)}
-                      className={`p-1.5 rounded-fr transition-colors ${
+                      className={`w-full h-full rounded-lg transition-colors flex items-center justify-center ${
                         expense.paid 
-                          ? 'bg-green-100 dark:bg-green-900/30 text-fr-secondary dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50' 
-                          : 'bg-red-100 dark:bg-red-900/30 text-fr-error dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50' 
+                          : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
                       }`}
                     >
                       {expense.paid ? (
-                        <FaCheckCircle className="w-4 h-4" />
+                        <FaCheckCircle className="w-5 h-5" />
                       ) : (
-                        <FaTimesCircle className="w-4 h-4" />
+                        <FaTimesCircle className="w-5 h-5" />
                       )}
                     </button>
                   </div>
 
-                  {/* Información principal en una línea */}
-                  <div className="flex-1 flex items-center justify-between min-w-0 mx-3">
-                    {/* Descripción y badges */}
-                    <div className="flex items-center space-x-2 min-w-0 flex-1">
-                      <h3 className="font-medium text-fr-gray-900 dark:text-gray-100 truncate text-sm">
+                  {/* Información principal */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="font-semibold text-fr-gray-900 dark:text-gray-100 text-sm truncate pr-2">
                         {expense.description}
                       </h3>
-                      {category && (
-                        <span className="badge-info text-xs whitespace-nowrap py-0.5 px-1.5">{category.name}</span>
-                      )}
-                      {expense.paid && (
-                        <span className="badge-success text-xs whitespace-nowrap py-0.5 px-1.5">Pagado</span>
-                      )}
-                    </div>
-
-                    {/* Fechas y porcentaje en una línea compacta */}
-                    <div className="flex items-center space-x-3 text-xs text-fr-gray-500 dark:text-gray-400 whitespace-nowrap">
-                      {expense.due_date && (
-                        <span>Vence: {new Date(expense.due_date).toLocaleDateString('es-AR', { 
-                          weekday: 'short', 
-                          day: '2-digit', 
-                          month: '2-digit' 
-                        })}</span>
-                      )}
-                      <span>Creado: {new Date(expense.created_at).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}</span>
-                      {/* Porcentaje de ingresos en línea */}
-                      {totalIncome > 0 && (
-                        <span className="text-blue-600 dark:text-blue-400 font-medium">
-                          {incomePercentage.toFixed(1)}% de tus ingresos
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Montos - todo en una línea */}
-                  <div className="flex items-center space-x-3">
-                    <div className="text-right">
-                      {expense.amount_paid > 0 && expense.amount_paid < expense.amount ? (
-                        // Pago parcial - mostrar en una sola línea compacta
-                        <div className="flex items-center space-x-2 text-xs">
-                          <span className="font-bold text-fr-gray-900 dark:text-gray-100 text-base">
-                            {formatAmount(expense.pending_amount || (expense.amount - (expense.amount_paid || 0)))}
-                          </span>
-                          <span className="text-fr-gray-500 dark:text-gray-400">
-                            de {formatAmount(expense.amount)}
-                          </span>
-                          <span className="text-fr-secondary dark:text-green-400">
-                            (Pagado: {formatAmount(expense.amount_paid || 0)})
-                          </span>
+                      <div className="text-right flex-shrink-0">
+                        <div className="font-bold text-fr-gray-900 dark:text-gray-100 text-base">
+                          -{formatAmount(expense.amount)}
                         </div>
-                      ) : (
-                        // Sin pagos parciales - mostrar solo el monto
-                        <p className="font-bold text-fr-gray-900 dark:text-gray-100 text-base">
-                          {formatAmount(expense.amount)}
-                        </p>
-                      )}
+                      </div>
                     </div>
-
-                    {/* Acciones */}
-                    <div className="flex items-center space-x-1">
-                      <button
-                        onClick={() => handleEdit(expense)}
-                        className="p-1.5 rounded-fr text-fr-gray-600 dark:text-gray-400 hover:bg-fr-gray-200 dark:hover:bg-gray-600 transition-colors"
-                        title="Editar"
-                      >
-                        <FaEdit className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(expense)}
-                        className="p-1.5 rounded-fr text-fr-error dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                        title="Eliminar"
-                      >
-                        <FaTrash className="w-3.5 h-3.5" />
-                      </button>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2 text-xs text-fr-gray-500 dark:text-gray-400">
+                        {category && (
+                          <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full text-xs">
+                            {category.name}
+                          </span>
+                        )}
+                        {expense.due_date && (
+                          <span>Vence: {new Date(expense.due_date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}</span>
+                        )}
+                      </div>
+                      
+                      {/* Botones de acción compactos */}
+                      <div className="flex space-x-1 ml-2">
+                        {!expense.paid && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPayingExpense(expense);
+                              setShowPaymentModal(true);
+                            }}
+                            className="w-7 h-7 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+                            title="Pagar"
+                          >
+                            <FaCheckCircle className="w-3 h-3 text-green-600 dark:text-green-400" />
+                          </button>
+                        )}
+                        
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(expense);
+                          }}
+                          className="w-7 h-7 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                          title="Editar"
+                        >
+                          <FaEdit className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                        </button>
+                        
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(expense);
+                          }}
+                          className="w-7 h-7 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                          title="Eliminar"
+                        >
+                          <FaTrash className="w-3 h-3 text-red-600 dark:text-red-400" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

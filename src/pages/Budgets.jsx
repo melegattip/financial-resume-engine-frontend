@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import { budgetsAPI, categoriesAPI, formatCurrency } from '../services/api';
 import TrialBanner from '../components/TrialBanner';
 import { usePeriod } from '../contexts/PeriodContext';
@@ -188,22 +189,46 @@ const Budgets = () => {
 
       {/* Dashboard Summary */}
       {dashboard && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border dark:border-gray-700">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Presupuestos</h3>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{dashboard.summary?.total_budgets || 0}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="card">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center space-x-6">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{dashboard.summary?.total_budgets || 0}</p>
+                  </div>
+                  <div className="h-12 w-px bg-fr-gray-200 dark:bg-gray-600"></div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">En Meta</p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">{dashboard.summary?.on_track_count || 0}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex-shrink-0 p-3 rounded-fr bg-green-100 dark:bg-green-900/30 ml-4">
+                <FaCheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border dark:border-gray-700">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">En Meta</h3>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{dashboard.summary?.on_track_count || 0}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border dark:border-gray-700">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Con Alerta</h3>
-            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{dashboard.summary?.warning_count || 0}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border dark:border-gray-700">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Excedidos</h3>
-            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{dashboard.summary?.exceeded_count || 0}</p>
+          <div className="card">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center space-x-6">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Con Alerta</p>
+                    <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{dashboard.summary?.warning_count || 0}</p>
+                  </div>
+                  <div className="h-12 w-px bg-fr-gray-200 dark:bg-gray-600"></div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Excedidos</p>
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">{dashboard.summary?.exceeded_count || 0}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex-shrink-0 p-3 rounded-fr bg-yellow-100 dark:bg-yellow-900/30 ml-4">
+                <FaExclamationTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+              </div>
+            </div>
           </div>
         </div>
       )}

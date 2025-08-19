@@ -684,36 +684,38 @@ const SavingsGoals = () => {
   // Vista principal de ahorros
   return (
     <>
-      <div className="min-h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900 px-4 pt-4">
         <TrialBanner featureKey="SAVINGS_GOALS" />
+        
+        {/* Título de la sección */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-fr-gray-900 dark:text-gray-100">Metas de Ahorro</h1>
+        </div>
+
+        {/* Botón de crear meta redondo y centrado */}
+        <div className="flex justify-center mb-6">
+          <button 
+            onClick={() => setShowModal(true)}
+            className="w-14 h-14 bg-blue-500 dark:bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-700 hover:scale-105 transition-all duration-200 shadow-lg"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </button>
+        </div>
+
         {/* Header con total ahorrado */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl mx-4 mt-4 p-6 shadow-sm border dark:border-gray-700">
+        <div className="mb-8">
           <h2 className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">Total ahorrado</h2>
-          <div className="flex items-baseline mb-3">
-              <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
+          <div className="mb-8">
+            <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
               {formatAmount(dashboard?.summary?.total_saved || 0, balancesHidden)}
             </span>
           </div>
 
-          {/* Botón de crear */}
-          <div className="flex justify-center mb-8">
-            <button 
-              onClick={() => setShowModal(true)}
-              className="flex flex-col items-center"
-            >
-              <div className="w-16 h-16 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center mb-2 hover:scale-105 transition-transform">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </div>
-              <span className="text-gray-700 dark:text-gray-300 font-medium">Crear</span>
-            </button>
-          </div>
-
           {/* Lista de metas de ahorro */}
           <div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Tus metas de ahorro</h3>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {goals.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-gray-400 dark:text-gray-500 mb-4">
@@ -734,116 +736,79 @@ const SavingsGoals = () => {
                 goals.map((goal) => (
                   <div 
                     key={goal.id} 
-                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+                    className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer mx-1"
                     onClick={() => setSelectedGoal(goal)}
                   >
-                    {/* Icono */}
-                    <div className="text-3xl">
-                      {getGoalDisplayIcon(goal)}
-                    </div>
-                    
-                    {/* Título y categoría */}
-                    <div className="flex-1 ml-4">
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">{goal.name}</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{getCategoryText(goal.category)}</p>
-                      {/* Barra de progreso compacta */}
-                      <div className="w-full max-w-xs mt-1">
-                        <div className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-blue-500 dark:bg-blue-400"
-                            style={{ width: `${getProgressPercent(goal.progress, goal.current_amount, goal.target_amount)}%` }}
-                          />
+                    {/* Título en línea separada arriba */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center">
+                        <div className="text-2xl mr-3 flex-shrink-0">
+                          {getGoalDisplayIcon(goal)}
                         </div>
+                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-base">{goal.name}</h4>
                       </div>
-                    </div>
-                    
-                    {/* Botones circulares de acción */}
-                    <div className="flex space-x-3 mx-4">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openTransactionModal(goal, 'deposit');
-                        }}
-                        className="flex flex-col items-center relative group"
-                        title="Depositar dinero"
-                      >
-                        <div className="w-10 h-10 bg-green-500 dark:bg-green-600 rounded-full flex items-center justify-center transition-transform group-hover:scale-110">
-                          <span className="text-lg">💰</span>
-                        </div>
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full mb-2 px-2 py-1 bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-100 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                          Depositar dinero
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800 dark:border-t-gray-700"></div>
-                        </div>
-                      </button>
                       
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openTransactionModal(goal, 'withdraw');
-                        }}
-                        className="flex flex-col items-center relative group"
-                        title="Retirar dinero"
-                      >
-                        <div className="w-10 h-10 bg-orange-500 dark:bg-orange-600 rounded-full flex items-center justify-center transition-transform group-hover:scale-110">
-                          <span className="text-lg">💸</span>
-                        </div>
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full mb-2 px-2 py-1 bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-100 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                          Retirar dinero
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800 dark:border-t-gray-700"></div>
-                        </div>
-                      </button>
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedGoal(goal);
-                        }}
-                        className="flex flex-col items-center relative group"
-                        title="Ver detalles"
-                      >
-                        <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center transition-transform group-hover:scale-110">
-                          <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        </div>
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full mb-2 px-2 py-1 bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-100 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                          Ver detalles
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800 dark:border-t-gray-700"></div>
-                        </div>
-                      </button>
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(goal);
-                        }}
-                        className="flex flex-col items-center relative group"
-                        title="Eliminar meta"
-                      >
-                        <div className="w-10 h-10 bg-red-500 dark:bg-red-600 rounded-full flex items-center justify-center transition-transform group-hover:scale-110">
-                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      {/* Botones de acción en la misma línea del título */}
+                      <div className="flex space-x-2 flex-shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openTransactionModal(goal, 'deposit');
+                          }}
+                          className="w-8 h-8 bg-green-500 dark:bg-green-600 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
+                          title="Depositar"
+                        >
+                          <span className="text-sm">💰</span>
+                        </button>
+                        
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openTransactionModal(goal, 'withdraw');
+                          }}
+                          className="w-8 h-8 bg-orange-500 dark:bg-orange-600 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
+                          title="Retirar"
+                        >
+                          <span className="text-sm">💸</span>
+                        </button>
+                        
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(goal);
+                          }}
+                          className="w-8 h-8 bg-red-500 dark:bg-red-600 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
+                          title="Eliminar"
+                        >
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
-                        </div>
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full mb-2 px-2 py-1 bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-100 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                          Eliminar meta
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800 dark:border-t-gray-700"></div>
-                        </div>
-                      </button>
+                        </button>
+                      </div>
                     </div>
                     
-                    {/* Monto y objetivo */}
-                    <div className="text-right">
-                      <div className="font-bold text-gray-900 dark:text-gray-100">
-                        {formatAmount(goal.current_amount, balancesHidden)}
+                    {/* Contenido principal en segunda línea */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-4">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{getCategoryText(goal.category)}</p>
+                        <div className="text-right">
+                          <div className="font-bold text-gray-900 dark:text-gray-100 text-lg">
+                            {formatAmount(goal.current_amount, balancesHidden)}
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            de {formatAmount(goal.target_amount, balancesHidden)}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        de {formatAmount(goal.target_amount, balancesHidden)}
+                    </div>
+                    
+                    {/* Barra de progreso */}
+                    <div className="w-full">
+                      <div className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500 dark:bg-blue-400"
+                          style={{ width: `${getProgressPercent(goal.progress, goal.current_amount, goal.target_amount)}%` }}
+                        />
                       </div>
                     </div>
                   </div>

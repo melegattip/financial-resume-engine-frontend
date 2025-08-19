@@ -77,6 +77,7 @@ export const GamificationProvider = ({ children }) => {
   // Cache para evitar llamadas innecesarias
   const [lastUpdate, setLastUpdate] = useState(null);
   const [pendingActions, setPendingActions] = useState([]);
+  const [featureAccessCache, setFeatureAccessCache] = useState(new Map());
   
   // Forzar re-render de componentes dependientes
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -139,14 +140,6 @@ export const GamificationProvider = ({ children }) => {
       setFeatures(featuresData || { unlocked_features: [], locked_features: [] });
       setLastUpdate(Date.now());
       setError(null);
-      
-      // Registrar daily login automáticamente después de cargar los datos
-      try {
-        console.log('🎯 [GamificationContext] Registrando daily login automáticamente');
-        await api.recordDailyLogin();
-      } catch (loginError) {
-        console.warn('⚠️ [GamificationContext] Error registrando daily login:', loginError);
-      }
     } catch (err) {
       console.error('Error loading gamification data:', err);
       setError(err.message);
@@ -461,15 +454,41 @@ export const GamificationProvider = ({ children }) => {
 
   // 🔒 Verificar acceso a feature específica (con llamada al backend si es necesario)
   const checkFeatureAccess = useCallback(async (featureKey) => {
+    // Verificar cache primero (cache por 5 minutos)
+    const cached = featureAccessCache.get(featureKey);
+    const now = Date.now();
+    if (cached && (now - cached.timestamp) < 5 * 60 * 1000) {
+      return cached.data;
+    }
+
     try {
       const access = await api.checkFeatureAccess(featureKey);
+      
+      // Guardar en cache
+      setFeatureAccessCache(prev => new Map(prev.set(featureKey, {
+        data: access,
+        timestamp: now
+      })));
+      
       return access;
     } catch (error) {
-      console.error(`Error checking feature access for ${featureKey}:`, error);
-      // Fallback a verificación local
-      return getFeatureAccess(featureKey);
+      // Solo mostrar error si no es 404 (endpoint no implementado)
+      if (error.response?.status !== 404) {
+        console.error(`Error checking feature access for ${featureKey}:`, error);
+      }
+      
+      // Fallback silencioso a verificación local
+      const localAccess = getFeatureAccess(featureKey);
+      
+      // También cachear el fallback local
+      setFeatureAccessCache(prev => new Map(prev.set(featureKey, {
+        data: localAccess,
+        timestamp: now
+      })));
+      
+      return localAccess;
     }
-  }, [api, getFeatureAccess]);
+  }, [api, getFeatureAccess, featureAccessCache]);
 
   const value = {
     // Estado

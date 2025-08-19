@@ -4,26 +4,49 @@ import { useGamification } from '../contexts/GamificationContext';
 // Muestra un banner con cuenta regresiva de trial para una feature
 // featureKey: 'AI_INSIGHTS' | 'BUDGETS' | 'SAVINGS_GOALS'
 const TrialBanner = ({ featureKey }) => {
-  const { checkFeatureAccess, userProfile } = useGamification();
+  const { checkFeatureAccess, userProfile, isFeatureUnlocked } = useGamification();
   const [access, setAccess] = useState(null);
   const [now, setNow] = useState(Date.now());
+  const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     const load = async () => {
+      // Si la feature ya está desbloqueada, no necesitamos verificar trial
+      if (isFeatureUnlocked && isFeatureUnlocked(featureKey)) {
+        setAccess(null);
+        setHasChecked(true);
+        return;
+      }
+
       try {
         const res = await checkFeatureAccess(featureKey);
-        if (mounted) setAccess(res);
+        if (mounted) {
+          setAccess(res);
+          setHasChecked(true);
+        }
       } catch (_) {
-        setAccess(null);
+        if (mounted) {
+          setAccess(null);
+          setHasChecked(true);
+        }
       }
     };
-    if (checkFeatureAccess) load();
+    
+    if (checkFeatureAccess && !hasChecked) {
+      load();
+    }
+    
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => { mounted = false; clearInterval(timer); };
-  }, [featureKey, checkFeatureAccess]);
+  }, [featureKey, checkFeatureAccess, isFeatureUnlocked, hasChecked]);
 
   const { trialActive, remaining } = useMemo(() => {
+    // Si ya está desbloqueada permanentemente, no mostrar trial
+    if (isFeatureUnlocked && isFeatureUnlocked(featureKey)) {
+      return { trialActive: false, remaining: null };
+    }
+
     // 1) Preferir bandera del endpoint de acceso a feature
     let trial = Boolean(access && access.trial_active);
     let endTs = access && access.trial_ends_at ? new Date(access.trial_ends_at).getTime() : null;
@@ -46,7 +69,7 @@ const TrialBanner = ({ featureKey }) => {
     const m = Math.floor((ms % (3600 * 1000)) / (60 * 1000));
     const s = Math.floor((ms % (60 * 1000)) / 1000);
     return { trialActive: ms > 0, remaining: { d, h, m, s } };
-  }, [access, userProfile, now]);
+  }, [access, userProfile, now, isFeatureUnlocked, featureKey]);
 
   if (!trialActive) return null;
 

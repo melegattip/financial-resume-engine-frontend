@@ -105,7 +105,10 @@ class GamificationAPI {
       const response = await apiClient.get(`${this.baseURL}/features/${featureKey}/access`);
       return response.data;
     } catch (error) {
-      console.error(`Error checking access to feature ${featureKey}:`, error);
+      // Solo mostrar error si no es 404 (endpoint no implementado)
+      if (error.response?.status !== 404) {
+        console.error(`Error checking access to feature ${featureKey}:`, error);
+      }
       throw error;
     }
   }
