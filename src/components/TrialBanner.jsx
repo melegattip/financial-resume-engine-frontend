@@ -4,7 +4,7 @@ import { useGamification } from '../contexts/GamificationContext';
 // Muestra un banner con cuenta regresiva de trial para una feature
 // featureKey: 'AI_INSIGHTS' | 'BUDGETS' | 'SAVINGS_GOALS'
 const TrialBanner = ({ featureKey }) => {
-  const { checkFeatureAccess, userProfile, isFeatureUnlocked } = useGamification();
+  const { checkFeatureAccess, userProfile, isFeatureUnlocked, features } = useGamification();
   const [access, setAccess] = useState(null);
   const [now, setNow] = useState(Date.now());
   const [hasChecked, setHasChecked] = useState(false);
@@ -42,16 +42,25 @@ const TrialBanner = ({ featureKey }) => {
   }, [featureKey, checkFeatureAccess, isFeatureUnlocked, hasChecked]);
 
   const { trialActive, remaining } = useMemo(() => {
-    // Si ya está desbloqueada permanentemente, no mostrar trial
-    if (isFeatureUnlocked && isFeatureUnlocked(featureKey)) {
-      return { trialActive: false, remaining: null };
+    // 1) Verificar datos del backend (locked_features con trial_active)
+    let trial = false;
+    let endTs = null;
+
+    if (features && features.locked_features && Array.isArray(features.locked_features)) {
+      const lockedFeature = features.locked_features.find(f => f.feature_key === featureKey);
+      if (lockedFeature && lockedFeature.trial_active) {
+        trial = true;
+        endTs = lockedFeature.trial_ends_at ? new Date(lockedFeature.trial_ends_at).getTime() : null;
+      }
     }
 
-    // 1) Preferir bandera del endpoint de acceso a feature
-    let trial = Boolean(access && access.trial_active);
-    let endTs = access && access.trial_ends_at ? new Date(access.trial_ends_at).getTime() : null;
+    // 2) Fallback: verificar con endpoint específico
+    if (!trial && access && access.trial_active) {
+      trial = true;
+      endTs = access.trial_ends_at ? new Date(access.trial_ends_at).getTime() : null;
+    }
 
-    // 2) Fallback: usar created_at del perfil de gamificación
+    // 3) Fallback final: usar created_at del perfil de gamificación
     if (!trial && userProfile && userProfile.created_at) {
       const created = new Date(userProfile.created_at).getTime();
       const tenDays = 10 * 24 * 3600 * 1000;
@@ -62,6 +71,7 @@ const TrialBanner = ({ featureKey }) => {
 
     if (!trial) return { trialActive: false, remaining: null };
     if (!endTs) return { trialActive: true, remaining: null };
+    
     const end = endTs;
     const ms = Math.max(0, end - now);
     const d = Math.floor(ms / (24 * 3600 * 1000));
@@ -69,7 +79,7 @@ const TrialBanner = ({ featureKey }) => {
     const m = Math.floor((ms % (3600 * 1000)) / (60 * 1000));
     const s = Math.floor((ms % (60 * 1000)) / 1000);
     return { trialActive: ms > 0, remaining: { d, h, m, s } };
-  }, [access, userProfile, now, isFeatureUnlocked, featureKey]);
+  }, [access, userProfile, now, featureKey, features]);
 
   if (!trialActive) return null;
 
