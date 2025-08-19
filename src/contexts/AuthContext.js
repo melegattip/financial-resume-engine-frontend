@@ -8,7 +8,7 @@ const AuthContext = createContext(null);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    console.error('❌ useAuth llamado fuera del AuthProvider');
+    console.error('useAuth called outside AuthProvider');
     throw new Error('useAuth debe ser usado dentro de un AuthProvider');
   }
   return context;
@@ -26,7 +26,6 @@ export const AUTH_STATES = {
  * Proveedor del contexto de autenticación
  */
 export const AuthProvider = ({ children }) => {
-  console.log('🔧 AuthProvider iniciando...');
   
   const [authState, setAuthState] = useState(AUTH_STATES.LOADING);
   const [user, setUser] = useState(null);
@@ -40,13 +39,11 @@ export const AuthProvider = ({ children }) => {
           const currentUser = authService.getCurrentUser();
           setUser(currentUser);
           setAuthState(AUTH_STATES.AUTHENTICATED);
-          console.log('✅ Usuario ya autenticado:', currentUser?.email);
         } else {
           setAuthState(AUTH_STATES.UNAUTHENTICATED);
-          console.log('⚠️ Usuario no autenticado');
         }
       } catch (error) {
-        console.error('❌ Error inicializando auth:', error);
+        console.error('Error initializing auth:', error);
         setAuthState(AUTH_STATES.UNAUTHENTICATED);
       } finally {
         setIsInitialized(true);
@@ -60,16 +57,14 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (credentials) => {
     try {
       setAuthState(AUTH_STATES.LOADING);
-      console.log('🔧 Intentando login...');
       
       const result = await authService.login(credentials);
       setUser(result.data.user);
       setAuthState(AUTH_STATES.AUTHENTICATED);
       
-      console.log('✅ Login exitoso:', result.data.user?.email);
       return result;
     } catch (error) {
-      console.error('❌ Error en login:', error);
+      console.error('Login error:', error);
       // Para errores de 2FA, mantener estado UNAUTHENTICATED (no LOADING)
       setAuthState(AUTH_STATES.UNAUTHENTICATED);
       throw error;
@@ -79,16 +74,14 @@ export const AuthProvider = ({ children }) => {
   const register = useCallback(async (userData) => {
     try {
       setAuthState(AUTH_STATES.LOADING);
-      console.log('🔧 Intentando registro...');
       
       const result = await authService.register(userData);
       setUser(result.data.user);
       setAuthState(AUTH_STATES.AUTHENTICATED);
       
-      console.log('✅ Registro exitoso:', result.data.user?.email);
       return result;
     } catch (error) {
-      console.error('❌ Error en registro:', error);
+      console.error('Registration error:', error);
       setAuthState(AUTH_STATES.UNAUTHENTICATED);
       throw error;
     }
@@ -96,14 +89,12 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(async () => {
     try {
-      console.log('🔧 Cerrando sesión...');
       await authService.logout();
     } catch (error) {
-      console.warn('⚠️ Error durante logout:', error);
+      console.warn('Error during logout:', error);
     } finally {
       setUser(null);
       setAuthState(AUTH_STATES.UNAUTHENTICATED);
-      console.log('✅ Sesión cerrada');
     }
   }, []);
 
@@ -112,7 +103,7 @@ export const AuthProvider = ({ children }) => {
       const result = await authService.refreshToken();
       return result;
     } catch (error) {
-      console.error('❌ Error renovando token:', error);
+      console.error('Token refresh error:', error);
       await logout();
       throw error;
     }
@@ -123,44 +114,36 @@ export const AuthProvider = ({ children }) => {
       const result = await authService.changePassword(passwordData);
       return result;
     } catch (error) {
-      console.error('❌ Error cambiando contraseña:', error);
+      console.error('Password change error:', error);
       throw error;
     }
   }, []);
 
   const updateProfile = useCallback(async (profileData) => {
     try {
-      console.log('🔧 [AuthContext] Actualizando perfil:', profileData);
       const updatedUser = await authService.updateProfile(profileData);
-      console.log('🔧 [AuthContext] Usuario actualizado del backend:', updatedUser);
       
       // Actualizar el estado global con los datos reales del backend
       setUser(updatedUser);
-      console.log('✅ [AuthContext] Estado global actualizado:', updatedUser);
       
       return { success: true, user: updatedUser };
     } catch (error) {
-      console.error('❌ [AuthContext] Error actualizando perfil:', error);
+      console.error('Profile update error:', error);
       return { success: false, error: error.message };
     }
   }, []);
 
   const uploadAvatar = useCallback(async (file) => {
     try {
-      console.log('🔧 [AuthContext] Subiendo avatar...');
       const result = await authService.uploadAvatar(file);
-      console.log('🔧 [AuthContext] Resultado upload:', result);
       
       // Recargar el perfil del usuario para obtener la URL del avatar actualizado
-      console.log('🔧 [AuthContext] Recargando perfil del usuario...');
       const updatedUser = await authService.getProfile();
-      console.log('🔧 [AuthContext] Usuario actualizado recibido:', updatedUser);
       
       setUser(updatedUser);
-      console.log('✅ [AuthContext] Avatar subido y perfil actualizado');
       return { success: true, result };
     } catch (error) {
-      console.error('❌ [AuthContext] Error subiendo avatar:', error);
+      console.error('Avatar upload error:', error);
       return { success: false, error: error.message };
     }
   }, []);
@@ -193,12 +176,7 @@ export const AuthProvider = ({ children }) => {
     expiresAt: authService.getSessionInfo().expiresAt,
   };
 
-  console.log('🔧 AuthProvider contexto:', {
-    authState,
-    isAuthenticated: contextValue.isAuthenticated,
-    userEmail: user?.email || 'no user',
-    isInitialized
-  });
+  // Debug info available in development
 
   return (
     <AuthContext.Provider value={contextValue}>

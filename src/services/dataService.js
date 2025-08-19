@@ -38,11 +38,11 @@ class DataService {
     const cachedData = this.cache.get(cacheKey);
     
     if (this.isCacheValid(cachedData)) {
-      console.log(`📦 Usando datos del cache para: ${cacheKey}`);
+      // Using cached data
       return cachedData.data;
     }
 
-    console.log(`🌐 Llamando API para: ${cacheKey}`);
+    // Making API call
     const data = await apiCall();
     
     // Guardar en cache

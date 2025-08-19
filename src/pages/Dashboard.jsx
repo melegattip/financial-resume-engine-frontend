@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { FaArrowUp, FaArrowDown, FaDollarSign, FaChartPie, FaCalendar, FaCheckCircle, FaTimesCircle, FaChartBar, FaBullseye, FaExclamationCircle, FaRedo, FaBrain } from 'react-icons/fa';
+import ValidatedInput from '../components/ValidatedInput';
+import { validateAmount, validateDescription } from '../utils/validation';
 import { 
   ResponsiveContainer,
   PieChart as RechartsPieChart,
@@ -45,6 +47,30 @@ const Resumen = () => {
   const [payingExpense, setPayingExpense] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState('');
 
+  // Estados para modales de edición
+  const [showExpenseEditModal, setShowExpenseEditModal] = useState(false);
+  const [showIncomeEditModal, setShowIncomeEditModal] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [editingIncome, setEditingIncome] = useState(null);
+  const [expenseFormData, setExpenseFormData] = useState({
+    description: '',
+    amount: '',
+    category_id: '',
+    due_date: '',
+    paid: false,
+  });
+  const [incomeFormData, setIncomeFormData] = useState({
+    description: '',
+    amount: '',
+    category_id: '',
+  });
+  const [expenseFormErrors, setExpenseFormErrors] = useState({});
+  const [incomeFormErrors, setIncomeFormErrors] = useState({});
+  const [isExpenseFormValid, setIsExpenseFormValid] = useState(false);
+  const [isIncomeFormValid, setIsIncomeFormValid] = useState(false);
+
+
+
   // Funciones para el color y icono del nivel de salud financiera
   const getHealthScoreColor = (level) => {
     switch (level) {
@@ -86,19 +112,16 @@ const Resumen = () => {
   // Usar el hook optimizado para operaciones API
   const { 
     expenses: expensesAPI, 
-    categories: categoriesAPI
+    categories: categoriesAPI,
+    incomes: incomesAPI
   } = useOptimizedAPI();
 
   // Hook de gamificación para registrar acciones
   const { recordCreateExpense, recordUpdateExpense, recordDeleteExpense } = useGamification();
 
-  // Debug de autenticación
+  // Load dashboard data when authentication state changes
   useEffect(() => {
-    console.log('🔍 Resumen - Estado de autenticación:', {
-      isAuthenticated,
-      user,
-      token: localStorage.getItem('auth_token') ? 'EXISTS' : 'MISSING'
-    });
+    // Dashboard data will be loaded automatically when authentication state changes
   }, [isAuthenticated, user]);
 
   const loadDashboardData = async (shouldUpdateAvailableData = true) => {
@@ -108,7 +131,6 @@ const Resumen = () => {
       // Obtener parámetros de filtro del contexto global
       const filterParams = getFilterParams();
       
-      console.log('📊 Cargando resumen con parámetros:', filterParams);
 
       // Usar el servicio optimizado de datos
       const dashboardData = await dataService.loadDashboardData(
@@ -126,10 +148,10 @@ const Resumen = () => {
         );
       }
 
-      console.log(`✅ Resumen cargado exitosamente (${dashboardData.source})`);
+      // Dashboard data loaded successfully
       
     } catch (error) {
-      console.error('❌ Error cargando resumen:', error);
+      console.error('Error loading dashboard:', error);
       
       // Último recurso: datos vacíos
       setData({
@@ -153,48 +175,38 @@ const Resumen = () => {
   // Cargar resúmenes de las nuevas funcionalidades
   const loadNewFeaturesSummary = async () => {
     try {
-      console.log('🔄 Cargando resúmenes de nuevas funcionalidades...');
       
       const [budgetsRes, savingsRes, recurringRes, healthRes] = await Promise.all([
         budgetsAPI.getDashboard().catch((err) => {
-          console.warn('❌ Error cargando budgets dashboard:', err);
+          console.warn('Error loading budgets dashboard:', err);
           return null;
         }),
         savingsGoalsAPI.getDashboard().catch((err) => {
-          console.warn('❌ Error cargando savings goals dashboard:', err);
+          console.warn('Error loading savings goals dashboard:', err);
           return null;
         }),
         recurringTransactionsAPI.getDashboard().catch((err) => {
-          console.warn('❌ Error cargando recurring transactions dashboard:', err);
+          console.warn('Error loading recurring transactions dashboard:', err);
           return null;
         }),
         aiAPI.getHealthScore().catch((err) => {
-          console.warn('❌ Error cargando AI health score:', err);
+          console.warn('Error loading AI health score:', err);
           return null;
         })
       ]);
 
-      console.log('📊 Respuestas recibidas:', {
-        budgets: budgetsRes,
-        savings: savingsRes,
-        recurring: recurringRes,
-        ai: healthRes
-      });
+      // Process received responses
 
       if (budgetsRes?.data?.data) {
-        console.log('✅ Configurando budgets summary:', budgetsRes.data.data);
         setBudgetsSummary(budgetsRes.data.data);
       }
       if (savingsRes?.data?.data) {
-        console.log('✅ Configurando savings goals summary:', savingsRes.data.data);
         setSavingsGoalsSummary(savingsRes.data.data);
       }
       if (recurringRes?.data?.data) {
-        console.log('✅ Configurando recurring transactions summary:', recurringRes.data.data);
         setRecurringTransactionsSummary(recurringRes.data.data);
       }
       if (healthRes) {
-        console.log('✅ Configurando AI data:', healthRes);
         // Extraer health score - usar estructura consistente con AIInsights
         const healthScore = healthRes.health_score || healthRes.data?.health_score || 0;
         let healthLevel = healthRes.health_level || healthRes.data?.health_level;
@@ -212,10 +224,9 @@ const Resumen = () => {
           level: healthLevel || 'Cargando...'
         });
         
-        console.log('🎯 Health data procesado:', { score: healthScore, level: healthLevel });
       }
     } catch (error) {
-      console.error('❌ Error cargando resúmenes de nuevas funcionalidades:', error);
+      console.error('Error loading feature summaries:', error);
     }
   };
 
@@ -304,7 +315,6 @@ const Resumen = () => {
     if (data.categoriesAnalytics && data.categoriesAnalytics.length) {
       const colors = ['#009ee3', '#00a650', '#ff6900', '#e53e3e', '#6b7280', '#8b5cf6', '#f59e0b'];
       
-      console.log('🔍 Datos de categorías del backend:', data.categoriesAnalytics);
       
       const result = data.categoriesAnalytics.map((category, index) => ({
         name: category.Name || category.CategoryName || category.category_name || 'Sin nombre',
@@ -313,7 +323,6 @@ const Resumen = () => {
         color: colors[index % colors.length]
       })).filter(item => item.value > 0);
       
-      console.log('📊 Datos procesados para el gráfico:', result);
       return result;
     }
 
@@ -460,7 +469,6 @@ const Resumen = () => {
 
   // Funciones para manejar pagos desde el dashboard
   const togglePaid = async (expense) => {
-    console.log('🔍 [Dashboard] togglePaid llamado con:', expense);
     
     // Guardar la posición actual de scroll y el elemento activo
     const currentScrollPosition = window.scrollY;
@@ -468,7 +476,6 @@ const Resumen = () => {
     
     if (expense.paid) {
       // Si ya está pagado, permitir marcarlo como no pagado
-      console.log('🔍 [Dashboard] Marcando gasto como pendiente:', expense.description);
       try {
         const updateData = { paid: false };
         await expensesAPI.update(expense.id, updateData);
@@ -494,11 +501,10 @@ const Resumen = () => {
           }
         }, 150);
       } catch (error) {
-        console.error('❌ [Dashboard] Error en togglePaid (marcar como pendiente):', error);
+        console.error('Error in togglePaid (mark as pending):', error);
       }
     } else {
       // Si no está pagado, abrir modal de pago
-      console.log('🔍 [Dashboard] Abriendo modal de pago para gasto:', expense.description);
       setPayingExpense(expense);
       const pendingAmount = expense.pending_amount || (expense.amount - (expense.amount_paid || 0));
       setPaymentAmount(pendingAmount.toString());
@@ -507,9 +513,6 @@ const Resumen = () => {
   };
 
   const handlePayment = async (paymentType) => {
-    console.log('🔍 [Dashboard] handlePayment llamado con paymentType:', paymentType);
-    console.log('🔍 [Dashboard] payingExpense:', payingExpense);
-    console.log('🔍 [Dashboard] paymentAmount:', paymentAmount);
     
     // Guardar la posición actual de scroll y el elemento activo
     const currentScrollPosition = window.scrollY;
@@ -519,7 +522,6 @@ const Resumen = () => {
       if (paymentType === 'total') {
         // Pago total - marcar como pagado
         const updateData = { paid: true };
-        console.log('🔍 [Dashboard] Actualizando gasto como pagado:', payingExpense.id);
         await expensesAPI.update(payingExpense.id, updateData);
         toast.success('Gasto pagado completamente');
       } else if (paymentType === 'partial') {
@@ -531,7 +533,6 @@ const Resumen = () => {
         }
         
         const updateData = { payment_amount: paymentAmt };
-        console.log('🔍 [Dashboard] Actualizando gasto con pago parcial:', paymentAmt);
         await expensesAPI.update(payingExpense.id, updateData);
         
         // Verificar si el pago cubre el total
@@ -548,7 +549,6 @@ const Resumen = () => {
       setPaymentAmount('');
       
       // Recargar datos para mostrar cambios
-      console.log('🔍 [Dashboard] Recargando datos después del pago');
       await loadDashboardData(false);
       
       // Restaurar la posición de scroll después de que el contenido se actualice
@@ -570,9 +570,182 @@ const Resumen = () => {
       
     } catch (error) {
       // useOptimizedAPI ya maneja el error base, pero estos son casos especiales
-      console.error('❌ [Dashboard] Error en handlePayment:', error);
+      console.error('Error in handlePayment:', error);
     }
   };
+
+  // Funciones de edición - abrir modales
+  const handleEditExpense = (expense) => {
+    setEditingExpense(expense);
+    setExpenseFormData({
+      description: expense.description,
+      amount: expense.amount.toString(),
+      category_id: expense.category_id || '',
+      due_date: expense.due_date || '',
+      paid: expense.paid || false,
+    });
+    setShowExpenseEditModal(true);
+  };
+
+  const handleEditIncome = (income) => {
+    setEditingIncome(income);
+    setIncomeFormData({
+      description: income.description,
+      amount: income.amount.toString(),
+      category_id: income.category_id || '',
+    });
+    setShowIncomeEditModal(true);
+  };
+
+  // Funciones de validación
+  const validateExpenseForm = () => {
+    const errors = {};
+    let valid = true;
+
+    const descriptionValidation = validateDescription(expenseFormData.description);
+    if (!descriptionValidation.isValid) {
+      errors.description = descriptionValidation.error;
+      valid = false;
+    }
+
+    const amountValidation = validateAmount(expenseFormData.amount);
+    if (!amountValidation.isValid) {
+      errors.amount = amountValidation.error;
+      valid = false;
+    }
+
+    setExpenseFormErrors(errors);
+    setIsExpenseFormValid(valid);
+    return valid;
+  };
+
+  const validateIncomeForm = () => {
+    const errors = {};
+    let valid = true;
+
+    const descriptionValidation = validateDescription(incomeFormData.description);
+    if (!descriptionValidation.isValid) {
+      errors.description = descriptionValidation.error;
+      valid = false;
+    }
+
+    const amountValidation = validateAmount(incomeFormData.amount, { fieldName: 'monto' });
+    if (!amountValidation.isValid) {
+      errors.amount = amountValidation.error;
+      valid = false;
+    }
+
+    setIncomeFormErrors(errors);
+    setIsIncomeFormValid(valid);
+    return valid;
+  };
+
+  // Funciones de manejo de formularios
+  const handleExpenseSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateExpenseForm()) {
+      toast.error('Por favor corrige los errores en el formulario');
+      return;
+    }
+
+    try {
+      const dataToSend = {
+        ...expenseFormData,
+        amount: parseFloat(expenseFormData.amount)
+      };
+
+      await expensesAPI.update(editingExpense.id, dataToSend);
+      
+      setShowExpenseEditModal(false);
+      setEditingExpense(null);
+      setExpenseFormData({
+        description: '',
+        amount: '',
+        category_id: '',
+        due_date: '',
+        paid: false,
+      });
+      setExpenseFormErrors({});
+      
+      await loadDashboardData(false);
+      toast.success('Gasto actualizado exitosamente');
+    } catch (error) {
+      console.error('Error updating expense:', error);
+      toast.error('Error al actualizar el gasto');
+    }
+  };
+
+  const handleIncomeSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateIncomeForm()) {
+      toast.error('Por favor corrige los errores en el formulario');
+      return;
+    }
+
+    try {
+      const dataToSend = {
+        ...incomeFormData,
+        amount: parseFloat(incomeFormData.amount)
+      };
+
+      // Usar la API de ingresos ya declarada
+      await incomesAPI.update(editingIncome.id, dataToSend);
+      
+      setShowIncomeEditModal(false);
+      setEditingIncome(null);
+      setIncomeFormData({
+        description: '',
+        amount: '',
+        category_id: '',
+      });
+      setIncomeFormErrors({});
+      
+      await loadDashboardData(false);
+      toast.success('Ingreso actualizado exitosamente');
+    } catch (error) {
+      console.error('Error updating income:', error);
+      toast.error('Error al actualizar el ingreso');
+    }
+  };
+
+  const handleCloseExpenseModal = () => {
+    setShowExpenseEditModal(false);
+    setEditingExpense(null);
+    setExpenseFormData({
+      description: '',
+      amount: '',
+      category_id: '',
+      due_date: '',
+      paid: false,
+    });
+    setExpenseFormErrors({});
+  };
+
+  const handleCloseIncomeModal = () => {
+    setShowIncomeEditModal(false);
+    setEditingIncome(null);
+    setIncomeFormData({
+      description: '',
+      amount: '',
+      category_id: '',
+    });
+    setIncomeFormErrors({});
+  };
+
+  // Effects para validación automática
+  useEffect(() => {
+    if (showExpenseEditModal) {
+      validateExpenseForm();
+    }
+  }, [expenseFormData, showExpenseEditModal]);
+
+  useEffect(() => {
+    if (showIncomeEditModal) {
+      validateIncomeForm();
+    }
+  }, [incomeFormData, showIncomeEditModal]);
 
   if (loading) {
     return (
@@ -683,10 +856,37 @@ const Resumen = () => {
         </div>
       </div>
 
-      {/* Widgets de funcionalidades secundarias - Nueva fila compacta */}
+      {/* Fila unificada: Todos los widgets en una sola cuadrícula */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Widget de Presupuestos (Nivel 5 requerido) */}
-        {isFeatureUnlocked('BUDGETS') && budgetsSummary && (
+        {/* Widget de Transacciones Recurrentes - Siempre visible */}
+        {recurringTransactionsSummary && (
+          <div className="card p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToRecurringTransactions}>
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-fr-gray-600 dark:text-gray-400">
+                  Transacciones Recurrentes
+                </p>
+                <p className="text-lg sm:text-xl font-bold text-fr-gray-900 dark:text-gray-100 break-words">
+                  {recurringTransactionsSummary.summary?.total_active || 0}
+                </p>
+              </div>
+              <div className="flex-shrink-0 p-1.5 sm:p-2 rounded-fr bg-purple-100 dark:bg-purple-900/30 ml-2">
+                <FaRedo className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 dark:text-purple-400" />
+              </div>
+            </div>
+            <div className="space-y-1 text-xs">
+              <div className="text-green-600">
+                +{formatAmount(recurringTransactionsSummary.summary?.monthly_income_total || 0)}/mes
+              </div>
+              <div className="text-red-600">
+                -{formatAmount(recurringTransactionsSummary.summary?.monthly_expense_total || 0)}/mes
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Widget de Presupuestos - Desbloqueado o Bloqueado */}
+        {isFeatureUnlocked('BUDGETS') && budgetsSummary ? (
           <div className="card p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToBudgets}>
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1 min-w-0">
@@ -713,10 +913,22 @@ const Resumen = () => {
               </span>
             </div>
           </div>
+        ) : (
+          <LockedWidget
+            mode="compact"
+            featureName="Presupuestos"
+            featureIcon={<FaChartPie className="w-3 h-3 sm:w-4 sm:h-4" />}
+            description="Controla tus gastos con límites inteligentes por categoría"
+            requiredLevel={FEATURE_GATES.BUDGETS.requiredLevel}
+            currentLevel={userProfile?.current_level || 0}
+            currentXP={userProfile?.total_xp || 0}
+            requiredXP={FEATURE_GATES.BUDGETS.xpThreshold}
+            benefits={FEATURE_GATES.BUDGETS.benefits}
+          />
         )}
 
-        {/* Widget de Metas de Ahorro (Nivel 3 requerido) */}
-        {isFeatureUnlocked('SAVINGS_GOALS') && savingsGoalsSummary && (
+        {/* Widget de Metas de Ahorro - Desbloqueado o Bloqueado */}
+        {isFeatureUnlocked('SAVINGS_GOALS') && savingsGoalsSummary ? (
           <div className="card p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToSavingsGoals}>
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1 min-w-0">
@@ -736,10 +948,22 @@ const Resumen = () => {
               <span>Meta: {formatAmount(savingsGoalsSummary.summary?.total_target || 0)}</span>
             </div>
           </div>
+        ) : (
+          <LockedWidget
+            mode="compact"
+            featureName="Metas de Ahorro"
+            featureIcon={<FaBullseye className="w-3 h-3 sm:w-4 sm:h-4" />}
+            description="Crea y gestiona objetivos de ahorro personalizados"
+            requiredLevel={FEATURE_GATES.SAVINGS_GOALS.requiredLevel}
+            currentLevel={userProfile?.current_level || 0}
+            currentXP={userProfile?.total_xp || 0}
+            requiredXP={FEATURE_GATES.SAVINGS_GOALS.xpThreshold}
+            benefits={FEATURE_GATES.SAVINGS_GOALS.benefits}
+          />
         )}
 
-        {/* Widget de IA Financiera (Nivel 7 requerido) */}
-        {isFeatureUnlocked('AI_INSIGHTS') && (
+        {/* Widget de IA Financiera - Desbloqueado o Bloqueado */}
+        {isFeatureUnlocked('AI_INSIGHTS') ? (
           <div className="card p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToAI}>
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1 min-w-0">
@@ -771,85 +995,20 @@ const Resumen = () => {
               )}
             </div>
           </div>
-        )}
-
-        {/* Widget de Transacciones Recurrentes */}
-        {recurringTransactionsSummary && (
-          <div className="card p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={navigateToRecurringTransactions}>
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-fr-gray-600 dark:text-gray-400">
-                  Transacciones Recurrentes
-                </p>
-                <p className="text-lg sm:text-xl font-bold text-fr-gray-900 dark:text-gray-100 break-words">
-                  {recurringTransactionsSummary.summary?.total_active || 0}
-                </p>
-              </div>
-              <div className="flex-shrink-0 p-1.5 sm:p-2 rounded-fr bg-purple-100 dark:bg-purple-900/30 ml-2">
-                <FaRedo className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 dark:text-purple-400" />
-              </div>
-            </div>
-            <div className="space-y-1 text-xs">
-              <div className="text-green-600">
-                +{formatAmount(recurringTransactionsSummary.summary?.monthly_income_total || 0)}/mes
-              </div>
-              <div className="text-red-600">
-                -{formatAmount(recurringTransactionsSummary.summary?.monthly_expense_total || 0)}/mes
-              </div>
-            </div>
-          </div>
+        ) : (
+          <LockedWidget
+            mode="compact"
+            featureName="IA Financiera"
+            featureIcon={<FaBrain className="w-3 h-3 sm:w-4 sm:h-4" />}
+            description="Análisis inteligente con IA para decisiones financieras"
+            requiredLevel={FEATURE_GATES.AI_INSIGHTS.requiredLevel}
+            currentLevel={userProfile?.current_level || 0}
+            currentXP={userProfile?.total_xp || 0}
+            requiredXP={FEATURE_GATES.AI_INSIGHTS.xpThreshold}
+            benefits={FEATURE_GATES.AI_INSIGHTS.benefits}
+          />
         )}
       </div>
-
-      {/* Widgets bloqueados - Layout compacto */}
-      {(!isFeatureUnlocked('BUDGETS') || !isFeatureUnlocked('SAVINGS_GOALS') || !isFeatureUnlocked('AI_INSIGHTS')) && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {/* Widget de Presupuestos (Nivel 5 requerido) */}
-          {!isFeatureUnlocked('BUDGETS') && (
-            <LockedWidget
-              mode="compact"
-              featureName="Presupuestos"
-              featureIcon={<FaChartPie className="w-3 h-3 sm:w-4 sm:h-4" />}
-              description="Controla tus gastos con límites inteligentes por categoría"
-              requiredLevel={FEATURE_GATES.BUDGETS.requiredLevel}
-              currentLevel={userProfile?.current_level || 0}
-              currentXP={userProfile?.total_xp || 0}
-              requiredXP={FEATURE_GATES.BUDGETS.xpThreshold}
-              benefits={FEATURE_GATES.BUDGETS.benefits}
-            />
-          )}
-
-          {/* Widget de Metas de Ahorro (Nivel 3 requerido) */}
-          {!isFeatureUnlocked('SAVINGS_GOALS') && (
-            <LockedWidget
-              mode="compact"
-              featureName="Metas de Ahorro"
-              featureIcon={<FaBullseye className="w-3 h-3 sm:w-4 sm:h-4" />}
-              description="Crea y gestiona objetivos de ahorro personalizados"
-              requiredLevel={FEATURE_GATES.SAVINGS_GOALS.requiredLevel}
-              currentLevel={userProfile?.current_level || 0}
-              currentXP={userProfile?.total_xp || 0}
-              requiredXP={FEATURE_GATES.SAVINGS_GOALS.xpThreshold}
-              benefits={FEATURE_GATES.SAVINGS_GOALS.benefits}
-            />
-          )}
-
-          {/* Widget de IA Financiera (Nivel 7 requerido) */}
-          {!isFeatureUnlocked('AI_INSIGHTS') && (
-            <LockedWidget
-              mode="compact"
-              featureName="IA Financiera"
-              featureIcon={<FaBrain className="w-3 h-3 sm:w-4 sm:h-4" />}
-              description="Análisis inteligente con IA para decisiones financieras"
-              requiredLevel={FEATURE_GATES.AI_INSIGHTS.requiredLevel}
-              currentLevel={userProfile?.current_level || 0}
-              currentXP={userProfile?.total_xp || 0}
-              requiredXP={FEATURE_GATES.AI_INSIGHTS.xpThreshold}
-              benefits={FEATURE_GATES.AI_INSIGHTS.benefits}
-            />
-          )}
-        </div>
-      )}
 
       {/* Transacciones por mes - Dos columnas */}
       {hasActiveFilters && (data.expenses.length > 0 || data.incomes.length > 0) && (
@@ -933,72 +1092,72 @@ const Resumen = () => {
                       const category = data.categories.find(c => c.id === expense.category_id);
                       const color = getCategoryColor(expense.category_id);
                       return (
-                        <div key={expense.id || index} className={`flex items-center justify-between px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-shadow`}>
-                          <div className="flex items-start space-x-3">
-                            {/* Indicador de pago */}
-                            <div className="flex-shrink-0 mt-1">
-                              <button
-                                onClick={() => togglePaid(expense)}
-                                className="hover:scale-110 transition-transform cursor-pointer"
-                                title={expense.paid ? "Marcar como pendiente" : "Hacer pago"}
-                              >
-                                {expense.paid ? (
-                                  <FaCheckCircle className="w-5 h-5 text-green-500" />
-                                ) : (
-                                  <FaTimesCircle className="w-5 h-5 text-red-500" />
-                                )}
-                              </button>
-                            </div>
-                            
-                            <div className="flex-1">
-                              <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
-                                <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">
-                                  {expense.description}
-                                </p>
-                                {!expense.paid && (
-                                  <span className="badge-error text-xs">Pendiente</span>
-                                )}
-                                {category && (
-                                  <span className={`px-2 py-1 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}>
-                                    {category.name}
-                                  </span>
-                                )}
-                                {/* Fechas inline solo en desktop */}
-                                <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2">
-                                  {new Date(expense.created_at).toLocaleDateString('es-AR')}
-                                  {expense.due_date && (
-                                    <span className="ml-2">• Vence: {new Date(expense.due_date).toLocaleDateString('es-AR')}</span>
-                                  )}
-                                </span>
-                              </div>
-                              {/* Fechas debajo solo en mobile/tablet */}
-                              <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                {new Date(expense.created_at).toLocaleDateString('es-AR')}
-                                {expense.due_date && (
-                                  <span className="ml-2">• Vence: {new Date(expense.due_date).toLocaleDateString('es-AR')}</span>
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right ml-3">
-                            <p className="font-semibold text-gray-900 dark:text-gray-100">
-                              -{formatAmount(expense.amount)}
-                              {expense.percentage && (
-                                <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2 align-middle">
-                                  {formatPercentage(expense.percentage)} del total
-                                </span>
+                        <div 
+                          key={expense.id || index} 
+                          className={`group flex items-center gap-2 py-1.5 px-3 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-all cursor-pointer`}
+                          onClick={() => handleEditExpense(expense)}
+                        >
+                          {/* Estado de pago compacto */}
+                          <div className="flex-shrink-0 w-6 h-6">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                togglePaid(expense);
+                              }}
+                              className={`w-full h-full rounded-md transition-colors flex items-center justify-center ${
+                                expense.paid 
+                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50' 
+                                  : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
+                              }`}
+                              title={expense.paid ? "Marcar como pendiente" : "Hacer pago"}
+                            >
+                              {expense.paid ? (
+                                <FaCheckCircle className="w-3 h-3" />
+                              ) : (
+                                <FaTimesCircle className="w-3 h-3" />
                               )}
-                            </p>
+                            </button>
+                          </div>
+
+                          {/* Descripción */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
+                              {expense.description}
+                            </h3>
+                          </div>
+
+                          {/* Categoría */}
+                          <div className="flex-shrink-0 hidden sm:block text-left min-w-[80px]">
+                            {category && (
+                              <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}>
+                                {category.name}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Fecha de vencimiento */}
+                          <div className="flex-shrink-0 hidden md:block text-xs text-gray-500 dark:text-gray-400 text-left min-w-[100px]">
+                            {expense.due_date && (
+                              <span>
+                                Vence: {new Date(expense.due_date).toLocaleDateString('es-AR', { 
+                                  day: 'numeric', 
+                                  month: 'numeric', 
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Porcentaje y monto */}
+                          <div className="flex items-center gap-2 flex-shrink-0 text-right min-w-[100px]">
                             {expense.percentage && (
-                              <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400">
-                                {formatPercentage(expense.percentage)} del total
-                              </p>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {formatPercentage(expense.percentage)}
+                              </span>
                             )}
-                            {expense.amount_paid > 0 && expense.amount_paid < expense.amount && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Pagado: {formatAmount(expense.amount_paid)}
-                              </p>
-                            )}
+                            <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+                              -{formatAmount(expense.amount)}
+                            </span>
                           </div>
                         </div>
                       );
@@ -1039,40 +1198,48 @@ const Resumen = () => {
                       const color = getCategoryColor(income.category_id);
                       const category = data.categories.find(c => c.id === income.category_id);
                       return (
-                        <div key={income.id || index} className={`flex items-center justify-between px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-shadow`}>
-                          <div className="flex-1">
-                            <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
-                              <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">
-                                {income.description}
-                              </p>
-                              {category && (
-                                <span className={`px-2 py-1 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}>
-                                  {category.name}
-                                </span>
-                              )}
-                              {/* Fecha inline en desktop */}
-                              <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2">
-                                {new Date(income.created_at).toLocaleDateString('es-AR')}
-                              </span>
+                        <div 
+                          key={income.id || index} 
+                          className={`group flex items-center gap-2 py-1.5 px-3 rounded-lg bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:shadow-sm transition-all cursor-pointer`}
+                          onClick={() => handleEditIncome(income)}
+                        >
+                          {/* Icono de ingreso */}
+                          <div className="flex-shrink-0 w-6 h-6">
+                            <div className="w-full h-full rounded-md bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                              <FaArrowUp className="w-3 h-3 text-green-600 dark:text-green-400" />
                             </div>
-                            <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {new Date(income.created_at).toLocaleDateString('es-AR')}
-                            </p>
                           </div>
-                          <div className="text-right ml-3">
-                            <p className="font-semibold text-green-600 dark:text-green-400">
-                              +{formatAmount(income.amount)}
-                              {income.percentage && (
-                                <span className="hidden lg:inline text-xs text-gray-500 dark:text-gray-400 ml-2 align-middle">
-                                  {formatPercentage(income.percentage)}
-                                </span>
-                              )}
-                            </p>
-                            {income.percentage && (
-                              <p className="lg:hidden text-xs text-gray-500 dark:text-gray-400">
-                                {formatPercentage(income.percentage)}
-                              </p>
+
+                          {/* Descripción */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
+                              {income.description}
+                            </h3>
+                          </div>
+
+                          {/* Categoría */}
+                          <div className="flex-shrink-0 hidden sm:block text-left min-w-[80px]">
+                            {category && (
+                              <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}>
+                                {category.name}
+                              </span>
                             )}
+                          </div>
+
+                          {/* Espacio para fecha (vacío para ingresos) */}
+                          <div className="flex-shrink-0 hidden md:block min-w-[100px]">
+                          </div>
+
+                          {/* Porcentaje y monto */}
+                          <div className="flex items-center gap-2 flex-shrink-0 text-right min-w-[100px]">
+                            {income.percentage && (
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {formatPercentage(income.percentage)}
+                              </span>
+                            )}
+                            <span className="font-semibold text-green-600 dark:text-green-400 text-sm">
+                              +{formatAmount(income.amount)}
+                            </span>
                           </div>
                         </div>
                       );
@@ -1237,39 +1404,20 @@ const Resumen = () => {
             Gastos por Categoría{hasActiveFilters && ` - ${getPeriodTitle()}`}
           </h3>
           {pieData.length > 0 ? (
-                        <div className="flex items-center justify-center">
-              <ResponsiveContainer width="100%" height={380}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Gráfico */}
+              <div className="lg:col-span-2 flex items-center justify-center">
+                <ResponsiveContainer width="100%" height={300}>
                 <RechartsPieChart>
                   <Pie
                     data={pieData}
                     cx="50%"
-                    cy="45%"
-                    innerRadius={50}
-                    outerRadius={110}
-                    paddingAngle={2}
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={100}
+                      paddingAngle={3}
                     dataKey="value"
-                    label={({ name, value, percent, midAngle, innerRadius, outerRadius, cx, cy }) => {
-                      const RADIAN = Math.PI / 180;
-                      const radius = outerRadius + 40;
-                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                      
-                      return (
-                        <text 
-                          x={x} 
-                          y={y} 
-                          fill="currentColor" 
-                          textAnchor={x > cx ? 'start' : 'end'} 
-                          dominantBaseline="central"
-                          fontSize="13"
-                          fontWeight="500"
-                          className="text-gray-700 dark:text-gray-200"
-                        >
-                          {`${name}: ${value.toFixed(1)}%`}
-                        </text>
-                      );
-                    }}
-                    labelLine={false}
+                      label={false}
                     startAngle={90}
                     endAngle={450}
                   >
@@ -1285,7 +1433,7 @@ const Resumen = () => {
                   <Tooltip 
                     formatter={(value, name, props) => [
                       `${value.toFixed(1)}% (${formatCurrency(props.payload.amount)})`, 
-                      'Porcentaje'
+                        props.payload.name
                     ]}
                     contentStyle={{
                       backgroundColor: 'var(--tooltip-bg)',
@@ -1297,6 +1445,39 @@ const Resumen = () => {
                   />
                 </RechartsPieChart>
               </ResponsiveContainer>
+              </div>
+              
+              {/* Leyenda */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-fr-gray-700 dark:text-gray-300 mb-3">
+                  Distribución por Categoría
+                </h4>
+                <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                  {pieData.map((item, index) => (
+                    <div key={index} className="flex items-start py-1 hover:bg-fr-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded px-1">
+                      <div className="flex items-center space-x-2 flex-1">
+                        <div 
+                          className="w-3 h-3 rounded-full flex-shrink-0 mt-0.5"
+                          style={{ backgroundColor: item.color }}
+                        ></div>
+                        <div className="flex-1">
+                          <div className="text-xs font-medium text-fr-gray-900 dark:text-gray-100 leading-tight">
+                            {item.name}
+                          </div>
+                          <div className="flex items-center space-x-2 mt-0.5">
+                            <span className="text-xs font-bold text-fr-gray-900 dark:text-gray-100">
+                              {item.value.toFixed(1)}%
+                            </span>
+                            <span className="text-xs text-fr-gray-500 dark:text-gray-400">
+                              {formatCurrency(item.amount)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-64 text-center">
@@ -1354,13 +1535,13 @@ const Resumen = () => {
                               <FaTimesCircle className="w-4 h-4 text-fr-error" />
                             )}
                             {!transaction.paid && (
-                              <span className="badge-error text-xs">Pendiente</span>
+                              <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-400">Pendiente</span>
                             )}
                           </div>
                         )}
                         {/* Badge de categoría */}
                         {category && (
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}>
+                          <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}>
                             {category.name}
                           </span>
                         )}
@@ -1489,6 +1670,191 @@ const Resumen = () => {
         </div>,
         document.body
       )}
+
+      {/* Modal de Edición de Gasto */}
+      {showExpenseEditModal && editingExpense && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-fr-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-fr-gray-900 dark:text-gray-100 mb-6">
+              Editar Gasto
+            </h2>
+
+            <form onSubmit={handleExpenseSubmit} className="space-y-4">
+              <ValidatedInput
+                type="text"
+                name="description"
+                label="Descripción"
+                value={expenseFormData.description}
+                onChange={(e) => setExpenseFormData({ ...expenseFormData, description: e.target.value })}
+                validator={validateDescription}
+                validateOnChange={true}
+                required={true}
+                placeholder="Ej: Compras del supermercado"
+                helpText="Describe brevemente el gasto"
+                maxLength={255}
+              />
+
+              <ValidatedInput
+                type="currency"
+                name="amount"
+                label="Monto"
+                value={expenseFormData.amount}
+                onChange={(e) => setExpenseFormData({ ...expenseFormData, amount: e.target.value })}
+                validator={(value) => validateAmount(value, { fieldName: 'monto' })}
+                validateOnChange={true}
+                required={true}
+                placeholder="0.00"
+                helpText="Ingresa el monto del gasto"
+                icon={<FaDollarSign />}
+                iconPosition="left"
+                allowNegative={false}
+                maxDecimals={2}
+              />
+
+              <div>
+                <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
+                  Categoría
+                </label>
+                <select
+                  value={expenseFormData.category_id}
+                  onChange={(e) => setExpenseFormData({ ...expenseFormData, category_id: e.target.value })}
+                  className="input"
+                >
+                  <option value="">Seleccionar categoría</option>
+                  {data.categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+            </div>
+
+              <div>
+                <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
+                  Fecha de vencimiento
+                </label>
+                <input
+                  type="date"
+                  value={expenseFormData.due_date}
+                  onChange={(e) => setExpenseFormData({ ...expenseFormData, due_date: e.target.value })}
+                  className="input"
+                />
+            </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={expenseFormData.paid}
+                  onChange={(e) => setExpenseFormData({ ...expenseFormData, paid: e.target.checked })}
+                  className="h-4 w-4 text-fr-primary border-gray-300 rounded focus:ring-fr-primary"
+                />
+                <label className="ml-2 text-sm text-fr-gray-700 dark:text-gray-300">
+                  Marcado como pagado
+                </label>
+              </div>
+
+              <div className="flex space-x-4 pt-4">
+              <button
+                  type="button"
+                  onClick={handleCloseExpenseModal}
+                  className="btn-outline flex-1"
+              >
+                  Cancelar
+              </button>
+              <button
+                  type="submit" 
+                  className={`btn-primary flex-1 ${!isExpenseFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={!isExpenseFormValid}
+                >
+                  Actualizar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal de Edición de Ingreso */}
+      {showIncomeEditModal && editingIncome && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-fr-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-fr-gray-900 dark:text-gray-100 mb-6">
+              Editar Ingreso
+            </h2>
+
+            <form onSubmit={handleIncomeSubmit} className="space-y-4">
+              <ValidatedInput
+                type="text"
+                name="description"
+                label="Descripción"
+                value={incomeFormData.description}
+                onChange={(e) => setIncomeFormData({ ...incomeFormData, description: e.target.value })}
+                validator={validateDescription}
+                validateOnChange={true}
+                required={true}
+                placeholder="Ej: Salario mensual, Freelance, etc."
+                helpText="Describe brevemente el ingreso"
+                maxLength={255}
+              />
+
+              <ValidatedInput
+                type="currency"
+                name="amount"
+                label="Monto"
+                value={incomeFormData.amount}
+                onChange={(e) => setIncomeFormData({ ...incomeFormData, amount: e.target.value })}
+                validator={(value) => validateAmount(value, { fieldName: 'monto' })}
+                validateOnChange={true}
+                required={true}
+                placeholder="0.00"
+                helpText="Ingresa el monto del ingreso"
+                icon={<FaDollarSign />}
+                iconPosition="left"
+                allowNegative={false}
+                maxDecimals={2}
+              />
+
+              <div>
+                <label className="block text-sm font-medium text-fr-gray-700 dark:text-gray-300 mb-2">
+                  Categoría
+                </label>
+                <select
+                  value={incomeFormData.category_id}
+                  onChange={(e) => setIncomeFormData({ ...incomeFormData, category_id: e.target.value })}
+                  className="input"
+                >
+                  <option value="">Seleccionar categoría</option>
+                  {data.categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex space-x-4 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCloseIncomeModal}
+                  className="btn-outline flex-1"
+              >
+                Cancelar
+              </button>
+                <button 
+                  type="submit" 
+                  className={`btn-secondary flex-1 ${!isIncomeFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={!isIncomeFormValid}
+                >
+                  Actualizar
+              </button>
+            </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
     </div>
   );
 };

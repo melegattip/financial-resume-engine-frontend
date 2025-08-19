@@ -21,7 +21,7 @@ class GamificationService {
         `Vio recomendación: ${insightTitle}`
       );
       
-      console.log('✅ Recomendación vista registrada:', result);
+      // Recommendation view recorded
       return result;
     } catch (error) {
       // Silenciar errores de gamificación para no interferir con la UX principal
@@ -46,7 +46,7 @@ class GamificationService {
         `Understood insight: ${insightTitle}`
       );
       
-      console.log('✅ Insight understood recorded:', result);
+      // Insight understanding recorded
       return result;
     } catch (error) {
       if (error.response?.status === 400 || error.response?.status === 404) {
@@ -70,7 +70,7 @@ class GamificationService {
         description
       );
       
-      console.log('✅ Action completed recorded:', result);
+      // Action completion recorded
       return result;
     } catch (error) {
       console.warn('⚠️ Error recording action completion:', error);
@@ -90,7 +90,7 @@ class GamificationService {
         `Used purchase analysis for: ${itemName} ($${amount})`
       );
       
-      console.log('✅ Purchase analysis recorded:', result);
+      // Purchase analysis recorded
       return result;
     } catch (error) {
       console.warn('⚠️ Error recording purchase analysis:', error);

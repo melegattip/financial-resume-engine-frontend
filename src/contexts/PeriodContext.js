@@ -69,7 +69,7 @@ export const PeriodProvider = ({ children }) => {
       const latestMonth = sortedMonths[0]; // sortedMonths ya está ordenado por fecha más reciente
       const [latestYear] = latestMonth.split('-');
       
-      console.log(`🗓️ [PeriodContext] Auto-seleccionando período por defecto: ${latestMonth}`);
+      // Auto-selecting default period
       setSelectedMonth(latestMonth);
       setSelectedYear(latestYear);
     }

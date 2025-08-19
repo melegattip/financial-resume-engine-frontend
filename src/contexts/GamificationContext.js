@@ -160,16 +160,8 @@ export const GamificationProvider = ({ children }) => {
     
     try {
       if (pendingActions.includes(actionKey)) {
-        console.log(`⚠️ [GamificationContext] Acción duplicada ignorada: ${actionKey}`);
         return null;
       }
-
-      console.log(`🎯 [GamificationContext] Registrando acción:`, {
-        actionType,
-        entityType,
-        entityId,
-        description: description || `User ${actionType} ${entityType}`
-      });
 
       setPendingActions(prev => [...prev, actionKey]);
 
@@ -180,15 +172,7 @@ export const GamificationProvider = ({ children }) => {
         description || `User ${actionType} ${entityType}`
       );
 
-      console.log(`✅ [GamificationContext] Resultado de la acción:`, result);
-      console.log(`🔍 [GamificationContext] Campos recibidos:`, {
-        total_xp: result.total_xp,
-        current_level: result.current_level,
-        new_level: result.new_level,
-        xp_earned: result.xp_earned,
-        level_up: result.level_up,
-        result_keys: Object.keys(result || {})
-      });
+      // Process action result
 
               // Actualizar datos locales inmediatamente solo si hay cambios reales
         setUserProfile(prev => {
@@ -200,7 +184,7 @@ export const GamificationProvider = ({ children }) => {
 
           // Solo actualizar si realmente cambió algo
           if (newXP !== prevXP || newLevel !== prevLevel) {
-            console.log(`✨ [GamificationContext] Actualizando XP: ${prevXP} → ${newXP}, Nivel: ${prevLevel} → ${newLevel}`);
+
             return {
               ...prev,
               total_xp: newXP,
@@ -209,7 +193,7 @@ export const GamificationProvider = ({ children }) => {
             };
           }
           
-          console.log(`⏭️ [GamificationContext] Sin cambios en XP/Nivel, manteniendo valores actuales`);
+
           return prev; // No cambios, no re-render
         });
 
@@ -232,24 +216,22 @@ export const GamificationProvider = ({ children }) => {
         });
 
       if (result.xp_earned > 0 && actionType !== 'view_insight') {
-        console.log(`🏆 [GamificationContext] XP ganado: ${result.xp_earned}`);
+
         // Mostrar notificación de XP ganado
         showXPGained(result.xp_earned, `¡Has ganado ${result.xp_earned} XP!`);
-      } else {
-        console.log(`⚠️ [GamificationContext] No se ganó XP para la acción ${actionType}`);
       }
 
       // Mostrar notificación de subida de nivel
       if (result.level_up) {
         const actualNewLevel = result.current_level || result.new_level;
-        console.log(`🎉 [GamificationContext] ¡Subida de nivel! Nuevo nivel: ${actualNewLevel}`);
+
         const levelInfo = getLevelInfo(actualNewLevel);
         showLevelUp(actualNewLevel, levelInfo.name);
       }
 
       // Mostrar notificaciones de nuevos logros
       if (result.new_achievements && result.new_achievements.length > 0) {
-        console.log(`🏅 [GamificationContext] Nuevos logros desbloqueados:`, result.new_achievements);
+
         result.new_achievements.forEach(achievement => {
           showAchievementUnlocked(achievement.name, achievement.description);
         });
@@ -271,7 +253,7 @@ export const GamificationProvider = ({ children }) => {
           current_level: result.new_level || result.current_level || prev.current_level,
           achievements_count: prev.achievements_count + (result.new_achievements?.length || 0)
         }));
-        console.log(`🔄 [GamificationContext] Perfil local actualizado: ${result.total_xp} XP, Nivel ${result.new_level || result.current_level}`);
+
       }
 
       // Limpiar acción pendiente
@@ -280,12 +262,10 @@ export const GamificationProvider = ({ children }) => {
       // Forzar re-render del contexto actualizando el timestamp
       setLastUpdate(Date.now());
       setRefreshTrigger(prev => prev + 1); // Forzar re-render de componentes dependientes
-      
-      console.log(`🚀 [GamificationContext] Acción completada y header actualizado automáticamente`);
-
+            
       return result;
     } catch (err) {
-      console.error('❌ [GamificationContext] Error recording gamification action:', err);
+      console.error('Error recording gamification action:', err);
       setPendingActions(prev => prev.filter(p => p !== actionKey));
       return null;
     }

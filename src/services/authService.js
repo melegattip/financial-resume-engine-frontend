@@ -9,7 +9,7 @@ const getUsersServiceUrl = async () => {
     const config = await configService.loadConfig();
     return config.users_service_url;
   } catch (error) {
-    console.error('Error obteniendo URL del users service:', error);
+    console.error('Error getting users service URL:', error);
     
     // Fallback con detección de ambiente
     if (process.env.REACT_APP_USERS_SERVICE_URL) {
@@ -55,7 +55,7 @@ const initializeConfig = async () => {
   if (configInitialized) return;
   
   try {
-    console.log('🔄 [authService] Inicializando configuración dinámica...');
+    // Initializing dynamic configuration
     const config = await configService.loadConfig();
     
     // Actualizar la baseURL de axios con la configuración del users service

@@ -57,6 +57,32 @@ const Incomes = () => {
     return formatCurrency(amount);
   };
 
+  // Función para obtener colores por categoría (consistente con Dashboard y Gastos)
+  const getCategoryColor = (categoryId) => {
+    const colors = [
+      { bg: 'bg-blue-100 dark:bg-blue-900/30', border: 'border-blue-400', text: 'text-blue-700 dark:text-blue-300' },
+      { bg: 'bg-green-100 dark:bg-green-900/30', border: 'border-green-400', text: 'text-green-700 dark:text-green-300' },
+      { bg: 'bg-yellow-100 dark:bg-yellow-900/30', border: 'border-yellow-400', text: 'text-yellow-700 dark:text-yellow-300' },
+      { bg: 'bg-purple-100 dark:bg-purple-900/30', border: 'border-purple-400', text: 'text-purple-700 dark:text-purple-300' },
+      { bg: 'bg-pink-100 dark:bg-pink-900/30', border: 'border-pink-400', text: 'text-pink-700 dark:text-pink-300' },
+      { bg: 'bg-indigo-100 dark:bg-indigo-900/30', border: 'border-indigo-400', text: 'text-indigo-700 dark:text-indigo-300' },
+      { bg: 'bg-cyan-100 dark:bg-cyan-900/30', border: 'border-cyan-400', text: 'text-cyan-700 dark:text-cyan-300' },
+      { bg: 'bg-orange-100 dark:bg-orange-900/30', border: 'border-orange-400', text: 'text-orange-700 dark:text-orange-300' },
+    ];
+    
+    if (!categoryId) {
+      return { bg: 'bg-gray-100 dark:bg-gray-700', border: 'border-gray-400 dark:border-gray-500', text: 'text-gray-700 dark:text-gray-300' };
+    }
+    
+    // Usar el hash del categoryId para asignar colores consistentes
+    let hash = 0;
+    for (let i = 0; i < categoryId.length; i++) {
+      hash = categoryId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colorIndex = Math.abs(hash) % colors.length;
+    return colors[colorIndex];
+  };
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -375,63 +401,66 @@ const Incomes = () => {
           ) : (
             filteredIncomes.map((income) => {
               const category = categories.find(c => c.id === income.category_id);
+              const color = getCategoryColor(income.category_id);
               
               return (
-                <div key={income.id} className="flex items-center justify-between p-3 rounded-fr bg-fr-gray-50 dark:bg-gray-700 hover:bg-fr-gray-100 dark:hover:bg-gray-600 transition-colors">
+                <div key={income.id} className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-fr-gray-50 dark:bg-gray-700 hover:bg-fr-gray-100 dark:hover:bg-gray-600 transition-colors">
                   {/* Icono de ingreso */}
-                  <div className="flex items-center space-x-3 flex-shrink-0">
-                    <div className="p-1.5 rounded-fr bg-green-100 dark:bg-green-900/30">
-                      <FaArrowUp className="w-4 h-4 text-fr-secondary dark:text-green-400" />
+                  <div className="flex-shrink-0 w-6 h-6">
+                    <div className="w-full h-full rounded-md bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                      <FaArrowUp className="w-3 h-3 text-green-600 dark:text-green-400" />
                     </div>
                   </div>
 
-                  {/* Información principal en una línea */}
-                  <div className="flex-1 flex items-center justify-between min-w-0 mx-3">
-                    {/* Descripción y badges */}
-                    <div className="flex items-center space-x-2 min-w-0 flex-1">
-                      <h3 className="font-medium text-fr-gray-900 dark:text-gray-100 truncate text-sm">
-                        {income.description}
-                      </h3>
-                      {category && (
-                        <span className="badge-info text-xs whitespace-nowrap py-0.5 px-1.5">{category.name}</span>
-                      )}
-                    </div>
-
-                    {/* Fechas en una línea compacta */}
-                    <div className="flex items-center space-x-3 text-xs text-fr-gray-500 dark:text-gray-400 whitespace-nowrap">
-                      <span>Creado: {new Date(income.created_at).toLocaleDateString('es-AR', { 
-                        weekday: 'short', 
-                        day: '2-digit', 
-                        month: '2-digit' 
-                      })}</span>
-                    </div>
+                  {/* Descripción */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-fr-gray-900 dark:text-gray-100 text-sm truncate">
+                      {income.description}
+                    </h3>
                   </div>
 
-                  {/* Montos */}
-                  <div className="flex items-center space-x-3">
-                    <div className="text-right">
-                      <p className="font-bold text-fr-secondary dark:text-green-400 text-base">
-                        +{formatAmount(income.amount)}
-                      </p>
-                    </div>
+                  {/* Categoría */}
+                  <div className="flex-shrink-0 hidden sm:block text-left min-w-[80px]">
+                    {category && (
+                      <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}>
+                        {category.name}
+                      </span>
+                    )}
+                  </div>
 
-                    {/* Acciones */}
-                    <div className="flex items-center space-x-1">
-                      <button
-                        onClick={() => handleEdit(income)}
-                        className="p-1.5 rounded-fr text-fr-gray-600 dark:text-gray-400 hover:bg-fr-gray-200 dark:hover:bg-gray-600 transition-colors"
-                        title="Editar"
-                      >
-                        <FaEdit className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(income)}
-                        className="p-1.5 rounded-fr text-fr-error dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                        title="Eliminar"
-                      >
-                        <FaTrash className="w-3.5 h-3.5" />
-                      </button>
+                  {/* Espacio para fecha (vacío para ingresos) */}
+                  <div className="flex-shrink-0 hidden md:block min-w-[100px]">
+                  </div>
+
+                  {/* Monto */}
+                  <div className="flex-shrink-0 text-right min-w-[90px]">
+                    <div className="font-semibold text-green-600 dark:text-green-400 text-sm">
+                      +{formatAmount(income.amount)}
                     </div>
+                  </div>
+                  
+                  {/* Botones de acción compactos */}
+                  <div className="flex space-x-0.5 flex-shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(income);
+                      }}
+                      className="w-6 h-6 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      title="Editar"
+                    >
+                      <FaEdit className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(income);
+                      }}
+                      className="w-6 h-6 bg-red-100 dark:bg-red-900/30 rounded-md flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                      title="Eliminar"
+                    >
+                      <FaTrash className="w-3 h-3 text-red-600 dark:text-red-400" />
+                    </button>
                   </div>
                 </div>
               );

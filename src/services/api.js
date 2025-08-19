@@ -19,20 +19,16 @@ const initializeConfig = async () => {
   if (configInitialized) return;
   
   try {
-    console.log('🔄 Inicializando configuración dinámica...');
+    // Initializing dynamic configuration
     const config = await configService.loadConfig();
     
     // Actualizar la baseURL de axios con la configuración dinámica
     api.defaults.baseURL = config.api_base_url;
     configInitialized = true;
     
-    console.log('✅ Configuración dinámica inicializada:', {
-      baseURL: api.defaults.baseURL,
-      environment: config.environment,
-      version: config.version
-    });
+    // Dynamic configuration initialized
   } catch (error) {
-    console.error('❌ Error inicializando configuración:', error);
+    console.error('Error initializing configuration:', error);
     // Mantener la configuración por defecto
   }
 };

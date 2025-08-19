@@ -26,11 +26,11 @@
   },
   "scripts": {
     "start": "node startup.js",
-    "dev": "react-scripts start",
-    "build": "react-scripts build",
+    "dev": "craco start",
+    "build": "craco build",
     "serve": "serve -s build -l $PORT",
     "start:express": "node server.js",
-    "test": "react-scripts test",
+    "test": "craco test",
     "eject": "react-scripts eject",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
     "lint:check": "eslint src --ext .js,.jsx,.ts,.tsx",
@@ -62,7 +62,9 @@
   "devDependencies": {
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
-    "jest-environment-jsdom": "^29.7.0"
+    "jest-environment-jsdom": "^29.7.0",
+    "@craco/craco": "^7.1.0",
+    "babel-plugin-transform-remove-console": "^6.9.4"
   },
   "overrides": {
     "nth-check": "^2.1.1",

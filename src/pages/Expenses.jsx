@@ -88,6 +88,32 @@ const Expenses = () => {
     return formatCurrency(amount);
   };
 
+  // Función para obtener colores por categoría (consistente con Dashboard)
+  const getCategoryColor = (categoryId) => {
+    const colors = [
+      { bg: 'bg-blue-100 dark:bg-blue-900/30', border: 'border-blue-400', text: 'text-blue-700 dark:text-blue-300' },
+      { bg: 'bg-green-100 dark:bg-green-900/30', border: 'border-green-400', text: 'text-green-700 dark:text-green-300' },
+      { bg: 'bg-yellow-100 dark:bg-yellow-900/30', border: 'border-yellow-400', text: 'text-yellow-700 dark:text-yellow-300' },
+      { bg: 'bg-purple-100 dark:bg-purple-900/30', border: 'border-purple-400', text: 'text-purple-700 dark:text-purple-300' },
+      { bg: 'bg-pink-100 dark:bg-pink-900/30', border: 'border-pink-400', text: 'text-pink-700 dark:text-pink-300' },
+      { bg: 'bg-indigo-100 dark:bg-indigo-900/30', border: 'border-indigo-400', text: 'text-indigo-700 dark:text-indigo-300' },
+      { bg: 'bg-cyan-100 dark:bg-cyan-900/30', border: 'border-cyan-400', text: 'text-cyan-700 dark:text-cyan-300' },
+      { bg: 'bg-orange-100 dark:bg-orange-900/30', border: 'border-orange-400', text: 'text-orange-700 dark:text-orange-300' },
+    ];
+    
+    if (!categoryId) {
+      return { bg: 'bg-gray-100 dark:bg-gray-700', border: 'border-gray-400 dark:border-gray-500', text: 'text-gray-700 dark:text-gray-300' };
+    }
+    
+    // Usar el hash del categoryId para asignar colores consistentes
+    let hash = 0;
+    for (let i = 0; i < categoryId.length; i++) {
+      hash = categoryId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colorIndex = Math.abs(hash) % colors.length;
+    return colors[colorIndex];
+  };
+
   const formatPercentageAmount = (percentage) => {
     if (balancesHidden) return '••••';
     return formatPercentage(percentage);
@@ -119,12 +145,7 @@ const Expenses = () => {
       
       // Actualizar datos disponibles en el contexto de períodos
       updateAvailableData(expensesData, incomesData);
-      
-      console.log('✅ Datos de gastos cargados exitosamente:', {
-        expenses: expensesData.length,
-        categories: categoriesData.length,
-        totalIncome: totalIncomeAmount
-      });
+
       
     } catch (error) {
       console.warn('⚠️ Error al cargar gastos:', error.message);
@@ -616,92 +637,102 @@ const Expenses = () => {
           ) : (
             filteredExpenses.map((expense) => {
               const category = categories.find(c => c.id === expense.category_id);
+              const color = getCategoryColor(expense.category_id);
               const incomePercentage = totalIncome > 0 ? (expense.amount / totalIncome) * 100 : 0;
               
               return (
-                <div key={expense.id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <div key={expense.id} className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-fr-gray-50 dark:bg-gray-700 hover:bg-fr-gray-100 dark:hover:bg-gray-600 transition-colors">
                   {/* Estado de pago compacto */}
-                  <div className="flex-shrink-0 w-12 h-12 mr-3">
+                  <div className="flex-shrink-0 w-6 h-6">
                     <button
                       onClick={() => togglePaid(expense)}
-                      className={`w-full h-full rounded-lg transition-colors flex items-center justify-center ${
+                      className={`w-full h-full rounded-md transition-colors flex items-center justify-center ${
                         expense.paid 
                           ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50' 
                           : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
                       }`}
                     >
                       {expense.paid ? (
-                        <FaCheckCircle className="w-5 h-5" />
+                        <FaCheckCircle className="w-3 h-3" />
                       ) : (
-                        <FaTimesCircle className="w-5 h-5" />
+                        <FaTimesCircle className="w-3 h-3" />
                       )}
                     </button>
                   </div>
 
-                  {/* Información principal */}
+                  {/* Descripción */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-semibold text-fr-gray-900 dark:text-gray-100 text-sm truncate pr-2">
-                        {expense.description}
-                      </h3>
-                      <div className="text-right flex-shrink-0">
-                        <div className="font-bold text-fr-gray-900 dark:text-gray-100 text-base">
-                          -{formatAmount(expense.amount)}
-                        </div>
-                      </div>
+                    <h3 className="font-medium text-fr-gray-900 dark:text-gray-100 text-sm truncate">
+                      {expense.description}
+                    </h3>
+                  </div>
+
+                  {/* Categoría */}
+                  <div className="flex-shrink-0 hidden sm:block text-left min-w-[80px]">
+                    {category && (
+                      <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}>
+                        {category.name}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Fecha de vencimiento */}
+                  <div className="flex-shrink-0 hidden md:block text-xs text-gray-500 dark:text-gray-400 text-left min-w-[100px]">
+                    {expense.due_date && (
+                      <span>
+                        Vence: {new Date(expense.due_date).toLocaleDateString('es-AR', { 
+                          day: 'numeric', 
+                          month: 'numeric', 
+                          year: 'numeric'
+                        })}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Monto */}
+                  <div className="flex-shrink-0 text-right min-w-[90px]">
+                    <div className="font-semibold text-fr-gray-900 dark:text-gray-100 text-sm">
+                      -{formatAmount(expense.amount)}
                     </div>
+                  </div>
+                  
+                  {/* Botones de acción compactos */}
+                  <div className="flex space-x-0.5 flex-shrink-0">
+                    {!expense.paid && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPayingExpense(expense);
+                          setShowPaymentModal(true);
+                        }}
+                        className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-md flex items-center justify-center hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+                        title="Pagar"
+                      >
+                        <FaCheckCircle className="w-3 h-3 text-green-600 dark:text-green-400" />
+                      </button>
+                    )}
                     
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2 text-xs text-fr-gray-500 dark:text-gray-400">
-                        {category && (
-                          <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full text-xs">
-                            {category.name}
-                          </span>
-                        )}
-                        {expense.due_date && (
-                          <span>Vence: {new Date(expense.due_date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}</span>
-                        )}
-                      </div>
-                      
-                      {/* Botones de acción compactos */}
-                      <div className="flex space-x-1 ml-2">
-                        {!expense.paid && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPayingExpense(expense);
-                              setShowPaymentModal(true);
-                            }}
-                            className="w-7 h-7 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
-                            title="Pagar"
-                          >
-                            <FaCheckCircle className="w-3 h-3 text-green-600 dark:text-green-400" />
-                          </button>
-                        )}
-                        
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(expense);
-                          }}
-                          className="w-7 h-7 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                          title="Editar"
-                        >
-                          <FaEdit className="w-3 h-3 text-gray-600 dark:text-gray-400" />
-                        </button>
-                        
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(expense);
-                          }}
-                          className="w-7 h-7 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                          title="Eliminar"
-                        >
-                          <FaTrash className="w-3 h-3 text-red-600 dark:text-red-400" />
-                        </button>
-                      </div>
-                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(expense);
+                      }}
+                      className="w-6 h-6 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      title="Editar"
+                    >
+                      <FaEdit className="w-2.5 h-2.5 text-gray-600 dark:text-gray-400" />
+                    </button>
+                    
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(expense);
+                      }}
+                      className="w-6 h-6 bg-red-100 dark:bg-red-900/30 rounded-md flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                      title="Eliminar"
+                    >
+                      <FaTrash className="w-2.5 h-2.5 text-red-600 dark:text-red-400" />
+                    </button>
                   </div>
                 </div>
               );

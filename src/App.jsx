@@ -35,8 +35,6 @@ import './index.css';
 
 // Componente de rutas que usa los contexts (exportado para tests)
 export function AppContent() {
-  console.log('🚀 AppContent rendering...');
-  
   return (
     <>
       <Routes>
@@ -131,8 +129,6 @@ export function AppContent() {
 
 // Componente principal de la aplicación
 function App() {
-  console.log('🚀 App rendering...');
-  
   return (
     <Router>
       <ThemeProvider>

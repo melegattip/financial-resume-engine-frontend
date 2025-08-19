@@ -38,7 +38,10 @@ const environments = {
     USERS_API_URL: 'https://users-service-mp5p.onrender.com/api/v1',
     REDIS_URL: 'redis://red-d1qmg0juibrs73esqdfg:6379',
     WEBSOCKET_URL: 'wss://financial-resume-engine.onrender.com/ws',
-    CORS_ORIGIN: 'https://financial-resume-engine-frontend.onrender.com'
+    CORS_ORIGIN: 'https://financial-resume-engine-frontend.onrender.com',
+    // Configuración de producción
+    DISABLE_CONSOLE_LOGS: true,
+    LOG_LEVEL: 'WARN' // ERROR, WARN, INFO, DEBUG
   },
   
 };
@@ -158,8 +161,8 @@ export default {
   }
 };
 
-// Debug en consola (solo en desarrollo)
-if (activeEnvironment === 'development') {
+// Debug en consola (solo en desarrollo o si está habilitado)
+if (activeEnvironment === 'development' || !activeConfig.DISABLE_CONSOLE_LOGS) {
   console.log('🔧 Environment Config:', {
     environment: activeEnvironment,
     config: activeConfig,
