@@ -23,7 +23,8 @@
     "recharts": "^2.5.0",
     "serve": "^14.2.0",
     "tailwindcss": "^3.2.7",
-    "@craco/craco": "^7.1.0"
+    "@craco/craco": "^7.1.0",
+    "babel-plugin-transform-remove-console": "^6.9.4"
   },
   "scripts": {
     "start": "node startup.js",
@@ -63,8 +64,7 @@
   "devDependencies": {
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
-    "jest-environment-jsdom": "^29.7.0",
-    "babel-plugin-transform-remove-console": "^6.9.4"
+    "jest-environment-jsdom": "^29.7.0"
   },
   "overrides": {
     "nth-check": "^2.1.1",
