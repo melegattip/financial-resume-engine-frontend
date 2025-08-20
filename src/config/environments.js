@@ -49,7 +49,7 @@ const environments = {
     API_BASE_URL: 'https://financial.niloft.com/api/v1',
     GAMIFICATION_API_URL: 'https://financial-gamification-service.onrender.com/api/v1',
     AI_API_URL: 'https://financial-ai-api.niloft.com/api/v1',
-    USERS_API_URL: 'https://financial.niloft.com/api/v1',
+    USERS_API_URL: 'https://users-service-mp5p.onrender.com/api/v1',
     REDIS_URL: 'redis://red-d1qmg0juibrs73esqdfg:6379',
     WEBSOCKET_URL: 'wss://financial.niloft.com/ws',
     CORS_ORIGIN: 'https://financial.niloft.com',
