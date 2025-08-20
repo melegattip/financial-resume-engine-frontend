@@ -7,6 +7,8 @@ import dataService from './dataService';
 const getUsersServiceUrl = async () => {
   try {
     const config = await configService.loadConfig();
+    console.log('🔧 [authService] getUsersServiceUrl - Config recibida:', config);
+    console.log('🔧 [authService] getUsersServiceUrl - users_service_url:', config.users_service_url);
     return config.users_service_url;
   } catch (error) {
     console.error('Error getting users service URL:', error);
@@ -598,5 +600,6 @@ export const authAPI_instance = authAPI; // Para requests manuales
 export const isAuthenticated = () => authService.isAuthenticated();
 export const getCurrentUser = () => authService.getCurrentUser();
 export const getAuthHeaders = () => authService.getAuthHeaders();
+export const getUsersServiceUrlAsync = () => getUsersServiceUrl(); // Función para obtener URL del users service
 
 export default authService; 
