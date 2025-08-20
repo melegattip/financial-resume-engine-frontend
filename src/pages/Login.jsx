@@ -75,7 +75,7 @@ const Login = () => {
     try {
       // Usar la configuración dinámica del authService
       const baseURL = await getUsersServiceUrlAsync();
-      const response = await fetch(`${baseURL}/users/check-2fa`, {
+      const response = await fetch(`${baseURL}/auth/check-2fa`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

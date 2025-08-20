@@ -600,6 +600,26 @@ export const authAPI_instance = authAPI; // Para requests manuales
 export const isAuthenticated = () => authService.isAuthenticated();
 export const getCurrentUser = () => authService.getCurrentUser();
 export const getAuthHeaders = () => authService.getAuthHeaders();
-export const getUsersServiceUrlAsync = () => getUsersServiceUrl(); // Función para obtener URL del users service
+export const getUsersServiceUrlAsync = async () => {
+  try {
+    const config = await configService.loadConfig();
+    return config.users_service_url;
+  } catch (error) {
+    console.error('Error getting users service URL:', error);
+    
+    // Fallback con detección de ambiente
+    if (process.env.REACT_APP_USERS_SERVICE_URL) {
+      return process.env.REACT_APP_USERS_SERVICE_URL;
+    }
+    
+    // Usar el proxy del backend principal en lugar de conectar directamente
+    const hostname = window.location.hostname;
+    if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
+      return 'https://financial-resume-engine.onrender.com/api/v1';  // Render - usar proxy
+    } else {
+      return 'http://localhost:8080/api/v1';  // Development - usar proxy
+    }
+  }
+};
 
 export default authService; 
