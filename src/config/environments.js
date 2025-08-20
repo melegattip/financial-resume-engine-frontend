@@ -43,6 +43,20 @@ const environments = {
     DISABLE_CONSOLE_LOGS: true,
     LOG_LEVEL: 'WARN' // ERROR, WARN, INFO, DEBUG
   },
+
+  production: {
+    name: 'Production (Niloft)',
+    API_BASE_URL: 'https://financial.niloft.com/api/v1',
+    GAMIFICATION_API_URL: 'https://financial-gamification-service.onrender.com/api/v1',
+    AI_API_URL: 'https://financial-ai-api.niloft.com/api/v1',
+    USERS_API_URL: 'https://financial.niloft.com/api/v1',
+    REDIS_URL: 'redis://red-d1qmg0juibrs73esqdfg:6379',
+    WEBSOCKET_URL: 'wss://financial.niloft.com/ws',
+    CORS_ORIGIN: 'https://financial.niloft.com',
+    // Configuración de producción
+    DISABLE_CONSOLE_LOGS: true,
+    LOG_LEVEL: 'WARN' // ERROR, WARN, INFO, DEBUG
+  },
   
 };
 
@@ -64,8 +78,14 @@ const detectEnvironment = () => {
     return 'development';
   }
   
+  // Configuración específica para financial.niloft.com
+  if (hostname === 'financial.niloft.com') {
+    console.log(`🔧 [environments] Ambiente detectado por hostname: production (${hostname})`);
+    return 'production';
+  }
+  
   // Solo usar render si realmente estamos en onrender.com
-  if (hostname.includes('onrender.com') || hostname === 'financial.niloft.com') {
+  if (hostname.includes('onrender.com')) {
     console.log(`🔧 [environments] Ambiente detectado por hostname: render (${hostname})`);
     return 'render';
   }
