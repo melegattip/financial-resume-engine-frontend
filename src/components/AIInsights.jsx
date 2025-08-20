@@ -38,9 +38,20 @@ const AIInsights = () => {
     savingsGoal: 0
   });
 
-  // Estados para gamificación
+  // Estados para gamificación - UX optimizada (seguridad real en backend)
   const [viewedInsights, setViewedInsights] = useState(new Set());
-  const [understoodInsights, setUnderstoodInsights] = useState(new Set());
+  const [understoodInsights, setUnderstoodInsights] = useState(() => {
+    // UX: Cargar estado desde sessionStorage para mejor experiencia
+    // 🛡️ SEGURIDAD REAL: El backend verifica duplicados en base de datos
+    try {
+      const userId = user?.id || 'guest';
+      const stored = sessionStorage.getItem(`understood_insights_${userId}`);
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch (error) {
+      console.warn('⚠️ Error loading understood insights from sessionStorage:', error);
+      return new Set();
+    }
+  });
 
   const paymentTypes = [
     { value: 'contado', label: 'Pago de contado' },
@@ -375,10 +386,37 @@ const AIInsights = () => {
 
   const handleUnderstandInsight = async (insightId, insightTitle) => {
     if (!understoodInsights.has(insightId)) {
-      setUnderstoodInsights(prev => new Set([...prev, insightId]));
+      const newUnderstoodInsights = new Set([...understoodInsights, insightId]);
+      setUnderstoodInsights(newUnderstoodInsights);
       
-      // Registrar en gamificación
-      await recordInsightUnderstood(String(insightId), insightTitle);
+      // UX: Persistir en sessionStorage para mejor experiencia de usuario
+      // 🛡️ SEGURIDAD: El backend tiene la verificación real de duplicados
+      try {
+        const userId = user?.id || 'guest';
+        sessionStorage.setItem(
+          `understood_insights_${userId}`,
+          JSON.stringify([...newUnderstoodInsights])
+        );
+        console.log('✅ [UX] Insight marcado como entendido:', insightId);
+      } catch (error) {
+        console.warn('⚠️ Error saving understood insights to sessionStorage:', error);
+      }
+      
+      // Registrar en gamificación - EL BACKEND VERIFICA DUPLICADOS
+      try {
+        await recordInsightUnderstood(String(insightId), insightTitle);
+        console.log('✅ [Gamification] XP procesado para insight:', insightId);
+      } catch (error) {
+        console.warn('⚠️ [Gamification] Error al procesar XP:', error);
+        // Si falla el backend, revertir el estado local
+        setUnderstoodInsights(prev => {
+          const reverted = new Set(prev);
+          reverted.delete(insightId);
+          return reverted;
+        });
+      }
+    } else {
+      console.log('🔄 [UX] Insight ya marcado en esta sesión:', insightId);
     }
   };
 
