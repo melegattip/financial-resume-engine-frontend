@@ -61,6 +61,7 @@ const initializeConfig = async () => {
     const config = await configService.loadConfig();
     
     // Actualizar la baseURL de axios con la configuración del users service
+    console.log('🔧 [authService] Configuración recibida del backend:', config);
     authAPI.defaults.baseURL = config.users_service_url;
     configInitialized = true;
     
