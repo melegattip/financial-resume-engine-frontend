@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { validateEmail, sanitizeText } from '../utils/validation';
 import Logo from '../components/Logo';
 import TwoFAModal from '../components/TwoFAModal';
+import environments from '../config/environments';
 
 
 const Login = () => {
@@ -73,8 +74,9 @@ const Login = () => {
   // Verificar si el usuario requiere 2FA antes de hacer login
   const check2FARequirement = async (credentials) => {
     try {
-      // Usar la misma base URL que authService
-      const baseURL = process.env.REACT_APP_USERS_SERVICE_URL || 'http://localhost:8083/api/v1';
+      // Usar la configuración de ambiente correcta
+      const baseURL = environments.USERS_API_URL;
+      console.log('🔧 [Login] Using USERS_API_URL:', baseURL);
       const response = await fetch(`${baseURL}/auth/check-2fa`, {
         method: 'POST',
         headers: {
